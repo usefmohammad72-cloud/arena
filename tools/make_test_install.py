@@ -88,7 +88,7 @@ def ignore_func(directory, names):
 
 def find_source_db(root: Path):
     candidates = []
-    if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
+    if os.environ.get("LOCALAPPDATA"):
         candidates.append(Path(os.environ["LOCALAPPDATA"]) / "STM" / "data" / "app.db")
     candidates.append(Path(os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share")) / "STM" / "data" / "app.db")
     candidates.append(root / "data" / "app.db")
