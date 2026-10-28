@@ -182,6 +182,9 @@ def main():
         return 1
     print(f"ورود ادمین موفق: {me.get('full_name')} ({me.get('username')})\n")
 
+    in_scope = None
+    was_approved = False
+
     try:
         # ---------- پیدا کردن یک دوره و یک رکورد ----------
         code, periods = admin.json("/api/period-options")
@@ -221,7 +224,12 @@ def main():
             return 1
         deputy = max(counts, key=counts.get)
 
-        in_scope = next((r for r in rows if row_deputy(r) == deputy), None)
+        candidates = [r for r in rows if row_deputy(r) == deputy]
+        # ترجیح می‌دهیم روی رکوردی آزمون کنیم که از قبل تأیید نشده باشد،
+        # تا آزمون هیچ تغییری در دادهٔ واقعی ایجاد نکند.
+        in_scope = next((r for r in candidates if not r.get("manager_approved")), None)
+        if in_scope is None and candidates:
+            in_scope = candidates[0]
         outside = next((r for r in rows if row_deputy(r) not in ("", deputy)), None)
         if not in_scope:
             skip("پیدا کردن رکورد داخل دامنه", "رکوردی برای این معاونت پیدا نشد")
@@ -229,7 +237,11 @@ def main():
 
         print(f"دورهٔ آزمون: {period}")
         print(f"دامنهٔ آزمون: معاونت «{deputy}» ({counts[deputy]} رکورد)")
-        print(f"رکورد داخل دامنه : id={in_scope['record_id']} | مرکز: {in_scope.get('cost_center')}")
+        was_approved = bool(in_scope.get("manager_approved"))
+        print(f"رکورد داخل دامنه : id={in_scope['record_id']} | مرکز: {in_scope.get('cost_center')}"
+              f" | وضعیت تأیید فعلی: {'تأییدشده' if was_approved else 'تأییدنشده'}")
+        if was_approved:
+            print("  ⚠ این رکورد از قبل تأیید شده است؛ آزمون در پایان وضعیت قبلی را برمی‌گرداند.")
         if outside:
             print(f"رکورد خارج دامنه: id={outside['record_id']} | معاونت: {row_deputy(outside)}")
         print()
@@ -336,6 +348,17 @@ def main():
             skip("آزمون کامل تأیید", "با سوئیچ --write-test فعال می‌شود")
 
     finally:
+        # بازگردانی وضعیت تأیید رکورد، اگر از قبل تأییدشده بود
+        try:
+            if was_approved and in_scope:
+                code, _ = admin.json(
+                    "/api/toggle-approval",
+                    {"record_id": in_scope["record_id"], "approved": True},
+                )
+                if code == 200:
+                    print("\n↺ وضعیت تأیید قبلی رکورد بازگردانده شد.")
+        except Exception:
+            print("\n[هشدار] بازگردانی وضعیت رکورد ممکن نشد؛ دستی بررسی کنید.")
         cleanup_users(admin)
         print("\nکاربران آزمایشی پاک شدند.")
 
