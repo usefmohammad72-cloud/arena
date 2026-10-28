@@ -8,6 +8,41 @@
 
 ---
 
+## راه ۰ — بدون اینترنت، بدون دانلود (توصیه‌شده)
+
+دو خطای رایج:
+
+| خطا | علت | راه‌حل |
+|---|---|---|
+| `D:\moghatee\samane\app : The term ... is not recognized` | مسیر یک **پوشه** است، نه یک دستور. PowerShell نمی‌تواند پوشه را «اجرا» کند | `cd "D:\moghatee\samane\app"` یا `Test-Path` |
+| `The argument '.\attach_app.ps1' ... does not exist` | اسکریپت دانلود نشده بود | راه ۰ را استفاده کن، یا اول دانلودش کن |
+
+**گام ۱ — مطمئن شو پوشه وجود دارد** (این خروجی را برای من بفرست):
+
+```powershell
+Test-Path "D:\moghatee\samane\app"
+Get-ChildItem "D:\moghatee\samane\app" -Name
+```
+
+**گام ۲ — این بلوک را کامل کپی و در PowerShell پیست کن** (نیازی به اینترنت و دانلود ندارد):
+
+```powershell
+$src   = "D:\moghatee\samane\app"
+$dest  = Join-Path ([Environment]::GetFolderPath('Desktop')) "stm-code.zip"
+$stage = Join-Path $env:TEMP "stm_stage"
+if (-not (Test-Path $src)) { "MISSING: $src" } else {
+  Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
+  robocopy $src $stage /E /XD venv __pycache__ data logs backups build dist dist_installer .git node_modules /XF *.pyc *.db *.exe *.zip *.key *.log *.bak /NFL /NDL /NP /NJH /NJS | Out-Null
+  Compress-Archive -Path "$stage\*" -DestinationPath $dest -Force
+  (Get-ChildItem $stage -Recurse -File | Measure-Object Length -Sum) | ForEach-Object { "files=$($_.Count)  size=$([math]::Round($_.Sum/1MB,2)) MB" }
+  "ZIP -> $dest"
+}
+```
+
+**گام ۳ — فایل `stm-code.zip` را از دسکتاپ در چت ضمیمه کن.**
+
+---
+
 ## راه ۱ — بسته‌بندی و آپلود ZIP در چت (ساده‌ترین)
 
 PowerShell را باز کن و این ۶ خط را یک‌جا پیست کن:
