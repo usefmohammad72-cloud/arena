@@ -1,0 +1,1330 @@
+{
+  "generated_for": "STM permissions audit",
+  "summary": {
+    "total_routes": 97,
+    "scoped": 7,
+    "auth_but_unscoped": 71,
+    "no_authorization": 20
+  },
+  "routes": [
+    {
+      "route": "/",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "index",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/analytics",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "analytics_page",
+      "auth": [
+        "perm:command_center"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/all-centers",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_all_centers",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/analytics/all",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_analytics_all",
+      "auth": [
+        "perm:command_center"
+      ],
+      "scope_applied": true,
+      "mutates": false,
+      "status": "scoped"
+    },
+    {
+      "route": "/api/apply-employment",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_apply_employment",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/approval-log",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_approval_log",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/approval-status/centers",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_approval_status_centers",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": true,
+      "mutates": false,
+      "status": "scoped"
+    },
+    {
+      "route": "/api/approval-status/deputies",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_approval_status_deputies",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": true,
+      "mutates": false,
+      "status": "scoped"
+    },
+    {
+      "route": "/api/bulk-approve",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_bulk_approve",
+      "auth": [
+        "perm:can_approve"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/bulk-import/<category>",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_bulk_import",
+      "auth": [
+        "perm:can_edit_specialists"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/bulk-import/remap",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_bulk_import_remap",
+      "auth": [
+        "perm:can_edit_specialists"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/bulk-unapprove",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_bulk_unapprove",
+      "auth": [
+        "perm:can_approve"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/by-deputy",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_by_deputy",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/by-supply-type",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_by_supply_type",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/centers-for-deputies",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_centers_for_deputies",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/centers-with-quota",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_centers_with_quota",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/clear-month",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_clear_month",
+      "auth": [
+        "perm:can_clear_month"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/command-center/snapshot",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_command_center_snapshot",
+      "auth": [
+        "perm:command_center"
+      ],
+      "scope_applied": true,
+      "mutates": false,
+      "status": "scoped"
+    },
+    {
+      "route": "/api/dashboard-charts",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_dashboard_charts",
+      "auth": [
+        "perm:dash_charts"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/dashboard-export/<kind>",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_dashboard_export",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/deadline",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_deadline",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/export/columns",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_export_columns",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/filter-options",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_filter_options",
+      "auth": [],
+      "scope_applied": true,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/import",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_import",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/import-employment",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_import_employment",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/import-main-center",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_import_main_center",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/import-monthly-payments",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_import_monthly_payments",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/manual-ceilings",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_manual_ceilings_list",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/manual-ceilings/<int:row_id>",
+      "methods": [
+        "DELETE"
+      ],
+      "file": "web/app.py",
+      "handler": "api_manual_ceilings_delete",
+      "auth": [
+        "perm:can_edit_ceilings"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/manual-ceilings/save",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_manual_ceilings_save",
+      "auth": [
+        "perm:can_edit_ceilings"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/me",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_me",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/menu-structure",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_menu_structure",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/payment-grid",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_payment_grid",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/payment-grid/export",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_payment_grid_export",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/payment-grid/save",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_payment_grid_save",
+      "auth": [
+        "perm:can_edit_payments"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/payments",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_payments_list",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/payments",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_payments_create",
+      "auth": [
+        "perm:can_edit_payments"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/payments/<int:pid>",
+      "methods": [
+        "DELETE"
+      ],
+      "file": "web/app.py",
+      "handler": "api_payments_delete",
+      "auth": [
+        "perm:can_edit_payments"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/payments/confirm-month",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_payments_confirm_month",
+      "auth": [
+        "perm:can_edit_payments"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/period-options",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_period_options",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/person",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_person",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/personnel",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_list",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_create",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/<int:pid>",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_get",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/<int:pid>",
+      "methods": [
+        "PUT"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_update",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/<int:pid>",
+      "methods": [
+        "DELETE"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_delete",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/<int:pid>/status-change",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_status_change",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/<int:pid>/status-changes",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_status_changes",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/<int:pid>/transfer",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_transfer",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/<int:pid>/transfers",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_transfers",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/enriched",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_enriched",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/export",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_export",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/import",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_import",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/personnel/meta",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_personnel_meta",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/pricing-rules",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_pricing_rules_list",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/pricing-rules/<int:rule_id>",
+      "methods": [
+        "PUT"
+      ],
+      "file": "web/app.py",
+      "handler": "api_pricing_rules_update",
+      "auth": [
+        "perm:can_edit_pricing"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/recalculate",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_recalculate",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/report",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_report",
+      "auth": [
+        "perm:tab_report"
+      ],
+      "scope_applied": true,
+      "mutates": false,
+      "status": "scoped"
+    },
+    {
+      "route": "/api/report-export",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_report_export",
+      "auth": [
+        "perm:tab_report"
+      ],
+      "scope_applied": true,
+      "mutates": false,
+      "status": "scoped"
+    },
+    {
+      "route": "/api/shifts/matrix",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_shifts_matrix",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/shifts/save",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_shifts_save",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/specialists",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_specialists_list",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/specialists/<int:row_id>",
+      "methods": [
+        "PUT"
+      ],
+      "file": "web/app.py",
+      "handler": "api_specialists_update",
+      "auth": [
+        "perm:can_edit_specialists"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/submitted-centers",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_submitted_centers",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/summary",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_summary",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/api/summary-table",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_summary_table",
+      "auth": [
+        "perm:tab_report"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/summary-table/export",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_summary_table_export",
+      "auth": [
+        "perm:tab_report"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/templates/details",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_templates_details",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/templates/import",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_templates_import",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/templates/matrix",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_templates_matrix",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/templates/sample",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_templates_sample",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/templates/save",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_templates_save",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/templates/save-matrix",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_templates_save_matrix",
+      "auth": [
+        "perm:can_upload"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/templates/summary",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_templates_summary",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/toggle-approval",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_toggle_approval",
+      "auth": [
+        "perm:can_approve"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/users",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "api_users_list",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/users",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "api_users_create",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/users/<int:user_id>",
+      "methods": [
+        "PUT"
+      ],
+      "file": "web/app.py",
+      "handler": "api_users_update",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/users/<int:user_id>",
+      "methods": [
+        "DELETE"
+      ],
+      "file": "web/app.py",
+      "handler": "api_users_delete",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/command-center",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "command_center_page",
+      "auth": [
+        "perm:command_center"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/favicon.ico",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "favicon",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/login",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "file": "web/app.py",
+      "handler": "login",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "no_authz"
+    },
+    {
+      "route": "/logout",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "logout",
+      "auth": [],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "no_authz"
+    },
+    {
+      "route": "/personnel",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "personnel_page",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/users",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/app.py",
+      "handler": "users_page",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/master/activate",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/master_routes.py",
+      "handler": "api_master_activate",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/master/deactivate",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/master_routes.py",
+      "handler": "api_master_deactivate",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/master/lockdown",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/master_routes.py",
+      "handler": "api_master_lockdown",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/master/setup",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/master_routes.py",
+      "handler": "api_master_setup",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/master/status",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/master_routes.py",
+      "handler": "api_master_status",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/master-control",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/master_routes.py",
+      "handler": "master_control_page",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/periods",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/period_routes.py",
+      "handler": "api_periods_list",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/periods/available",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/period_routes.py",
+      "handler": "api_periods_available",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/periods/close",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/period_routes.py",
+      "handler": "api_periods_close",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/periods/is-open",
+      "methods": [
+        "GET"
+      ],
+      "file": "web/period_routes.py",
+      "handler": "api_periods_is_open",
+      "auth": [
+        "login"
+      ],
+      "scope_applied": false,
+      "mutates": false,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/periods/open",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/period_routes.py",
+      "handler": "api_periods_open",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    },
+    {
+      "route": "/api/periods/toggle",
+      "methods": [
+        "POST"
+      ],
+      "file": "web/period_routes.py",
+      "handler": "api_periods_toggle",
+      "auth": [
+        "admin"
+      ],
+      "scope_applied": false,
+      "mutates": true,
+      "status": "perm_only"
+    }
+  ]
+}

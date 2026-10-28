@@ -1,0 +1,145 @@
+{
+  "project": "STM",
+  "area": "authorization-and-user-scope",
+  "audited_commit": "b3ec87b",
+  "date": "2026-10-28",
+  "method": [
+    "static-analysis",
+    "live-runtime-testing"
+  ],
+  "findings": [
+    {
+      "id": "F-01",
+      "severity": "critical",
+      "title": "NameError perms_mod in _approval_scope_check",
+      "file": "web/app.py",
+      "lines": [
+        1253,
+        1256
+      ],
+      "impact": "هر عملیات تأیید/رد توسط کاربر غیرادمین با خطای ۵۰۰ متوقف می‌شود؛ جریان تأیید→پرداختی برای غیرادمین کاملاً غیرفعال است",
+      "evidence": "POST /api/toggle-approval → 500, NameError: name 'perms_mod' is not defined",
+      "cwe": "CWE-754",
+      "fix": "import ماژول با نام درست (perms) + تست رگرسیون"
+    },
+    {
+      "id": "F-02",
+      "severity": "critical",
+      "title": "empty scope treated as global (fail-open)",
+      "file": "web/analytics.py, web/command_center.py",
+      "lines": [],
+      "impact": "کاربر با صفر دامنه، همهٔ معاونت‌ها را می‌بیند",
+      "evidence": "/api/analytics/all و /api/command-center/snapshot با کاربر بدون دامنه، داده برگرداندند",
+      "cwe": "CWE-863",
+      "fix": "if scope is not None و ساخت شرط fail-closed"
+    },
+    {
+      "id": "F-03",
+      "severity": "critical",
+      "title": "summary-table و dashboard-charts بدون اعمال دامنه",
+      "file": "web/app.py",
+      "lines": [],
+      "impact": "نشت تجمیعی دادهٔ معاونت‌های دیگر در جدول خلاصه و نمودارها",
+      "evidence": "کاربر مجاز «حوزه ریاست» → rows با deputy='معاونت سیما'",
+      "cwe": "CWE-863",
+      "fix": "اعمال دامنه در _build_summary_rows و dashboard-charts"
+    },
+    {
+      "id": "F-04",
+      "severity": "critical",
+      "title": "جست‌وجوی پرسنل با کد ملی بدون مجوز و دامنه",
+      "file": "web/app.py",
+      "lines": [],
+      "impact": "نشت کد ملی، دستمزد و سابقهٔ پرداخت هر فرد به هر کاربر لاگین‌کرده",
+      "evidence": "/api/person?national_code=0012345678 → 200 با دستمزد و رکوردها",
+      "cwe": "CWE-639",
+      "fix": "مجوز search_person + فیلتر دامنه روی records/payments"
+    },
+    {
+      "id": "F-05",
+      "severity": "critical",
+      "title": "ایمپورت و clear-month دادهٔ کل ماه را حذف می‌کنند",
+      "file": "importer/excel_importer.py, web/app.py",
+      "lines": [],
+      "impact": "کاربر محدود می‌تواند دادهٔ معاونت‌های دیگر را حذف کند",
+      "evidence": "_safe_delete_records_for_month: DELETE FROM records WHERE period_month = ?",
+      "cwe": "CWE-863",
+      "fix": "حذف/جایگذاری محدود به دامنه + رد ردیف‌های خارج از دامنه"
+    },
+    {
+      "id": "F-06",
+      "severity": "high",
+      "title": "AND semantics in approval scope check",
+      "file": "web/app.py",
+      "lines": [],
+      "impact": "تأییدکنندهٔ معاونت‌محور (بدون انتخاب مرکز) هیچ رکوردی نمی‌تواند تأیید کند",
+      "evidence": "get_center_scope→[] ⇒ ok_ctr=False ⇒ 403",
+      "cwe": "CWE-863",
+      "fix": "مدل grant سلسله‌مراتبی با wildcard"
+    },
+    {
+      "id": "F-07",
+      "severity": "high",
+      "title": "personnel بدون دامنه و با نگاشت مجوز غلط",
+      "file": "web/personnel.py, web/templates/index.html",
+      "lines": [],
+      "impact": "مشاهده/ویرایش/خروجی همهٔ پرسنل توسط هر کاربر؛ تب HR با can_upload قفل شده",
+      "cwe": "CWE-863",
+      "fix": "مجوز personnel_view + دامنه + تب مستقل"
+    },
+    {
+      "id": "F-08",
+      "severity": "high",
+      "title": "مسیرهای حساس بدون دروازهٔ مجوز",
+      "file": "web/app.py",
+      "lines": [],
+      "impact": "recalculate، approval-log، pricing-rules، payment-grid، payments، specialists، manual-ceilings",
+      "evidence": "coverage-ledger: 20 route بدون authz",
+      "cwe": "CWE-862",
+      "fix": "مجوز اختصاصی + دامنه برای هر مسیر"
+    },
+    {
+      "id": "F-09",
+      "severity": "high",
+      "title": "UI fail-open + ستون تأیید همیشه نمایان",
+      "file": "web/templates/index.html",
+      "lines": [
+        1690,
+        1098
+      ],
+      "impact": "نمایش باکس‌های غیرمجاز وقتی /api/me شکست بخورد",
+      "cwe": "CWE-863",
+      "fix": "fail-closed در hasPerm + رندر ستون بر اساس مجوز"
+    },
+    {
+      "id": "F-10",
+      "severity": "medium",
+      "title": "supply_type در دامنه قابل بیان نیست",
+      "file": "web/permissions.py",
+      "lines": [],
+      "impact": "تفکیک تامین/پخش در دامنه ممکن نیست",
+      "cwe": "CWE-863",
+      "fix": "grant سه‌سطحی deputy/center/supply_type"
+    },
+    {
+      "id": "F-11",
+      "severity": "medium",
+      "title": "تطبیق نام مرکز شکننده",
+      "file": "web/app.py, engine/center_mapping.py",
+      "lines": [],
+      "impact": "مرکز مجاز به‌خاطر تفاوت فاصله/حروف، غیرمجاز یا برعکس",
+      "cwe": "CWE-178",
+      "fix": "نرمال‌سازی متمرکز نام‌ها در دامنه"
+    },
+    {
+      "id": "F-12",
+      "severity": "medium",
+      "title": "بدون ردپای دسترسی",
+      "file": "db/database.py",
+      "lines": [],
+      "impact": "امکان حسابرسی «چه کسی چه دید» نیست",
+      "cwe": "CWE-778",
+      "fix": "access_log + گزارش"
+    }
+  ]
+}
