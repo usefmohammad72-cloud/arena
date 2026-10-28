@@ -22,8 +22,10 @@
 """
 
 import sys
+import re
 import json
 import argparse
+import pathlib
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -44,8 +46,11 @@ class Client:
     def __init__(self, base):
         self.base = base.rstrip("/")
         self.jar = http.cookiejar.CookieJar()
+        # پراکسی سیستم نادیده گرفته می‌شود؛ وگرنه درخواست به 127.0.0.1
+        # ممکن است به پراکسی سازمان فرستاده شود و شکست بخورد.
         self.opener = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(self.jar)
+            urllib.request.ProxyHandler({}),
+            urllib.request.HTTPCookieProcessor(self.jar),
         )
 
     def _req(self, path, data=None, method=None, form=False):
@@ -129,29 +134,69 @@ def cleanup_users(admin):
 
 
 # ------------------------------------------------------------------ تشخیص آدرس
-CANDIDATES = [
-    "http://127.0.0.1",
-    "http://127.0.0.1:80",
-    "http://127.0.0.1:5000",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:8000",
-]
+PORTS = [80, 5000, 5001, 5050, 8000, 8080, 8081, 8888, 3000]
 
 
-def detect_url():
-    """آدرس سامانهٔ در حال اجرا را خودکار پیدا می‌کند."""
-    for url in CANDIDATES:
-        try:
-            with urllib.request.urlopen(url + "/login", timeout=3) as resp:
-                if resp.status == 200:
-                    return url
-        except Exception:
-            continue
+def _port_from_source():
+    """پورت و میزبان را از web/app.py خودِ پروژه می‌خواند."""
+    try:
+        here = pathlib.Path(__file__).resolve().parent
+        src = (here / "web" / "app.py").read_text(encoding="utf-8", errors="ignore")
+        m = re.search(r"app\.run\(([^)]*)\)", src)
+        if not m:
+            return None, None
+        args = m.group(1)
+        port = re.search(r"port\s*=\s*(\d+)", args)
+        host = re.search(r"host\s*=\s*['\"]([^'\"]+)", args)
+        return (int(port.group(1)) if port else 80,
+                host.group(1) if host else None)
+    except Exception:
+        return None, None
+
+
+def _probe(url):
+    """آیا سامانه روی این آدرس پاسخ می‌دهد؟ (بدون پراکسی)"""
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    try:
+        with opener.open(url + "/login", timeout=3) as resp:
+            return resp.status == 200, f"HTTP {resp.status}"
+    except urllib.error.HTTPError as exc:
+        return exc.code in (200, 302, 401), f"HTTP {exc.code}"
+    except Exception as exc:
+        return False, str(exc)[:80]
+
+
+def detect_url(explicit=None):
+    if explicit:
+        return explicit.rstrip("/")
+
+    tried = []
+    src_port, _src_host = _port_from_source()
+    ports = []
+    if src_port:
+        ports.append(src_port)
+    ports += [p for p in PORTS if p not in ports]
+
+    for port in ports:
+        url = "http://127.0.0.1" if port == 80 else f"http://127.0.0.1:{port}"
+        ok, why = _probe(url)
+        tried.append((url, ok, why))
+        if ok:
+            src_note = "  (بر اساس web/app.py)" if (src_port and port == src_port) else ""
+            print(f"سامانه پیدا شد: {url}{src_note}")
+            return url
+
+    print("\n✘ سامانه روی هیچ‌کدام از این آدرس‌ها پاسخ نداد:")
+    for url, ok, why in tried:
+        print(f"    {url:32s} {'✔' if ok else '✘'} {why}")
     raise SystemExit(
-        "[خطا] سامانه در حال اجرا پیدا نشد.\n"
-        "       اول سرور را اجرا کنید (python web\\app.py) یا آدرس را بدهید:\n"
-        "       python step1_verify.py --url http://127.0.0.1"
+        "\n[خطا] سرور در حال اجرا نیست.\n"
+        "       ۱) پنجرهٔ سرور را باز کنید و اجرا کنید:  run.bat\n"
+        "       ۲) منتظر بمانید تا خط «Running on ...» را ببینید، بعد این آزمون را بزنید.\n"
+        "       ۳) اگر پورت دیگری استفاده می‌کنید:  python step1_verify.py --url http://127.0.0.1:PORT\n"
+        "       ۴) برای تشخیص کامل:  python step1_doctor.py"
     )
+
 
 # ------------------------------------------------------------------ اصلی
 def main():
@@ -164,7 +209,7 @@ def main():
                     help="آزمون کامل تأیید و سپس برگرداندن آن")
     args = ap.parse_args()
 
-    base = args.url or detect_url()
+    base = detect_url(args.url)
 
     print("=" * 78)
     print("آزمون دسترسی «تأییدکننده» — گام ۱")
