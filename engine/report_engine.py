@@ -296,11 +296,66 @@ def _get_specialists_totals(conn, deputy, center, supply_type, period_month=None
     return 0, 0, 0
 
 
-def build_report(db_path, deputy, center, supply_type, period_month=None):
+def _get_specialists_totals_scoped(conn, period_month, allowed):
+    """جمع «کارشناسان/تجهیزات/پاداش» فقط برای مراکزی که در دامنهٔ کاربر است."""
+    where = []
+    params = []
+    if period_month and period_month != "همه":
+        where.append("s.period_month = ?"); params.append(period_month)
+    where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+    rows = conn.execute(f"""
+        SELECT s.center_name, s.supply_type,
+               COALESCE(SUM(s.specialists),0) sp,
+               COALESCE(SUM(s.equipment),0) eq,
+               COALESCE(SUM(s.bonus),0) bo
+        FROM specialists_equipment_bonus s
+        LEFT JOIN centers_structure c
+            ON c.center_name = s.center_name
+            AND COALESCE(c.supply_type,'') = s.supply_type
+        {where_sql}
+        GROUP BY s.center_name, s.supply_type
+    """, params).fetchall()
+    sp = eq = bo = 0
+    for r in rows:
+        if not allowed(_deputy_of_center_safe(conn, r["center_name"]), r["center_name"], r["supply_type"] or ""):
+            continue
+        sp += r["sp"] or 0
+        eq += r["eq"] or 0
+        bo += r["bo"] or 0
+    return sp, eq, bo
+
+
+def _deputy_of_center_safe(conn, center_name):
+    """معاونتِ یک مرکز (برای فیلترکردن جمع‌ها)."""
+    if not center_name:
+        return ""
+    try:
+        row = conn.execute(
+            "SELECT deputy FROM centers_structure WHERE center_name = ? LIMIT 1",
+            (center_name,)).fetchone()
+    except Exception:
+        return ""
+    return (row["deputy"] or "") if row else ""
+
+def build_report(db_path, deputy, center, supply_type, period_month=None, allowed=None):
+    """گزارش را می‌سازد. allowed: تابع (deputy, center, supply) → True/False
+
+    وقتی allowed داده شود، ردیف‌های خارج از دامنه حذف می‌شوند و خلاصه فقط روی
+    همان ردیف‌ها حساب می‌شود (هیچ عدد کلّی سازمانی بیرون نمی‌رود).
+    """
     period_month = _period_for_records(period_month)
     from db.database import get_connection
     conn = get_connection(db_path)
     rows = get_filtered_records(conn, deputy, center, supply_type, period_month)
+    if allowed is not None:
+        _kept = []
+        for _r in rows:
+            _dep = (_r["deputy"] or "").strip() if "deputy" in _r.keys() else ""
+            _cen = (_r["cost_center"] or "").strip() if "cost_center" in _r.keys() else ""
+            _sup = (_r["contract_subject"] or "").strip() if "contract_subject" in _r.keys() else ""
+            if allowed(_dep, _cen, _sup):
+                _kept.append(_r)
+        rows = _kept
     places_map = _compute_service_places(conn)
     wage_sums = _compute_monthly_wage_sums(conn)
     ceiling_max_map = _compute_monthly_ceiling_max(conn)
@@ -395,6 +450,7 @@ def build_report(db_path, deputy, center, supply_type, period_month=None):
             "monthly_wage": wage,
             "cost_center": r["cost_center"],
             "main_cost_center": r["main_cost_center"],
+            "deputy": (r["deputy"] if "deputy" in r.keys() else None),
             "service_places": service_places,
             "employment_status": r["employment_status"],
             "ceiling_status": r["ceiling_status"],
@@ -423,9 +479,14 @@ def build_report(db_path, deputy, center, supply_type, period_month=None):
     monthly_wage_sum = sum((d["monthly_wage"] or 0) for d in eligible)
     non_continuous_sum = sum((d["non_continuous_bonus"] or 0) for d in eligible)
 
-    specialists, equipment, bonus = _get_specialists_totals(
-        conn, deputy, center, supply_type, period_month
-    )
+    if allowed is None:
+        specialists, equipment, bonus = _get_specialists_totals(
+            conn, deputy, center, supply_type, period_month
+        )
+    else:
+        specialists, equipment, bonus = _get_specialists_totals_scoped(
+            conn, period_month, allowed
+        )
 
     professional_qualification = (
         skill_card_all + (skill_card_excl_38 * 0.23)

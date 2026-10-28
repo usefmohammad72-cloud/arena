@@ -22,13 +22,10 @@ def _count(con, sql, params=()):
 
 
 def get_snapshot(scope=None, last_event_id=0):
+    """اتاق فرمان — همیشه محدود به دامنهٔ دسترسی کاربر."""
     con = _conn()
-    scope_clause = ""
-    scope_params = []
-    if scope:
-        placeholders = ",".join("?" for _ in scope)
-        scope_clause = f" AND COALESCE(r.deputy,'') IN ({placeholders})"
-        scope_params = list(scope)
+    from web.scope import scope_sql
+    scope_clause, scope_params = scope_sql("r.deputy", "r.cost_center", "r.contract_subject")
 
     total_records = _count(con, "SELECT COUNT(*) FROM records")
     total_persons = _count(con, "SELECT COUNT(*) FROM persons")

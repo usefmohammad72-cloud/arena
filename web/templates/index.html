@@ -1689,7 +1689,8 @@ async function loadUserPerms() {
 
 function hasPerm(p) {
   if (window.__USER_ROLE === 'admin') return true;
-  if (!window.__USER_PERMS) return true;
+  // بسته به‌طور پیش‌فرض: تا وقتی مجوزها نرسیده‌اند، هیچ‌چیز مجاز نیست.
+  if (!window.__USER_PERMS) return false;
   return !!window.__USER_PERMS[p];
 }
 
@@ -1797,7 +1798,11 @@ function applyPermissions() {
     }
   });
 
-  // 7. ???????? approve
+  // 7. ستون و باکس تأییدیه مدیر
+  if (!hasPerm('box_approval')) {
+    document.querySelectorAll('#report-table th.approve, #report-table td.approve')
+      .forEach(function(el){ _hideEl(el); hideCount++; });
+  }
   if (!hasPerm('can_approve')) {
     var a = document.getElementById('approve-all-btn');
     var u = document.getElementById('unapprove-all-btn');

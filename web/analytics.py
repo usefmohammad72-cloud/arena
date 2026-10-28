@@ -24,13 +24,10 @@ def _sort_period(pm):
 
 
 def get_analytics(scope=None):
+    """تحلیل‌ها — همیشه محدود به دامنهٔ دسترسی کاربر (بسته به‌طور پیش‌فرض)."""
     con = _conn()
-    sc = ""
-    sp = []
-    if scope:
-        ph = ",".join("?" for _ in scope)
-        sc = f" AND COALESCE(r.deputy,'') IN ({ph})"
-        sp = list(scope)
+    from web.scope import scope_sql
+    sc, sp = scope_sql("r.deputy", "r.cost_center", "r.contract_subject")
 
     def rows(sql, p=None):
         try:

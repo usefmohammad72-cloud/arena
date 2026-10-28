@@ -20,6 +20,7 @@ from io import BytesIO
 from app_paths import get_secret_key, get_uploads_dir, get_resource_dir
 import web.auth as auth
 import web.permissions as perms
+import web.scope as scope
 import web.approval as approval
 import web.command_center as cc
 import web.analytics as analytics
@@ -219,6 +220,14 @@ def api_users_create():
     data = request.get_json() or {}
     try:
         uid = auth.create_user(data.get("username", ""), data.get("password", ""), data.get("full_name", ""), data.get("role", "user"), permissions=data.get("permissions"), allowed_deputies=data.get("allowed_deputies"), allowed_centers=data.get("allowed_centers"))
+        _scopes = data.get("scopes")
+        if _scopes is None:
+            _scopes = scope.grants_from_legacy(
+                data.get("allowed_deputies"),
+                data.get("allowed_centers"),
+                data.get("permissions"),
+            )
+        scope.replace_grants(uid, _scopes, note="panel:create")
         return jsonify({"ok": True, "id": uid})
     except ValueError as e: return jsonify({"error": str(e)}), 400
 
@@ -227,7 +236,48 @@ def api_users_create():
 def api_users_update(user_id):
     data = request.get_json() or {}
     auth.update_user(user_id, full_name=data.get("full_name"), role=data.get("role"), is_active=data.get("is_active"), new_password=data.get("new_password"), permissions=data.get("permissions"), allowed_deputies=data.get("allowed_deputies"), allowed_centers=data.get("allowed_centers"))
+    if any(k in data for k in ("scopes", "allowed_deputies", "allowed_centers", "permissions")):
+        _scopes = data.get("scopes")
+        if _scopes is None:
+            _scopes = scope.grants_from_legacy(
+                data.get("allowed_deputies"),
+                data.get("allowed_centers"),
+                data.get("permissions"),
+            )
+        scope.replace_grants(user_id, _scopes, note="panel:update")
     return jsonify({"ok": True})
+
+@app.route("/api/users/<int:user_id>/scopes", methods=["GET"])
+@auth.admin_required
+def api_user_scopes(user_id):
+    """دامنهٔ دسترسی فعلی کاربر + پیش‌نمایش اینکه چه چیزی می‌بیند."""
+    return jsonify(scope.preview(user_id))
+
+
+@app.route("/api/scope-options")
+@auth.login_required
+def api_scope_options():
+    """درخت معاونت → مرکز/شبکه → نوع تأمین برای پنل مدیریت کاربران."""
+    conn = get_connection(DB_PATH)
+    try:
+        deputies = [r["deputy"] for r in conn.execute(
+            "SELECT deputy FROM deputies_structure ORDER BY id").fetchall() if r["deputy"]]
+        rows = conn.execute(
+            "SELECT DISTINCT deputy, center_name, COALESCE(supply_type,'') AS supply_type "
+            "FROM centers_structure WHERE center_name IS NOT NULL AND center_name != '' "
+            "ORDER BY deputy, center_name").fetchall()
+        tree = {}
+        for r in rows:
+            dep = r["deputy"] or ""
+            node = tree.setdefault(dep, [])
+            node.append({"name": r["center_name"], "supply_type": r["supply_type"]})
+        for d in deputies:
+            tree.setdefault(d, [])
+        return jsonify({"deputies": deputies, "tree": tree,
+                        "supply_types": scope.SUPPLY_TYPES})
+    finally:
+        conn.close()
+
 
 @app.route("/api/users/<int:user_id>", methods=["DELETE"])
 @auth.admin_required
@@ -270,7 +320,9 @@ def api_submitted_centers():
              "%" + u + "%", u,
              period)
         ).fetchall()
-        return jsonify([{"center": r["cost_center"], "supply_type": r["st"]} for r in rows])
+        return jsonify([{"center": r["cost_center"], "supply_type": r["st"]}
+                        for r in rows
+                        if scope.can_see(_deputy_of_center(r["cost_center"]), r["cost_center"])])
     finally:
         conn.close()
 
@@ -286,7 +338,8 @@ def api_centers_with_quota():
             params.append(deputy)
         q += " ORDER BY deputy, center_name, supply_type"
         rows = conn.execute(q, params).fetchall()
-        return jsonify([dict(r) for r in rows])
+        return jsonify([dict(r) for r in rows
+                        if scope.can_see(r["deputy"] or "", r["center_name"] or "")])
     finally:
         conn.close()
 
@@ -296,7 +349,8 @@ def api_all_centers():
     conn = get_connection(DB_PATH)
     rows = conn.execute("SELECT DISTINCT center_name, deputy, COALESCE(supply_type, '') AS supply_type FROM centers_structure WHERE center_name IS NOT NULL AND center_name != '' ORDER BY deputy, center_name, supply_type").fetchall()
     conn.close()
-    return jsonify([{"name": r["center_name"], "deputy": r["deputy"] or "", "supply_type": r["supply_type"]} for r in rows])
+    return jsonify([{"name": r["center_name"], "deputy": r["deputy"] or "", "supply_type": r["supply_type"]}
+                    for r in rows if scope.can_see(r["deputy"] or "", r["center_name"] or "")])
 
 @app.route("/")
 def index():
@@ -317,7 +371,7 @@ def api_by_deputy():
     conn = get_connection(DB_PATH)
     rows = conn.execute("SELECT r.deputy AS deputy, COUNT(*) AS person_count, COALESCE(SUM(CASE WHEN cr.ceiling_status NOT IN ('', 'حذف شود') THEN CAST(cr.ceiling_status AS REAL) ELSE 0 END), 0) AS total_amount FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id GROUP BY r.deputy ORDER BY total_amount DESC").fetchall()
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([dict(r) for r in rows if scope.can_see(r["deputy"] or "", None)])
 
 @app.route("/api/by-supply-type")
 def api_by_supply_type():
@@ -332,28 +386,36 @@ def api_dashboard_charts():
     period = request.args.get("period") or None
     if period in ("همه", "", "all"): period = None
     conn = get_connection(DB_PATH)
-    if period: by_month_rows = conn.execute("SELECT period_month, COALESCE(SUM(amount),0) s, COUNT(*) c FROM monthly_payments WHERE period_month = ? GROUP BY period_month", (period,)).fetchall()
-    else: by_month_rows = conn.execute("SELECT period_month, COALESCE(SUM(amount),0) s, COUNT(*) c FROM monthly_payments GROUP BY period_month").fetchall()
+    _pm_scope, _pm_params = scope.scope_sql("rr.deputy", "rr.cost_center", "rr.contract_subject")
+    _pm_exists = ""
+    if _pm_scope:
+        _pm_exists = (" AND EXISTS (SELECT 1 FROM records rr JOIN persons pp ON pp.id = rr.person_id "
+                      "WHERE pp.national_code = monthly_payments.national_code"
+                      " AND rr.period_month = monthly_payments.period_month" + _pm_scope + ")")
+    if period: by_month_rows = conn.execute("SELECT period_month, COALESCE(SUM(amount),0) s, COUNT(*) c FROM monthly_payments WHERE period_month = ?" + _pm_exists + " GROUP BY period_month", [period] + _pm_params).fetchall()
+    else: by_month_rows = conn.execute("SELECT period_month, COALESCE(SUM(amount),0) s, COUNT(*) c FROM monthly_payments WHERE 1=1" + _pm_exists + " GROUP BY period_month", _pm_params).fetchall()
     def _sort_key(x):
         try:
             y, m = x["month"].split("-", 1)
             return (int(y), PERSIAN_MONTHS.index(m) if m in PERSIAN_MONTHS else 99)
         except: return (0, 99)
     by_month = sorted([{"month": r["period_month"], "amount": float(r["s"] or 0), "count": r["c"]} for r in by_month_rows], key=_sort_key)
+    _ch_scope, _ch_params = scope.scope_sql("r.deputy", "r.cost_center", "r.contract_subject")
     where_month = " WHERE r.period_month = ? " if period else " WHERE 1=1 "
-    params_month = [period] if period else []
+    params_month = ([period] if period else []) + _ch_params
+    where_month += _ch_scope
     warn = conn.execute(f"SELECT SUM(CASE WHEN cr.ceiling_status = 'حذف شود' AND COALESCE(cr.manager_approved,0) = 0 THEN 1 ELSE 0 END) AS employed, SUM(CASE WHEN cr.six_month_ceiling < 0 AND COALESCE(cr.manager_approved,0) = 0 THEN 1 ELSE 0 END) AS orange_cnt, SUM(CASE WHEN cr.six_month_ceiling >= 0 AND cr.ceiling_status NOT IN ('', 'حذف شود') AND COALESCE(cr.manager_approved,0) = 0 AND r.monthly_wage > CAST(cr.ceiling_status AS REAL) THEN 1 ELSE 0 END) AS yellow_cnt, SUM(CASE WHEN COALESCE(cr.manager_approved,0) = 1 THEN 1 ELSE 0 END) AS approved_cnt, SUM(CASE WHEN cr.ceiling_status NOT IN ('', 'حذف شود') AND COALESCE(cr.manager_approved,0) = 0 AND (cr.six_month_ceiling IS NULL OR cr.six_month_ceiling >= 0) AND r.monthly_wage <= CAST(cr.ceiling_status AS REAL) THEN 1 ELSE 0 END) AS ok_cnt FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id {where_month}", params_month).fetchone()
     buckets = [("۰ تا ۵۰ میلیون", 0, 50_000_000), ("۵۰ تا ۱۰۰ میلیون", 50_000_000, 100_000_000), ("۱۰۰ تا ۲۰۰ میلیون", 100_000_000, 200_000_000), ("۲۰۰ تا ۳۰۰ میلیون", 200_000_000, 300_000_000), ("۳۰۰ تا ۵۰۰ میلیون", 300_000_000, 500_000_000), ("بیش از ۵۰۰ میلیون", 500_000_000, 10**18)]
     wage_dist = []
     for label, lo, hi in buckets:
-        c = conn.execute(f"SELECT COUNT(*) c FROM records r WHERE r.monthly_wage >= ? AND r.monthly_wage < ? {'AND r.period_month = ?' if period else ''}", ([lo, hi] + ([period] if period else []))).fetchone()["c"]
+        c = conn.execute(f"SELECT COUNT(*) c FROM records r WHERE r.monthly_wage >= ? AND r.monthly_wage < ? {'AND r.period_month = ?' if period else ''}" + _ch_scope, ([lo, hi] + ([period] if period else []) + _ch_params)).fetchone()["c"]
         wage_dist.append({"label": label, "count": c})
     emp_rows = conn.execute(f"SELECT COALESCE(NULLIF(r.employment_status,''),'نامعلوم') AS s, COUNT(*) c FROM records r {where_month} GROUP BY s ORDER BY c DESC LIMIT 8", params_month).fetchall()
     employment_dist = [{"label": r["s"], "count": r["c"]} for r in emp_rows]
     dep_rows = conn.execute(f"SELECT COALESCE(NULLIF(r.deputy,''),'نامعلوم') AS d, COUNT(*) c, COALESCE(SUM(r.monthly_wage),0) s FROM records r {where_month} GROUP BY d ORDER BY s DESC LIMIT 10", params_month).fetchall()
     deputy_amounts = [{"deputy": r["d"], "count": r["c"], "amount": float(r["s"] or 0)} for r in dep_rows]
-    if period: place_rows = conn.execute("SELECT cnt, COUNT(*) c FROM (SELECT p.national_code, r.period_month, COUNT(DISTINCT r.cost_center) AS cnt FROM records r JOIN persons p ON p.id = r.person_id WHERE r.cost_center IS NOT NULL AND r.cost_center != '' AND r.period_month = ? GROUP BY p.national_code, r.period_month) GROUP BY cnt ORDER BY cnt LIMIT 6", (period,)).fetchall()
-    else: place_rows = conn.execute("SELECT cnt, COUNT(*) c FROM (SELECT p.national_code, r.period_month, COUNT(DISTINCT r.cost_center) AS cnt FROM records r JOIN persons p ON p.id = r.person_id WHERE r.cost_center IS NOT NULL AND r.cost_center != '' GROUP BY p.national_code, r.period_month) GROUP BY cnt ORDER BY cnt LIMIT 6").fetchall()
+    if period: place_rows = conn.execute("SELECT cnt, COUNT(*) c FROM (SELECT p.national_code, r.period_month, COUNT(DISTINCT r.cost_center) AS cnt FROM records r JOIN persons p ON p.id = r.person_id WHERE r.cost_center IS NOT NULL AND r.cost_center != '' AND r.period_month = ?" + _ch_scope + " GROUP BY p.national_code, r.period_month) GROUP BY cnt ORDER BY cnt LIMIT 6", [period] + _ch_params).fetchall()
+    else: place_rows = conn.execute("SELECT cnt, COUNT(*) c FROM (SELECT p.national_code, r.period_month, COUNT(DISTINCT r.cost_center) AS cnt FROM records r JOIN persons p ON p.id = r.person_id WHERE r.cost_center IS NOT NULL AND r.cost_center != ''" + _ch_scope + " GROUP BY p.national_code, r.period_month) GROUP BY cnt ORDER BY cnt LIMIT 6", _ch_params).fetchall()
     places_dist = [{"count": r["cnt"], "persons": r["c"]} for r in place_rows]
     conn.close()
     return jsonify({"period": period or "همه", "by_month": by_month, "warnings": {"employed": warn["employed"] or 0, "orange": warn["orange_cnt"] or 0, "yellow": warn["yellow_cnt"] or 0, "approved": warn["approved_cnt"] or 0, "ok": warn["ok_cnt"] or 0}, "wage_distribution": wage_dist, "employment_distribution": employment_dist, "deputy_amounts": deputy_amounts, "places_distribution": places_dist})
@@ -373,9 +435,11 @@ def api_period_options():
     return jsonify(sorted(options, key=lambda pm: (int(pm.split('-')[0]), PERSIAN_MONTHS.index(pm.split('-')[1]) if pm.split('-')[1] in PERSIAN_MONTHS else 99), reverse=True))
 
 @app.route("/api/person")
+@perms.perm_required('search_person')
 def api_person():
     nc = request.args.get("national_code", "").strip().zfill(10)
-    if not nc: return jsonify({"error": "کد ملی وارد نشده است."}), 400
+    if not nc:
+        return jsonify({"error": "کد ملی وارد نشده است."}), 400
     conn = get_connection(DB_PATH)
     person = conn.execute("SELECT * FROM persons WHERE national_code=?", (nc,)).fetchone()
     if not person:
@@ -384,14 +448,22 @@ def api_person():
     records = conn.execute("SELECT r.*, cr.ceiling_status FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id WHERE r.person_id = ? ORDER BY r.period_month DESC", (person["id"],)).fetchall()
     payments = conn.execute("SELECT period_month, amount, source FROM monthly_payments WHERE national_code = ? ORDER BY id", (nc,)).fetchall()
     conn.close()
-    return jsonify({"person": dict(person), "records": [dict(r) for r in records], "payments": [dict(r) for r in payments]})
+
+    rec_out = [dict(r) for r in records
+               if scope.can_see(r["deputy"] or "", r["cost_center"] or "")]
+    if not rec_out and scope.get_grants() is not None:
+        return jsonify({"error": "این فرد خارج از دامنهٔ دسترسی شماست."}), 403
+    return jsonify({"person": dict(person), "records": rec_out,
+                    "payments": [dict(r) for r in payments]})
 
 @app.route("/api/pricing-rules", methods=["GET"])
 def api_pricing_rules_list():
     conn = get_connection(DB_PATH)
     rows = conn.execute("SELECT * FROM pricing_rules WHERE valid_to IS NULL ORDER BY deputy, legal_article, category, job_title").fetchall()
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([dict(r) for r in rows
+                    if scope.can_see(r["deputy"] or "", r["cost_center_filter"] or "",
+                                     None, empty_center_is_any=True)])
 
 @app.route("/api/pricing-rules/<int:rule_id>", methods=["PUT"])
 @perms.perm_required('can_edit_pricing')
@@ -426,7 +498,8 @@ def api_manual_ceilings_list():
     q += " ORDER BY period_month DESC, center_name, supply_type"
     rows = conn.execute(q, p).fetchall()
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([dict(r) for r in rows
+                    if scope.can_see(_deputy_of_center(r["center_name"]), r["center_name"], r["supply_type"] or "")])
 
 @app.route("/api/manual-ceilings/save", methods=["POST"])
 @perms.perm_required('can_edit_ceilings')
@@ -453,6 +526,34 @@ def api_manual_ceilings_delete(row_id):
     conn.close()
     recalculate_all(DB_PATH)
     return jsonify({"ok": True})
+
+_DEPUTY_CACHE = {}
+
+
+def _deputy_of_center(center):
+    """معاونت یک مرکز را از ساختار مراکز می‌خواند (با کش)."""
+    if not center:
+        return ""
+    if center in _DEPUTY_CACHE:
+        return _DEPUTY_CACHE[center]
+    conn = None
+    try:
+        conn = get_connection(DB_PATH)
+        row = conn.execute(
+            "SELECT deputy FROM centers_structure WHERE center_name = ? LIMIT 1",
+            (center,),
+        ).fetchone()
+        value = (row["deputy"] or "") if row else ""
+    except Exception:
+        value = ""
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+    _DEPUTY_CACHE[center] = value
+    return value
+
 
 @app.route("/api/import", methods=["POST"])
 @perms.perm_required('can_upload')
@@ -604,7 +705,8 @@ def api_centers_for_deputies():
             params.append(period)
         sql += " ORDER BY deputy, cost_center"
         rows = conn.execute(sql, params).fetchall()
-        return jsonify([{"name": r["name"], "deputy": r["deputy"] or ""} for r in rows])
+        return jsonify([{"name": r["name"], "deputy": r["deputy"] or ""}
+                        for r in rows if scope.can_see(r["deputy"] or "", r["name"] or "")])
     finally:
         conn.close()
 
@@ -734,71 +836,34 @@ def _apply_scope_filters(deputy_raw, center_raw):
 
 
 def _build_report_scoped(deputy_raw, center_raw, supply_type, period):
-    """Build report honoring scope with OR-union semantics."""
-    scope = perms.current_scope()
-    center_scope = perms.current_center_scope()
+    """گزارش خروجی، محدود به دامنهٔ دسترسی کاربر.
 
-    if scope is None and center_scope is None:
+    ردیف‌ها «و» فیلتر انتخابی کاربر و «و» دامنهٔ مجاز است؛ اگر دامنه خالی باشد
+    هیچ ردیفی برنمی‌گردد. خلاصه هم فقط روی همان ردیف‌ها حساب می‌شود.
+    """
+    grants = scope.get_grants()
+
+    if grants is None:
         dep = deputy_raw if deputy_raw and deputy_raw != "همه" else "همه"
         cen = center_raw if center_raw and center_raw != "همه" else "همه"
         return build_report(DB_PATH, dep, cen, supply_type, period)
 
-    eff_deps, eff_cens = _apply_scope_filters(deputy_raw, center_raw)
-
-    if not eff_deps and not eff_cens:
+    if not grants:
         return {"summary": {}, "rows": []}
 
-    all_rows = []
-    all_summary = {}
+    def _allowed(deputy, center, supply):
+        deputy = (deputy or "").strip() or _deputy_of_center(center)
+        return scope.can_see(deputy, (center or "").strip(), (supply or "").strip())
 
-    # Phase 1: deputies
-    for d in eff_deps:
-        if d == "همه":
-            data = build_report(DB_PATH, "همه", "همه", supply_type, period)
-        else:
-            data = build_report(DB_PATH, d, "همه", supply_type, period)
-        all_rows.extend(data.get("rows", []))
-        for k, v in (data.get("summary") or {}).items():
-            if v is None:
-                if k not in all_summary:
-                    all_summary[k] = None
-            elif isinstance(v, (int, float)):
-                prev = all_summary.get(k, 0)
-                if prev is None:
-                    prev = 0
-                all_summary[k] = prev + v
-            elif k not in all_summary:
-                all_summary[k] = v
+    dep = deputy_raw if deputy_raw and deputy_raw != "همه" else "همه"
+    cen = center_raw if center_raw and center_raw != "همه" else "همه"
+    data = build_report(DB_PATH, dep, cen, supply_type, period, allowed=_allowed)
+    return {"summary": data.get("summary", {}), "rows": data.get("rows", [])}
 
-    # Phase 2: specific centers (union - regardless of deputy)
-    for c in eff_cens:
-        if c == "همه":
-            continue
-        data = build_report(DB_PATH, "همه", c, supply_type, period)
-        all_rows.extend(data.get("rows", []))
-        for k, v in (data.get("summary") or {}).items():
-            if v is None:
-                if k not in all_summary:
-                    all_summary[k] = None
-            elif isinstance(v, (int, float)):
-                prev = all_summary.get(k, 0)
-                if prev is None:
-                    prev = 0
-                all_summary[k] = prev + v
-            elif k not in all_summary:
-                all_summary[k] = v
 
-    # Dedupe by record_id
-    seen = set()
-    unique = []
-    for r in all_rows:
-        rid = r.get("record_id")
-        if rid is not None:
-            if rid in seen: continue
-            seen.add(rid)
-        unique.append(r)
-
-    return {"summary": all_summary, "rows": unique}
+def copy_summary(summary):
+    """کپی امن از خلاصهٔ گزارش."""
+    return dict(summary or {})
 
 
 @app.route("/api/report")
@@ -1185,15 +1250,30 @@ def api_report_export():
     buf.seek(0)
     return send_file(buf, as_attachment=True, download_name="گزارش-خروجی.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-@app.route("/api/payments", methods=["GET"])
+@app.route('/api/payments', methods=['GET'])
+@perms.perm_required('view_payments')
 def api_payments_list():
     period, nc = request.args.get("period"), request.args.get("national_code")
     conn = get_connection(DB_PATH)
-    if period: rows = conn.execute("SELECT mp.id, mp.national_code, mp.period_month, mp.amount, mp.source, p.first_name, p.last_name, GROUP_CONCAT(DISTINCT r.deputy) AS deputies, GROUP_CONCAT(DISTINCT r.cost_center) AS centers FROM monthly_payments mp LEFT JOIN persons p ON p.national_code = mp.national_code LEFT JOIN records r ON r.person_id = p.id AND r.period_month = mp.period_month WHERE mp.period_month = ? GROUP BY mp.id ORDER BY p.last_name", (period,)).fetchall()
-    elif nc: rows = conn.execute("SELECT * FROM monthly_payments WHERE national_code = ? ORDER BY id", (nc,)).fetchall()
-    else: rows = conn.execute("SELECT * FROM monthly_payments ORDER BY id LIMIT 500").fetchall()
+    clause, params = scope.scope_sql("rr.deputy", "rr.cost_center", "rr.contract_subject")
+    exists = ""
+    if clause:
+        exists = (" AND EXISTS (SELECT 1 FROM records rr JOIN persons pp ON pp.id = rr.person_id "
+                  "WHERE pp.national_code = monthly_payments.national_code"
+                  " AND rr.period_month = monthly_payments.period_month" + clause + ")")
+    if period:
+        rows = conn.execute("SELECT mp.id, mp.national_code, mp.period_month, mp.amount, mp.source, p.first_name, p.last_name, GROUP_CONCAT(DISTINCT r.deputy) AS deputies, GROUP_CONCAT(DISTINCT r.cost_center) AS centers FROM monthly_payments mp LEFT JOIN persons p ON p.national_code = mp.national_code LEFT JOIN records r ON r.person_id = p.id AND r.period_month = mp.period_month WHERE mp.period_month = ? GROUP BY mp.id ORDER BY p.last_name", (period,)).fetchall()
+        out = [dict(r) for r in rows if scope.get_grants() is None
+               or any(scope.can_see(d, c) for d in (r["deputies"] or "").split(",")
+                      for c in (r["centers"] or "").split(","))]
+    elif nc:
+        rows = conn.execute("SELECT * FROM monthly_payments WHERE national_code = ? ORDER BY id", (nc,)).fetchall()
+        out = [dict(r) for r in rows]
+    else:
+        rows = conn.execute("SELECT * FROM monthly_payments WHERE 1=1" + exists + " ORDER BY id LIMIT 500", params).fetchall()
+        out = [dict(r) for r in rows]
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(out)
 
 @app.route("/api/payments", methods=["POST"])
 @perms.perm_required('can_edit_payments')
@@ -1244,25 +1324,61 @@ def api_payments_confirm_month():
     return jsonify({"ok": True, "confirmed": confirmed, "skipped_manual": skipped})
 
 def _approval_scope_check(row):
-    """Fail-closed scope check for approval actions (deputy + cost_center)."""
-    uid = session.get('user_id')
+    """بررسی دامنهٔ دسترسی برای عملیات تأیید/رد — بسته به‌طور پیش‌فرض (fail-closed).
+
+    قاعده‌ها:
+      ۱) ادمین: همهٔ رکوردها مجاز.
+      ۲) کاربر بدون مجوز «تأیید رکوردها» (can_approve): رد.
+      ۳) دامنهٔ معاونت/مرکز:
+             None  → «همه» (مجاز)
+             لیست  → فقط همان موارد
+             []    → «هیچ»
+      ۴) رکورد وقتی مجاز است که «یا» معاونتش در دامنه باشد «یا» مرکزش
+         (اجتماع دامنه‌ها؛ مثلاً «کل معاونت برون مرزی» + «فقط شبکه فیلم»).
+      ۵) رکورد بدون معاونت و بدون مرکز، برای کاربر محدود قابل تأیید نیست.
+    """
+    uid = session.get("user_id")
     if not uid:
-        return False, 403, "unauthorized"
-    if session.get('role') == 'admin':
+        return False, 403, "نشست معتبر نیست؛ دوباره وارد شوید"
+
+    if session.get("role") == "admin":
         return True, 200, ""
-    if not perms_mod.has_perm(uid, 'can_approve'):
-        return False, 403, "forbidden: can_approve required"
-    dep_scope = perms_mod.get_deputy_scope(uid)
-    ctr_scope = perms_mod.get_center_scope(uid)
-    deputy = (str(row["deputy"]).strip() if row["deputy"] is not None else "")
-    center = (str(row["cost_center"]).strip() if row["cost_center"] is not None else "")
-    if not deputy or not center:
-        return False, 403, "forbidden: missing deputy/cost_center on record"
-    ok_dep = True if dep_scope is None else (deputy in [str(d).strip() for d in dep_scope] if dep_scope else False)
-    ok_ctr = True if ctr_scope is None else (center in [str(c).strip() for c in ctr_scope] if ctr_scope else False)
-    if not ok_dep or not ok_ctr:
-        return False, 403, "forbidden: record outside your approval scope"
+
+    if not perms.has_perm(uid, "can_approve"):
+        return False, 403, "مجوز «تأیید/رد رکوردها» را ندارید"
+
+    dep_scope = perms.get_deputy_scope(uid)
+    ctr_scope = perms.get_center_scope(uid)
+
+    # کاربری که دامنه‌اش «همهٔ معاونت‌ها» و «همهٔ مراکز» است
+    if dep_scope is None and ctr_scope is None:
+        return True, 200, ""
+
+    keys = row.keys() if hasattr(row, "keys") else []
+    deputy = ""
+    center = ""
+    if "deputy" in keys and row["deputy"] is not None:
+        deputy = str(row["deputy"]).strip()
+    if "cost_center" in keys and row["cost_center"] is not None:
+        center = str(row["cost_center"]).strip()
+
+    if not deputy and not center:
+        return False, 403, "این رکورد معاونت/مرکز مشخصی ندارد و قابل تأیید نیست"
+
+    dep_list = [str(d).strip() for d in (dep_scope or [])]
+    ctr_list = [str(c).strip() for c in (ctr_scope or [])]
+
+    ok_dep = bool(deputy) and (dep_scope is None or deputy in dep_list)
+    ok_ctr = bool(center) and (ctr_scope is None or center in ctr_list)
+
+    if not (ok_dep or ok_ctr):
+        return False, 403, (
+            "این رکورد خارج از دامنهٔ دسترسی شماست "
+            f"(معاونت: {deputy or '—'} | مرکز: {center or '—'})"
+        )
+
     return True, 200, ""
+
 
 @app.route("/api/bulk-approve", methods=["POST"])
 @perms.perm_required('can_approve')
@@ -1298,26 +1414,73 @@ def api_bulk_approve():
 @app.route("/api/bulk-unapprove", methods=["POST"])
 @perms.perm_required('can_approve')
 def api_bulk_unapprove():
+    """لغو تأیید گروهی — با همان بررسی دامنهٔ دسترسی و ثبت در لاگ."""
     data = request.get_json() or {}
     record_ids = data.get("record_ids") or []
-    if not record_ids: return jsonify({"error": "هیچ ردیفی انتخاب نشده"}), 400
+    if not record_ids:
+        return jsonify({"error": "هیچ ردیفی انتخاب نشده"}), 400
+
     conn = get_connection(DB_PATH)
-    unapproved_count = 0
-    for rid in record_ids:
-        try:
-            row = conn.execute("SELECT r.id, r.period_month, r.monthly_wage, p.national_code FROM records r JOIN persons p ON p.id = r.person_id WHERE r.id = ?", (rid,)).fetchone()
-            if not row: continue
-            _ok, _st, _msg = _approval_scope_check(row)
-            if not _ok: continue
-            conn.execute("UPDATE calculated_results SET manager_approved = 0 WHERE record_id = ?", (rid,))
-            conn.execute("DELETE FROM monthly_payments WHERE national_code = ? AND period_month = ? AND source = 'approved'", (row["national_code"], row["period_month"]))
-            unapproved_count += 1
-        except: pass
-    conn.commit()
-    conn.close()
-    try: recalculate_all(DB_PATH)
-    except: pass
-    return jsonify({"ok": True, "unapproved_count": unapproved_count})
+    unapproved_count, skipped = 0, []
+    try:
+        for rid in record_ids:
+            try:
+                row = conn.execute(
+                    "SELECT r.id, r.period_month, r.monthly_wage, p.national_code, "
+                    "r.deputy, r.cost_center "
+                    "FROM records r JOIN persons p ON p.id = r.person_id "
+                    "WHERE r.id = ?",
+                    (rid,),
+                ).fetchone()
+                if not row:
+                    skipped.append({"id": rid, "reason": "رکورد پیدا نشد"})
+                    continue
+
+                _ok, _st, _msg = _approval_scope_check(row)
+                if not _ok:
+                    skipped.append({"id": rid, "reason": _msg})
+                    continue
+
+                conn.execute(
+                    "UPDATE calculated_results SET manager_approved = 0 WHERE record_id = ?",
+                    (rid,),
+                )
+                conn.execute(
+                    "DELETE FROM monthly_payments "
+                    "WHERE national_code = ? AND period_month = ? AND source = 'approved'",
+                    (row["national_code"], row["period_month"]),
+                )
+                try:
+                    approval.log_approval(
+                        record_id=rid,
+                        user_id=session.get("user_id"),
+                        username=session.get("username", "?"),
+                        action="unapprove",
+                        deputy=row["deputy"] or "",
+                        cost_center=row["cost_center"] or "",
+                        period_month=row["period_month"],
+                        amount=float(row["monthly_wage"] or 0),
+                    )
+                except Exception:
+                    pass
+                unapproved_count += 1
+            except Exception as exc:
+                skipped.append({"id": rid, "reason": str(exc)})
+        conn.commit()
+    finally:
+        conn.close()
+
+    try:
+        recalculate_all(DB_PATH)
+    except Exception:
+        pass
+
+    return jsonify({
+        "ok": True,
+        "unapproved_count": unapproved_count,
+        "skipped": skipped[:20],
+    })
+
 
 @app.route("/api/toggle-approval", methods=["POST"])
 @perms.perm_required('can_approve')
@@ -1349,20 +1512,36 @@ def api_toggle_approval():
     recalculate_all(DB_PATH)
     return jsonify({"ok": True, "approved": approved})
 
+def _scoped_persons(conn, with_names=True):
+    """فقط افرادی که در دامنهٔ کاربر حداقل یک رکورد دارند."""
+    clause, params = scope.scope_sql("r.deputy", "r.cost_center", "r.contract_subject")
+    if not clause:
+        cols = "p.national_code, p.first_name, p.last_name" if with_names else "p.national_code"
+        order = " ORDER BY p.last_name, p.first_name" if with_names else ""
+        return conn.execute(f"SELECT DISTINCT {cols} FROM persons p{order}", []).fetchall()
+    cols = "p.national_code, p.first_name, p.last_name" if with_names else "p.national_code"
+    q = (f"SELECT DISTINCT {cols} FROM persons p JOIN records r ON r.person_id = p.id"
+         f" WHERE 1=1 {clause}" + (" ORDER BY p.last_name, p.first_name" if with_names else ""))
+    return conn.execute(q, params).fetchall()
+
 @app.route("/api/payment-grid", methods=["GET"])
+@perms.perm_required('view_payments')
 def api_payment_grid():
     year = request.args.get("year", "").strip() or None
     conn = get_connection(DB_PATH)
-    persons = conn.execute("SELECT national_code, first_name, last_name FROM persons ORDER BY last_name, first_name").fetchall()
+    persons = _scoped_persons(conn, with_names=True)
     if year: payments = conn.execute("SELECT national_code, period_month, amount FROM monthly_payments WHERE period_month LIKE ?", (f"{year}-%",)).fetchall()
     else: payments = conn.execute("SELECT national_code, period_month, amount FROM monthly_payments").fetchall()
+    conn.close()
+    allowed_nc = {p["national_code"] for p in persons}
     by_nc = {}
     for p in payments:
+        if p["national_code"] not in allowed_nc:
+            continue
         pm = p["period_month"] or ""
         m = pm.split("-", 1)[1] if "-" in pm else pm
         by_nc.setdefault(p["national_code"], {})[m] = p["amount"]
     result = [{"national_code": p["national_code"], "first_name": p["first_name"], "last_name": p["last_name"], "amounts": by_nc.get(p["national_code"], {})} for p in persons]
-    conn.close()
     return jsonify(result)
 
 @app.route("/api/payment-grid/save", methods=["POST"])
@@ -1374,6 +1553,12 @@ def api_payment_grid_save():
     try: amount = float(amount or 0)
     except: return jsonify({"error": "مبلغ نامعتبر"}), 400
     conn = get_connection(DB_PATH)
+    if scope.is_restricted():
+        clause, params = scope.scope_sql("r.deputy", "r.cost_center", "r.contract_subject")
+        hit = conn.execute("SELECT 1 FROM records r JOIN persons p ON p.id = r.person_id WHERE p.national_code = ? " + clause + " LIMIT 1", [nc] + params).fetchone()
+        if not hit:
+            conn.close()
+            return jsonify({"error": "این فرد خارج از دامنهٔ دسترسی شماست."}), 403
     if amount <= 0: conn.execute("DELETE FROM monthly_payments WHERE national_code=? AND period_month=?", (nc, period))
     else: conn.execute("INSERT INTO monthly_payments (national_code, period_month, amount, source) VALUES (?, ?, ?, 'manual') ON CONFLICT(national_code, period_month) DO UPDATE SET amount = excluded.amount, source = 'manual'", (nc, period, amount))
     conn.commit()
@@ -1382,13 +1567,17 @@ def api_payment_grid_save():
     return jsonify({"ok": True})
 
 @app.route("/api/payment-grid/export")
+@perms.perm_required('export_excel')
 def api_payment_grid_export():
     conn = get_connection(DB_PATH)
-    persons = conn.execute("SELECT national_code, first_name, last_name FROM persons ORDER BY last_name, first_name").fetchall()
+    persons = _scoped_persons(conn, with_names=True)
     payments = conn.execute("SELECT national_code, period_month, amount FROM monthly_payments").fetchall()
     conn.close()
+    allowed_nc = {p["national_code"] for p in persons}
     by_nc = {}
-    for p in payments: by_nc.setdefault(p["national_code"], {})[p["period_month"]] = p["amount"]
+    for p in payments:
+        if p["national_code"] in allowed_nc:
+            by_nc.setdefault(p["national_code"], {})[p["period_month"]] = p["amount"]
     all_periods = set()
     for pm_map in by_nc.values(): all_periods.update(pm_map.keys())
     def sort_key(pm):
@@ -1439,7 +1628,8 @@ def api_specialists_list():
     query += " ORDER BY c.deputy, s.center_name, s.supply_type"
     rows = conn.execute(query, params).fetchall()
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([dict(r) for r in rows
+                    if scope.can_see(r["deputy"] or "", r["center_name"] or "", r["supply_type"] or "")])
 
 @app.route("/api/bulk-import/<category>", methods=["POST"])
 @perms.perm_required('can_edit_specialists')
@@ -1496,31 +1686,80 @@ def api_specialists_update(row_id):
 
 def _build_summary_rows(conn, period, deputy_filter, center_filter, supply_filter):
     from collections import defaultdict
-    q = "SELECT r.deputy, r.cost_center, COALESCE(SUM(r.skill_card_bonus), 0) AS skill_card_all, COALESCE(SUM(CASE WHEN r.legal_article NOT LIKE '%38%' AND r.legal_article NOT LIKE '%۳۸%' THEN r.skill_card_bonus ELSE 0 END), 0) AS skill_card_excl_38, COALESCE(SUM(r.monthly_wage), 0) AS wage_sum, COALESCE(SUM(r.non_continuous_bonus), 0) AS non_continuous_sum, COALESCE(SUM(r.employer_insurance), 0) AS employer_insurance_sum, COUNT(*) AS cnt FROM records r WHERE 1=1"
-    p = []
-    if period: q += " AND r.period_month = ?"; p.append(period)
-    if deputy_filter and deputy_filter != "همه": q += " AND r.deputy = ?"; p.append(deputy_filter)
-    if center_filter and center_filter != "همه": q += " AND r.cost_center = ?"; p.append(center_filter)
-    if supply_filter and supply_filter != "همه": q += " AND r.contract_subject LIKE ?"; p.append(f"%{supply_filter}%")
+
+    clause, sc_params = scope.scope_sql("r.deputy", "r.cost_center", "r.contract_subject")
+
+    q = ("SELECT r.deputy, r.cost_center, "
+         "COALESCE(SUM(r.skill_card_bonus), 0) AS skill_card_all, "
+         "COALESCE(SUM(CASE WHEN r.legal_article NOT LIKE '%38%' AND r.legal_article NOT LIKE '%۳۸%' "
+         "THEN r.skill_card_bonus ELSE 0 END), 0) AS skill_card_excl_38, "
+         "COALESCE(SUM(r.monthly_wage), 0) AS wage_sum, "
+         "COALESCE(SUM(r.non_continuous_bonus), 0) AS non_continuous_sum, "
+         "COALESCE(SUM(r.employer_insurance), 0) AS employer_insurance_sum, "
+         "COUNT(*) AS cnt FROM records r WHERE 1=1" + clause)
+    p = list(sc_params)
+    if period:
+        q += " AND r.period_month = ?"; p.append(period)
+    if deputy_filter and deputy_filter != "همه":
+        q += " AND r.deputy = ?"; p.append(deputy_filter)
+    if center_filter and center_filter != "همه":
+        q += " AND r.cost_center = ?"; p.append(center_filter)
+    if supply_filter and supply_filter != "همه":
+        q += " AND r.contract_subject LIKE ?"; p.append(f"%{supply_filter}%")
     q += " GROUP BY r.deputy, r.cost_center ORDER BY r.deputy, r.cost_center"
     rows = conn.execute(q, p).fetchall()
-    if period: se_rows = conn.execute("SELECT center_name, supply_type, specialists, equipment, bonus FROM specialists_equipment_bonus WHERE period_month = ?", (period,)).fetchall()
-    else: se_rows = conn.execute("SELECT center_name, supply_type, SUM(specialists) AS specialists, SUM(equipment) AS equipment, SUM(bonus) AS bonus FROM specialists_equipment_bonus GROUP BY center_name, supply_type").fetchall()
+
+    centers_ok = scope.visible_centers(conn)
+    se_sql, se_params = "", []
+    if centers_ok is not None:
+        if not centers_ok:
+            se_sql = " AND 1=0"
+        else:
+            se_sql = " AND center_name IN (" + ",".join("?" * len(centers_ok)) + ")"
+            se_params = sorted(centers_ok)
+
+    if period:
+        se_rows = conn.execute(
+            "SELECT center_name, supply_type, specialists, equipment, bonus "
+            "FROM specialists_equipment_bonus WHERE period_month = ?" + se_sql,
+            [period] + se_params,
+        ).fetchall()
+    else:
+        se_rows = conn.execute(
+            "SELECT center_name, supply_type, SUM(specialists) AS specialists, "
+            "SUM(equipment) AS equipment, SUM(bonus) AS bonus "
+            "FROM specialists_equipment_bonus WHERE 1=1" + se_sql +
+            " GROUP BY center_name, supply_type", se_params,
+        ).fetchall()
+
     se_map = defaultdict(lambda: {"specialists": 0.0, "equipment": 0.0, "bonus": 0.0})
     for r in se_rows:
         se_map[r["center_name"]]["specialists"] += float(r["specialists"] or 0)
         se_map[r["center_name"]]["equipment"] += float(r["equipment"] or 0)
         se_map[r["center_name"]]["bonus"] += float(r["bonus"] or 0)
+
     result = []
     for r in rows:
         deputy, center = r["deputy"] or "", r["cost_center"] or ""
         se = se_map.get(center, {"specialists": 0, "equipment": 0, "bonus": 0})
-        skill_all, skill_excl_38, wage_sum, non_cont_sum, emp_ins = float(r["skill_card_all"] or 0), float(r["skill_card_excl_38"] or 0), float(r["wage_sum"] or 0), float(r["non_continuous_sum"] or 0), float(r["employer_insurance_sum"] or 0)
+        skill_all = float(r["skill_card_all"] or 0)
+        skill_excl_38 = float(r["skill_card_excl_38"] or 0)
+        wage_sum = float(r["wage_sum"] or 0)
+        non_cont_sum = float(r["non_continuous_sum"] or 0)
+        emp_ins = float(r["employer_insurance_sum"] or 0)
         professional = (skill_all + skill_excl_38 * 0.23) * 1.04
-        allocation_base = (wage_sum + non_cont_sum + se["specialists"] + se["equipment"] + se["bonus"] + (emp_ins - skill_excl_38 * 0.23))
+        allocation_base = (wage_sum + non_cont_sum + se["specialists"] + se["equipment"]
+                           + se["bonus"] + (emp_ins - skill_excl_38 * 0.23))
         allocation = allocation_base * 1.04
-        total = professional + allocation
-        result.append({"deputy": deputy, "center": center, "count": r["cnt"], "skill_card_all": skill_all, "skill_card_excl_38": skill_excl_38, "wage_sum": wage_sum, "non_continuous_sum": non_cont_sum, "employer_insurance_sum": emp_ins, "specialists": se["specialists"], "equipment": se["equipment"], "bonus": se["bonus"], "professional": professional, "allocation": allocation, "total": total})
+        result.append({
+            "deputy": deputy, "center": center, "count": r["cnt"],
+            "skill_card_all": skill_all, "skill_card_excl_38": skill_excl_38,
+            "wage_sum": wage_sum, "non_continuous_sum": non_cont_sum,
+            "employer_insurance_sum": emp_ins,
+            "specialists": se["specialists"], "equipment": se["equipment"],
+            "bonus": se["bonus"], "professional": professional,
+            "allocation": allocation, "total": professional + allocation,
+        })
     return result
 
 @app.route("/api/summary-table")
@@ -1563,7 +1802,7 @@ def api_summary_table_export():
     return send_file(buf, as_attachment=True, download_name="خلاصه-تفکیکی.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 @app.route("/api/clear-month", methods=["POST"])
-@perms.perm_required('can_clear_month')
+@auth.admin_required
 def api_clear_month():
     data = request.get_json() or {}
     period = (data.get("period_month") or "").strip()
@@ -1617,9 +1856,13 @@ def api_approval_status_centers():
 @app.route("/api/approval-log")
 @auth.login_required
 def api_approval_log():
+    """تاریخچهٔ تاییدها، محدود به دامنهٔ دسترسی کاربر."""
     try: limit = int(request.args.get("limit", 100))
     except: limit = 100
-    return jsonify(approval.get_recent_approvals(max(1, min(limit, 500))))
+    rows = approval.get_recent_approvals(max(1, min(limit, 500)))
+    out = [r for r in rows
+           if scope.can_see(r.get("deputy") or "", r.get("cost_center") or "")]
+    return jsonify(out)
 
 @app.route("/command-center")
 @perms.perm_required('command_center')
@@ -1666,7 +1909,9 @@ def api_personnel_list():
     except: limit = 500
     try: offset = int(request.args.get("offset", 0))
     except: offset = 0
-    items, total = personnel.list_personnel(deputy, center, search, limit, offset)
+    sc_sql, sc_par = scope.scope_sql("deputy", "center", "supply_type")
+    items, total = personnel.list_personnel(deputy, center, search, limit, offset,
+                                            sc_sql, sc_par)
     return jsonify({"items": items, "total": total})
 
 @app.route("/api/personnel/enriched", methods=["GET"])
@@ -1678,7 +1923,10 @@ def api_personnel_enriched():
     except: limit = 1000
     try: offset = int(request.args.get("offset", 0))
     except: offset = 0
-    items, total = personnel.list_personnel_enriched(deputy, center, search, job_title, contract_type, limit, offset)
+    sc_sql, sc_par = scope.scope_sql("p.deputy", "p.center", "p.supply_type")
+    items, total = personnel.list_personnel_enriched(deputy, center, search, job_title,
+                                                     contract_type, limit, offset,
+                                                     sc_sql, sc_par)
     return jsonify({"items": items, "total": total})
 
 @app.route("/api/personnel/<int:pid>", methods=["GET"])
@@ -1983,6 +2231,7 @@ if __name__ == "__main__":
     _init_wal.close()
     auth.init_users_table()
     perms.init_permissions()
+    scope.ensure_schema()
     periods.init_periods_table()
     personnel.init_personnel_tables()
     personnel_templates.init_templates_table()

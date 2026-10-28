@@ -12,6 +12,12 @@ PERMISSIONS = {
     'tab_dashboard':        'مشاهدهٔ تب داشبورد',
     'tab_report':           'مشاهدهٔ تب گزارش خروجی',
     'tab_input':            'مشاهدهٔ تب اطلاعات ورودی',
+    'tab_personnel':        'مشاهدهٔ تب منابع انسانی',
+    'box_approval':         'مشاهدهٔ ستون و باکس «تأییدیه مدیر»',
+    'search_person':        'جست‌وجوی فرد با کد ملی',
+    'view_payments':        'مشاهدهٔ پرداختی‌های ماه',
+    'view_personnel':       'مشاهدهٔ پرسنل',
+    'export_excel':         'گرفتن خروجی اکسل',
     'dash_charts':          'نمودارهای داشبورد',
     'dash_summary':         'جدول خلاصه تفکیکی',
     'dash_approval':        'وضعیت تأیید معاونت/مرکز',
@@ -30,8 +36,11 @@ PERMISSIONS = {
 }
 
 PERMISSION_GROUPS = {
-    'دسترسی به تب‌ها': ['tab_dashboard', 'tab_report', 'tab_input', 'command_center'],
+    'دسترسی به تب‌ها': ['tab_dashboard', 'tab_report', 'tab_input', 'tab_personnel',
+                        'command_center'],
     'داخل داشبورد': ['dash_charts', 'dash_summary', 'dash_approval'],
+    'دیدن اطلاعات حساس': ['box_approval', 'search_person', 'view_payments',
+                          'view_personnel', 'export_excel'],
     'عملیات روی داده‌ها': ['can_approve', 'can_upload', 'can_edit_pricing',
                           'can_edit_ceilings', 'can_edit_specialists',
                           'can_edit_payments', 'can_clear_month'],
@@ -100,19 +109,36 @@ def has_perm(user_id, key):
 
 
 def get_deputy_scope(user_id):
-    """None = ??? ????????? | ???? = ??? ??? ????????? | [] = ???"""
-    perms, deputies, _ = get_perms(user_id)
-    if perms.get('scope_all_deputies', False):
+    """دامنهٔ معاونت‌ها بر اساس موتور جدید (web/scope.py).
+
+    None = همه | [] = هیچ | لیست = همان معاونت‌ها
+    """
+    from web import scope as _scope
+
+    grants = _scope.get_grants(user_id)
+    if grants is None:
         return None
-    return deputies if deputies else []
+    if not grants:
+        return []
+    if any(g["deputy"] == _scope.WILDCARD for g in grants):
+        return None
+    return sorted({g["deputy"] for g in grants})
 
 
 def get_center_scope(user_id):
-    """None = ??? ????? | ???? = ??? ??? ????? | [] = ???"""
-    perms, _, centers = get_perms(user_id)
-    if perms.get('scope_all_centers', False):
+    """دامنهٔ مراکز بر اساس موتور جدید (web/scope.py).
+
+    None = همه | [] = هیچ | لیست = همان مراکز
+    """
+    from web import scope as _scope
+
+    grants = _scope.get_grants(user_id)
+    if grants is None:
         return None
-    return centers if centers else []
+    if not grants:
+        return []
+    centers = _scope.visible_centers(None, user_id)
+    return sorted(centers) if centers is not None else None
 
 
 def current_perm(key):

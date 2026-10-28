@@ -128,10 +128,12 @@ def init_personnel_tables():
 # ============================================================
 # CRUD
 # ============================================================
-def list_personnel(deputy=None, center=None, search=None, limit=500, offset=0):
+def list_personnel(deputy=None, center=None, search=None, limit=500, offset=0,
+                   scope_clause="", scope_params=None):
     con = _conn()
-    q = "SELECT * FROM personnel WHERE 1=1"
-    p = []
+    scope_params = list(scope_params or [])
+    q = "SELECT * FROM personnel WHERE 1=1" + scope_clause
+    p = list(scope_params)
     if deputy and deputy != "همه":
         q += " AND deputy = ?"; p.append(deputy)
     if center and center != "همه":
@@ -143,14 +145,15 @@ def list_personnel(deputy=None, center=None, search=None, limit=500, offset=0):
     q += " ORDER BY last_name, first_name LIMIT ? OFFSET ?"
     p.extend([limit, offset])
     rows = con.execute(q, p).fetchall()
-    total = con.execute("SELECT COUNT(*) FROM personnel").fetchone()[0]
+    total = con.execute("SELECT COUNT(*) FROM personnel WHERE 1=1" + scope_clause,
+                        scope_params).fetchone()[0]
     con.close()
     return [dict(r) for r in rows], total
 
 
 def list_personnel_enriched(deputy=None, center=None, search=None,
                              job_title=None, contract_type=None,
-                             limit=1000, offset=0):
+                             limit=1000, offset=0, scope_clause="", scope_params=None):
     con = _conn()
     q = """
         SELECT p.*,
@@ -179,7 +182,8 @@ def list_personnel_enriched(deputy=None, center=None, search=None,
         FROM personnel p
         WHERE 1=1
     """
-    params = []
+    params = list(scope_params or [])
+    q += scope_clause
     if deputy and deputy != "همه":
         q += " AND p.deputy = ?"; params.append(deputy)
     if center and center != "همه":
@@ -196,7 +200,8 @@ def list_personnel_enriched(deputy=None, center=None, search=None,
     params.extend([limit, offset])
 
     rows = con.execute(q, params).fetchall()
-    total = con.execute("SELECT COUNT(*) FROM personnel").fetchone()[0]
+    total = con.execute("SELECT COUNT(*) FROM personnel p WHERE 1=1" + scope_clause,
+                        list(scope_params or [])).fetchone()[0]
     con.close()
     return [dict(r) for r in rows], total
 
