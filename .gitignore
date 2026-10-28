@@ -5,3 +5,12 @@ __pycache__/
 *.zip
 data/app.db
 data/app_backup.db
+# dev / local
+venv/
+.venv/
+.devdata/
+dist/
+dist_installer/
+build/
+*.key
+*.bak_*
