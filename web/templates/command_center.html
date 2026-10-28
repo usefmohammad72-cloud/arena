@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>اتاق فرمان لحظه‌ای — STM</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+ *{box-sizing:border-box;margin:0;padding:0}
+ :root{
+ --bg:#050a14;--card:rgba(13,23,40,.85);--border:#1a2a44;
+ --text:#e8eef7;--muted:#7688a1;--blue:#2f6fdb;--blue-b:#4f8ff7;
+ --gold:#d4b062;--gold-b:#e8c877;--success:#10b981;--danger:#ef4444;
+ --warn:#f59e0b;--teal:#22d3ee;
+ }
+ html,body{height:100%}
+ body{
+ font-family:Vazirmatn,Tahoma,sans-serif;color:var(--text);
+ background:
+ radial-gradient(1200px 700px at 90% -10%, rgba(47,111,219,.16), transparent 60%),
+ radial-gradient(900px 500px at 10% 110%, rgba(212,176,98,.08), transparent 60%),
+ var(--bg);
+ background-attachment:fixed;
+ min-height:100vh;overflow-x:hidden;
+ }
+ body::before{
+ content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+ background:
+ radial-gradient(400px 400px at 20% 30%, rgba(34,211,238,.04), transparent 70%),
+ radial-gradient(500px 500px at 80% 70%, rgba(212,176,98,.03), transparent 70%);
+ animation:driftBg 22s ease-in-out infinite alternate;
+ }
+ @keyframes driftBg{
+ 0%{transform:translate(0,0) scale(1)}
+ 100%{transform:translate(40px,-30px) scale(1.15)}
+ }
+
+ .wrap{position:relative;z-index:1;padding:18px 22px 40px;max-width:1920px;margin:0 auto}
+
+ /* ---------- Header ---------- */
+ .cc-head{
+ display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+ padding:16px 20px;border-radius:16px;
+ background:linear-gradient(120deg,rgba(13,23,40,.9),rgba(18,32,54,.85));
+ border:1px solid var(--border);backdrop-filter:blur(10px);
+ box-shadow:0 20px 50px -30px rgba(0,0,0,1);
+ margin-bottom:18px;position:relative;overflow:hidden;
+ }
+ .cc-head::before{
+ content:"";position:absolute;top:0;left:0;right:0;height:2px;
+ background:linear-gradient(90deg,transparent,#2f6fdb 20%,#d4b062 50%,#2f6fdb 80%,transparent);
+ opacity:.85;
+ }
+ .cc-head h1{font-size:19px;font-weight:800;letter-spacing:-.2px;display:flex;align-items:center;gap:10px}
+ .pulse-dot{
+ width:12px;height:12px;border-radius:50%;background:var(--success);
+ box-shadow:0 0 10px rgba(16,185,129,.9);
+ position:relative;flex:none;
+ }
+ .pulse-dot::after{
+ content:"";position:absolute;inset:-4px;border-radius:50%;
+ border:2px solid rgba(16,185,129,.5);
+ animation:pulseRing 1.6s ease-out infinite;
+ }
+ @keyframes pulseRing{
+ 0%{transform:scale(.6);opacity:1}
+ 100%{transform:scale(2);opacity:0}
+ }
+ .cc-head .time{margin-inline-start:auto;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;direction:ltr}
+ .hbtn{
+ padding:9px 15px;border-radius:10px;border:1px solid var(--border);
+ background:rgba(255,255,255,.04);color:#b6c3d8;
+ font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+ text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+ transition:.2s;white-space:nowrap;
+ }
+ .hbtn:hover{background:rgba(47,111,219,.12);border-color:var(--blue);color:#fff;transform:translateY(-1px)}
+ .hbtn.on{background:linear-gradient(135deg,#2f6fdb,#1a4ea8);border-color:var(--blue-b);color:#fff}
+ .hbtn.gold{background:linear-gradient(135deg,#d4b062,#a8863d);border-color:transparent;color:#050a14}
+ .hbtn.gold:hover{background:linear-gradient(135deg,#e8c877,#d4b062)}
+
+ /* ---------- Deadline bar ---------- */
+ #deadline-bar{
+ display:none;margin-bottom:14px;padding:14px 20px;border-radius:14px;
+ background:linear-gradient(135deg,rgba(13,23,40,.96),rgba(18,32,54,.9));
+ border:1px solid var(--border);align-items:center;gap:14px;
+ position:relative;overflow:hidden;
+ }
+ #deadline-bar #db-icon{font-size:22px}
+ #deadline-bar .db-body{flex:1}
+ #deadline-bar #db-title{font-size:13.5px;font-weight:800;margin-bottom:3px}
+ #deadline-bar #db-sub{font-size:11.5px;color:#7688a1}
+ #deadline-bar #db-days{
+ font-size:26px;font-weight:900;direction:ltr;
+ font-variant-numeric:tabular-nums;color:#fff;
+ }
+
+ /* ---------- KPI grid ---------- */
+ .kpi-grid{
+ display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px;
+ }
+ @media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+ @media (max-width:700px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+ .kpi{
+ padding:18px 20px;border-radius:14px;
+ background:var(--card);border:1px solid var(--border);
+ backdrop-filter:blur(8px);position:relative;overflow:hidden;
+ box-shadow:0 10px 30px -22px rgba(0,0,0,1),inset 0 1px 0 rgba(255,255,255,.02);
+ transition:.35s cubic-bezier(.2,.8,.2,1);
+ }
+ .kpi::after{
+ content:"";position:absolute;top:0;right:0;width:3px;height:100%;
+ background:linear-gradient(180deg,var(--gold),var(--blue));
+ opacity:.5;
+ }
+ .kpi:hover{transform:translateY(-4px);box-shadow:0 24px 50px -25px rgba(47,111,219,.4);border-color:var(--blue)}
+ .kpi .lbl{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.3px;margin-bottom:8px}
+ .kpi .val{
+ font-size:26px;font-weight:900;line-height:1.15;direction:ltr;
+ text-align:right;font-variant-numeric:tabular-nums;color:#fff;
+ text-shadow:0 2px 8px rgba(47,111,219,.25);
+ }
+ .kpi.blue .val{color:#7cb0ff}
+ .kpi.gold .val{color:var(--gold-b)}
+ .kpi.green .val{color:#4ade80}
+ .kpi.red .val{color:#fca5a5}
+ .kpi.warn .val{color:#fbbf24}
+ .kpi.teal .val{color:#67e8f9}
+ .kpi.flash{animation:kpiFlash 1.2s ease-out}
+ @keyframes kpiFlash{
+ 0%{box-shadow:0 0 0 0 rgba(47,111,219,.9)}
+ 100%{box-shadow:0 0 0 18px rgba(47,111,219,0)}
+ }
+
+ /* ---------- Layout rows ---------- */
+ .row2{display:grid;gap:14px;margin-bottom:18px}
+ .row-main{grid-template-columns:1.15fr 1fr}
+ .row-sub{grid-template-columns:1.4fr 1fr}
+ @media (max-width:1100px){.row-main,.row-sub{grid-template-columns:1fr}}
+
+ /* ---------- Panel ---------- */
+ .panel{
+ background:var(--card);border-radius:14px;border:1px solid var(--border);
+ backdrop-filter:blur(8px);padding:18px 20px;position:relative;overflow:hidden;
+ box-shadow:0 10px 30px -22px rgba(0,0,0,1),inset 0 1px 0 rgba(255,255,255,.02);
+ }
+ .panel h3{
+ font-size:13.5px;font-weight:800;margin-bottom:14px;
+ padding-bottom:10px;border-bottom:1px solid var(--border);
+ display:flex;align-items:center;gap:9px;color:#fff;
+ }
+ .panel h3::before{
+ content:"";width:4px;height:15px;border-radius:2px;
+ background:linear-gradient(180deg,var(--gold),var(--blue));
+ box-shadow:0 2px 8px rgba(212,176,98,.4);
+ }
+ .panel h3 .badge{
+ margin-inline-start:auto;font-size:11px;font-weight:700;
+ padding:3px 10px;border-radius:20px;
+ background:rgba(47,111,219,.15);color:#7cb0ff;border:1px solid rgba(47,111,219,.3);
+ }
+
+ /* ---------- Live Feed ---------- */
+ .feed{max-height:360px;overflow-y:auto;padding-left:6px}
+ .feed::-webkit-scrollbar{width:5px}
+ .feed::-webkit-scrollbar-thumb{background:#1a2a44;border-radius:4px}
+ .feed-item{
+ display:flex;gap:10px;padding:10px 12px;border-radius:10px;
+ margin-bottom:6px;background:rgba(11,21,38,.6);
+ border:1px solid #12203a;
+ font-size:12.5px;align-items:flex-start;
+ }
+ .feed-item.new{
+ animation:feedIn .7s cubic-bezier(.2,.8,.2,1);
+ background:linear-gradient(90deg,rgba(47,111,219,.15),rgba(11,21,38,.6));
+ border-color:rgba(47,111,219,.5);
+ }
+ @keyframes feedIn{
+ 0%{transform:translateX(-30px);opacity:0;background:rgba(212,176,98,.3)}
+ 60%{transform:translateX(0);opacity:1}
+ 100%{background:rgba(11,21,38,.6)}
+ }
+ .feed-item .ico{font-size:15px;flex:none;line-height:1.4}
+ .feed-item .body{flex:1;min-width:0}
+ .feed-item .who{color:var(--gold-b);font-weight:700}
+ .feed-item .act{color:#b6c3d8;margin-inline-start:5px}
+ .feed-item .meta{font-size:11px;color:var(--muted);margin-top:3px}
+ .feed-item .t{font-size:10.5px;color:#5c719a;direction:ltr;font-variant-numeric:tabular-nums;flex:none}
+ .feed-item.kind-approve{border-right:3px solid var(--success)}
+ .feed-item.kind-unapprove{border-right:3px solid var(--danger)}
+ .feed-item.kind-audit{border-right:3px solid var(--blue)}
+ .feed-empty{text-align:center;padding:32px;color:var(--muted);font-size:12px}
+
+ /* ---------- Heatmap ---------- */
+ .heat-grid{
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+ gap:8px;
+ }
+ .heat-tile{
+ padding:12px 10px;border-radius:11px;
+ background:rgba(11,21,38,.7);border:1px solid #12203a;
+ text-align:center;transition:.3s cubic-bezier(.2,.8,.2,1);
+ }
+ .heat-tile:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 12px 26px -12px rgba(47,111,219,.5)}
+ .heat-tile .name{font-size:11.5px;font-weight:700;color:#d0daea;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .heat-tile .pct{font-size:22px;font-weight:900;line-height:1;direction:ltr;font-variant-numeric:tabular-nums}
+ .heat-tile .meta{font-size:10px;color:var(--muted);margin-top:5px}
+ .heat-tile.lvl-great{background:linear-gradient(135deg,rgba(16,185,129,.22),rgba(16,185,129,.06));border-color:rgba(16,185,129,.5)}
+ .heat-tile.lvl-great .pct{color:#6ee7b7}
+ .heat-tile.lvl-good{background:linear-gradient(135deg,rgba(34,211,238,.2),rgba(34,211,238,.05));border-color:rgba(34,211,238,.4)}
+ .heat-tile.lvl-good .pct{color:#67e8f9}
+ .heat-tile.lvl-mid{background:linear-gradient(135deg,rgba(245,158,11,.22),rgba(245,158,11,.06));border-color:rgba(245,158,11,.5)}
+ .heat-tile.lvl-mid .pct{color:#fbbf24}
+ .heat-tile.lvl-low{background:linear-gradient(135deg,rgba(239,68,68,.24),rgba(239,68,68,.06));border-color:rgba(239,68,68,.5)}
+ .heat-tile.lvl-low .pct{color:#fca5a5}
+ .heat-tile.lvl-none{background:linear-gradient(135deg,rgba(120,120,120,.16),rgba(120,120,120,.04));border-color:rgba(120,120,120,.35)}
+ .heat-tile.lvl-none .pct{color:#94a3b8}
+
+ /* ---------- Online users ---------- */
+ .online-list{display:flex;flex-direction:column;gap:6px;max-height:130px;overflow-y:auto}
+ .online-item{
+ display:flex;align-items:center;gap:9px;
+ padding:8px 11px;border-radius:9px;
+ background:rgba(11,21,38,.6);border:1px solid #12203a;
+ font-size:12.5px;
+ }
+ .online-item .dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(16,185,129,.9);flex:none}
+ .online-item .nm{font-weight:700;color:#d0daea}
+ .online-item .u{font-size:11px;color:var(--muted);direction:ltr;margin-inline-start:auto}
+
+ /* ---------- Alerts ---------- */
+ .alerts{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto}
+ .alert-item{
+ padding:11px 14px;border-radius:10px;font-size:12.5px;font-weight:600;
+ display:flex;gap:10px;align-items:flex-start;
+ border:1px solid transparent;
+ }
+ .alert-item .ico{font-size:15px;flex:none}
+ .alert-item.lvl-danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.35);color:#fca5a5}
+ .alert-item.lvl-warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35);color:#fbbf24}
+ .alert-item.lvl-ok{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.35);color:#6ee7b7}
+ .alert-empty{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+
+ /* ---------- Trend chart ---------- */
+ .trend{display:flex;align-items:flex-end;gap:5px;height:130px;padding:8px 0}
+ .trend-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}
+ .trend-bar{
+ width:100%;max-width:32px;border-radius:6px 6px 3px 3px;
+ background:linear-gradient(180deg,#4f8ff7,#1a4ea8);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 8px rgba(47,111,219,.4);
+ transition:height .5s cubic-bezier(.2,.8,.2,1);
+ min-height:4px;
+ }
+ .trend-col .d{font-size:9.5px;color:#5c719a;direction:ltr;font-variant-numeric:tabular-nums}
+ .trend-col .v{font-size:10px;color:var(--blue-b);font-weight:700;direction:ltr}
+
+ /* ---------- Toasts ---------- */
+ #toasts{position:fixed;top:20px;left:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:360px}
+ .toast{
+ padding:14px 18px;border-radius:12px;
+ background:linear-gradient(135deg,rgba(13,23,40,.98),rgba(18,32,54,.95));
+ border:1px solid var(--blue);color:#fff;
+ box-shadow:0 20px 50px -15px rgba(0,0,0,.8),0 0 0 1px rgba(47,111,219,.3);
+ backdrop-filter:blur(10px);
+ animation:toastIn .5s cubic-bezier(.2,.8,.2,1);
+ position:relative;overflow:hidden;
+ }
+ .toast::before{
+ content:"";position:absolute;top:0;right:0;width:4px;height:100%;
+ background:linear-gradient(180deg,var(--gold),var(--blue));
+ }
+ .toast.ok{border-color:var(--success)}
+ .toast.ok::before{background:linear-gradient(180deg,#6ee7b7,#10b981)}
+ .toast.warn{border-color:var(--warn)}
+ .toast.warn::before{background:linear-gradient(180deg,#fbbf24,#f59e0b)}
+ .toast.err{border-color:var(--danger)}
+ .toast.err::before{background:linear-gradient(180deg,#fca5a5,#ef4444)}
+ .toast .tit{font-size:13px;font-weight:800;margin-bottom:3px}
+ .toast .msg{font-size:12px;color:#b6c3d8;line-height:1.55}
+ .toast.out{animation:toastOut .4s ease forwards}
+ @keyframes toastIn{from{transform:translateX(-30px);opacity:0}to{transform:translateX(0);opacity:1}}
+ @keyframes toastOut{to{transform:translateX(-30px);opacity:0;height:0;padding:0;margin:0}}
+
+ /* ---------- Wall mode ---------- */
+ body.wall .hbtn:not(.wall-keep){display:none}
+ body.wall .cc-head{padding:12px 18px}
+ body.wall .cc-head h1{font-size:22px}
+ body.wall .kpi .val{font-size:34px}
+ body.wall .kpi .lbl{font-size:13px}
+ body.wall .feed{max-height:640px}
+ body.wall .heat-tile .pct{font-size:28px}
+ body.wall .heat-tile{padding:16px 12px}
+ body.wall .panel h3{font-size:15px}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+<div class="wrap">
+
+ <!-- نوار مهلت ماهانه -->
+ <div id="deadline-bar">
+ <span id="db-icon"></span>
+ <div class="db-body">
+ <div id="db-title">—</div>
+ <div id="db-sub">—</div>
+ </div>
+ <div id="db-days">—</div>
+ <div style="font-size:11px;color:#7688a1">روز مانده</div>
+ <a href="/analytics" class="hbtn" style="margin-inline-start:10px">مشاهدهٔ جزئیات</a>
+ </div>
+
+ <!-- هدر -->
+ <div class="cc-head">
+ <span class="pulse-dot"></span>
+ <h1> اتاق فرمان لحظه‌ای</h1>
+ <span class="time" id="clock">—</span>
+ <button class="hbtn wall-keep" id="btn-sound" onclick="toggleSound()"> صدا روشن</button>
+ <button class="hbtn wall-keep" id="btn-refresh" onclick="toggleRefresh()">⏸ توقف</button>
+ <button class="hbtn wall-keep" onclick="toggleWall()" id="btn-wall"> حالت دیوار</button>
+ <a href="/analytics" class="hbtn gold"> اتاق تحلیل</a>
+ <a href="/" class="hbtn"> داشبورد</a>
+ </div>
+
+ <!-- KPI -->
+ <div class="kpi-grid" id="kpi-grid"></div>
+
+ <!-- ردیف اصلی: فید + heatmap -->
+ <div class="row2 row-main">
+ <div class="panel">
+ <h3> جریان فعالیت‌های زنده <span class="badge" id="feed-badge">—</span></h3>
+ <div class="feed" id="feed"></div>
+ </div>
+
+ <div class="panel">
+ <h3> نقشهٔ حرارتی معاونت‌ها <span class="badge" id="heat-badge">—</span></h3>
+ <div class="heat-grid" id="heat"></div>
+
+ <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--border)">
+ <div style="font-size:12.5px;font-weight:800;color:#d0daea;margin-bottom:10px">
+ کاربران آنلاین <span style="color:var(--muted);font-weight:600" id="online-badge">—</span>
+ </div>
+ <div class="online-list" id="online"></div>
+ </div>
+ </div>
+ </div>
+
+ <!-- ردیف دوم: روند + هشدارها -->
+ <div class="row2 row-sub">
+ <div class="panel">
+ <h3> روند تأییدهای ۱۴ روز اخیر <span class="badge" id="trend-badge">—</span></h3>
+ <div class="trend" id="trend"></div>
+ </div>
+
+ <div class="panel">
+ <h3> هشدارهای هوشمند <span class="badge" id="alert-badge">—</span></h3>
+ <div class="alerts" id="alerts"></div>
+ </div>
+ </div>
+
+</div>
+
+<script>
+var SOUND_KEY = 'stm_cc_sound';
+var REFRESH_KEY = 'stm_cc_refresh';
+var lastFeedId = 0;
+var refreshTimer = null;
+var lastKpi = {};
+var firstLoad = true;
+
+function num(n){
+ if (n === null || n === undefined) return '0';
+ return Number(n).toLocaleString('fa-IR');
+}
+function moneyShort(n){
+ n = Number(n) || 0;
+ if (n >= 1e12) return (n/1e12).toFixed(2) + ' همت';
+ if (n >= 1e9) return (n/1e9).toFixed(2) + ' م.ت';
+ if (n >= 1e6) return (n/1e6).toFixed(1) + ' م.ر';
+ return num(Math.round(n));
+}
+function esc(s){
+ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+ });
+}
+
+function setClock(){
+ var d = new Date();
+ var p = function(x){return String(x).padStart(2,'0');};
+ var el = document.getElementById('clock');
+ if (el) el.textContent = p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
+setInterval(setClock, 1000); setClock();
+
+function playDing(kind){
+ if (localStorage.getItem(SOUND_KEY) === 'off') return;
+ try {
+ var ctx = new (window.AudioContext || window.webkitAudioContext)();
+ var o = ctx.createOscillator();
+ var g = ctx.createGain();
+ o.connect(g); g.connect(ctx.destination);
+ o.type = 'sine';
+ if (kind === 'danger'){
+ o.frequency.setValueAtTime(880, ctx.currentTime);
+ o.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.25);
+ } else {
+ o.frequency.setValueAtTime(660, ctx.currentTime);
+ o.frequency.exponentialRampToValueAtTime(990, ctx.currentTime + 0.15);
+ }
+ g.gain.setValueAtTime(0.12, ctx.currentTime);
+ g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+ o.start(); o.stop(ctx.currentTime + 0.35);
+ } catch(e){}
+}
+
+function showToast(title, msg, kind){
+ var t = document.createElement('div');
+ t.className = 'toast ' + (kind || 'ok');
+ t.innerHTML = '<div class="tit">' + esc(title) + '</div><div class="msg">' + esc(msg) + '</div>';
+ document.getElementById('toasts').appendChild(t);
+ setTimeout(function(){
+ t.classList.add('out');
+ setTimeout(function(){t.remove();}, 450);
+ }, 6500);
+}
+
+function toggleSound(){
+ var cur = localStorage.getItem(SOUND_KEY) === 'off';
+ localStorage.setItem(SOUND_KEY, cur ? 'on' : 'off');
+ var b = document.getElementById('btn-sound');
+ b.textContent = cur ? ' صدا روشن' : ' صدا خاموش';
+ b.classList.toggle('on', cur);
+}
+function toggleRefresh(){
+ var isOff = localStorage.getItem(REFRESH_KEY) === 'off';
+ if (isOff){
+ startAutoRefresh();
+ localStorage.setItem(REFRESH_KEY,'on');
+ } else {
+ stopAutoRefresh();
+ localStorage.setItem(REFRESH_KEY,'off');
+ }
+ var b = document.getElementById('btn-refresh');
+ b.textContent = isOff ? '⏸ توقف' : '▶ ادامه';
+ b.classList.toggle('on', !isOff);
+}
+function startAutoRefresh(){
+ if (refreshTimer) clearInterval(refreshTimer);
+ refreshTimer = setInterval(refresh, 5000);
+}
+function stopAutoRefresh(){
+ if (refreshTimer){ clearInterval(refreshTimer); refreshTimer = null; }
+}
+function toggleWall(){
+ document.body.classList.toggle('wall');
+ var on = document.body.classList.contains('wall');
+ if (on && document.documentElement.requestFullscreen){
+ try { document.documentElement.requestFullscreen(); } catch(e){}
+ } else if (!on && document.exitFullscreen){
+ try { document.exitFullscreen(); } catch(e){}
+ }
+}
+
+function renderKpi(kpi){
+ var defs = [
+ {key:'total_records', lbl:'کل رکوردها', cls:'blue', fmt:num},
+ {key:'total_approved', lbl:'تأییدشده', cls:'green', fmt:num},
+ {key:'total_pending', lbl:'در انتظار', cls:'warn', fmt:num},
+ {key:'approved_amount', lbl:'مبلغ تأیید', cls:'gold', fmt:moneyShort},
+ {key:'pending_amount', lbl:'مبلغ در انتظار',cls:'red', fmt:moneyShort},
+ {key:'online_users', lbl:'کاربران آنلاین',cls:'teal', fmt:num},
+ ];
+ var html = defs.map(function(d){
+ var v = kpi[d.key];
+ var display = d.fmt(v);
+ var flash = (lastKpi[d.key] !== undefined && lastKpi[d.key] !== v) ? ' flash' : '';
+ return '<div class="kpi ' + d.cls + flash + '">' +
+ '<div class="lbl">' + d.lbl + '</div>' +
+ '<div class="val">' + display + '</div>' +
+ '</div>';
+ }).join('');
+ document.getElementById('kpi-grid').innerHTML = html;
+ for (var k in kpi) lastKpi[k] = kpi[k];
+}
+
+function renderHeat(rows){
+ var el = document.getElementById('heat');
+ document.getElementById('heat-badge').textContent = rows.length + ' معاونت';
+ if (!rows.length){
+ el.innerHTML = '<div class="feed-empty">داده‌ای نیست</div>';
+ return;
+ }
+ el.innerHTML = rows.map(function(r){
+ var lvl = 'lvl-none';
+ if (r.pct >= 95) lvl = 'lvl-great';
+ else if (r.pct >= 70) lvl = 'lvl-good';
+ else if (r.pct >= 30) lvl = 'lvl-mid';
+ else if (r.total > 0) lvl = 'lvl-low';
+ return '<div class="heat-tile ' + lvl + '">' +
+ '<div class="name" title="' + esc(r.deputy) + '">' + esc(r.deputy) + '</div>' +
+ '<div class="pct">' + r.pct + '٪</div>' +
+ '<div class="meta">' + num(r.approved) + ' از ' + num(r.total) + '</div>' +
+ '</div>';
+ }).join('');
+}
+
+function renderOnline(list){
+ var el = document.getElementById('online');
+ document.getElementById('online-badge').textContent = '(' + list.length + ')';
+ if (!list.length){
+ el.innerHTML = '<div class="feed-empty">هیچ‌کس آنلاین نیست</div>';
+ return;
+ }
+ el.innerHTML = list.map(function(u){
+ return '<div class="online-item">' +
+ '<span class="dot"></span>' +
+ '<span class="nm">' + esc(u.full_name || u.username) + '</span>' +
+ '<span class="u">' + esc(u.username) + '</span>' +
+ '</div>';
+ }).join('');
+}
+
+function feedIcon(kind, action){
+ if (kind === 'approval'){
+ if (action === 'approve') return '';
+ if (action === 'unapprove') return '';
+ return '';
+ }
+ if (action && action.indexOf('حذف') >= 0) return '';
+ if (action && action.indexOf('ایمپورت') >= 0) return '';
+ return '';
+}
+
+function renderFeed(rows){
+ var el = document.getElementById('feed');
+ document.getElementById('feed-badge').textContent = rows.length + ' رویداد';
+ if (!rows.length){
+ el.innerHTML = '<div class="feed-empty">هیچ رویدادی ثبت نشده</div>';
+ return;
+ }
+ var maxId = lastFeedId;
+ el.innerHTML = rows.map(function(r){
+ var id = (r.kind === 'approval' ? 'a' : 'u') + r.id;
+ var isNew = firstLoad ? false : (r.id > lastFeedId);
+ if (r.id > maxId) maxId = r.id;
+ var cls = 'feed-item';
+ if (r.kind === 'approval'){
+ if (r.action === 'approve') cls += ' kind-approve';
+ else if (r.action === 'unapprove') cls += ' kind-unapprove';
+ } else {
+ cls += ' kind-audit';
+ }
+ if (isNew) cls += ' new';
+
+ var meta = '';
+ if (r.kind === 'approval'){
+ var parts = [];
+ if (r.deputy) parts.push(r.deputy);
+ if (r.cost_center) parts.push(r.cost_center);
+ if (r.period_month) parts.push(r.period_month);
+ if (r.amount) parts.push(moneyShort(r.amount) + ' ریال');
+ meta = parts.join(' • ');
+ } else {
+ meta = r.details || '';
+ }
+ var act = '';
+ if (r.kind === 'approval'){
+ act = r.action === 'approve' ? 'تأیید کرد' : (r.action === 'unapprove' ? 'رد کرد' : r.action);
+ } else {
+ act = r.action || '';
+ }
+ return '<div class="' + cls + '" data-id="' + id + '">' +
+ '<span class="ico">' + feedIcon(r.kind, r.action) + '</span>' +
+ '<div class="body">' +
+ '<div><span class="who">' + esc(r.username) + '</span> <span class="act">' + esc(act) + '</span></div>' +
+ (meta ? '<div class="meta">' + esc(meta) + '</div>' : '') +
+ '</div>' +
+ '<span class="t">' + esc((r.created_at || '').split(' ')[1] || '') + '</span>' +
+ '</div>';
+ }).join('');
+
+ if (!firstLoad && maxId > lastFeedId){
+ var newest = rows.filter(function(r){ return r.id > lastFeedId; });
+ if (newest.length){
+ var first = newest[0];
+ var title = first.kind === 'approval'
+ ? (first.action === 'approve' ? ' تأیید جدید' : ' رد جدید')
+ : ' عملیات جدید';
+ var body = first.username + ' — ' + (first.deputy || first.details || '');
+ showToast(title, body, first.action === 'unapprove' ? 'warn' : 'ok');
+ playDing(first.action === 'unapprove' ? 'danger' : 'ok');
+ }
+ }
+ lastFeedId = maxId;
+}
+
+function renderAlerts(rows){
+ var el = document.getElementById('alerts');
+ var bad = rows.filter(function(a){ return a.level !== 'ok'; }).length;
+ document.getElementById('alert-badge').textContent = bad ? bad + ' هشدار' : 'همه‌چیز خوب';
+ if (!rows.length){
+ el.innerHTML = '<div class="alert-empty">هیچ هشداری نیست </div>';
+ return;
+ }
+ el.innerHTML = rows.map(function(a){
+ return '<div class="alert-item lvl-' + a.level + '">' +
+ '<span class="ico">' + a.icon + '</span>' +
+ '<span>' + esc(a.text) + '</span>' +
+ '</div>';
+ }).join('');
+}
+
+function renderTrend(rows){
+ var el = document.getElementById('trend');
+ var maxV = Math.max.apply(null, rows.map(function(x){return x.count;}).concat([1]));
+ var total = rows.reduce(function(s,r){return s+r.count;},0);
+ document.getElementById('trend-badge').textContent = num(total) + ' تأیید در ۱۴ روز';
+ el.innerHTML = rows.map(function(r){
+ var h = Math.max(4, (r.count / maxV) * 100);
+ var d = r.date.slice(5).replace('-', '/');
+ return '<div class="trend-col" title="' + r.date + ' — ' + num(r.count) + '">' +
+ '<div class="v">' + (r.count ? num(r.count) : '') + '</div>' +
+ '<div class="trend-bar" style="height:' + h + '%"></div>' +
+ '<div class="d">' + d + '</div>' +
+ '</div>';
+ }).join('');
+}
+
+async function loadDeadlineBar(){
+ try{
+ var r = await fetch('/api/deadline');
+ if (r.status !== 200) return;
+ var d = await r.json();
+ var bar = document.getElementById('deadline-bar');
+ bar.style.display = 'flex';
+ var icon = document.getElementById('db-icon');
+ var title = document.getElementById('db-title');
+ var sub = document.getElementById('db-sub');
+ var days = document.getElementById('db-days');
+ var color;
+
+ if (d.phase === 'waiting'){
+ icon.textContent = '';
+ color = '#93c5fd';
+ title.textContent = 'در انتظار دریافت اطلاعات ماهانه';
+ sub.textContent = 'تا ' + d.days_to_receive + ' روز دیگه باید دادهٔ جدید دریافت شه';
+ days.textContent = d.days_to_receive;
+ } else if (d.phase === 'received'){
+ icon.textContent = '';
+ color = '#67e8f9';
+ title.textContent = 'اطلاعات دریافت شد — فرصت تأیید';
+ sub.textContent = 'ماه ' + d.jalali_month_name + ' — ' + d.pending + ' رکورد در انتظار تأیید';
+ days.textContent = Math.max(0, d.days_left);
+ } else if (d.phase === 'urgent'){
+ icon.textContent = '';
+ color = '#fbbf24';
+ title.textContent = '⏰ زمان فوری برای تأیید';
+ sub.textContent = d.pending + ' رکورد مانده — مهلت ' + d.deadline_day + ' ' + d.jalali_month_name;
+ days.textContent = Math.max(0, d.days_left);
+ } else if (d.phase === 'critical'){
+ icon.textContent = '';
+ color = '#fca5a5';
+ title.textContent = 'آخرین روز! — همین امروز';
+ sub.textContent = d.pending + ' رکورد باید امروز تأیید شن';
+ days.textContent = Math.max(0, d.days_left);
+ } else {
+ icon.textContent = '⏰';
+ color = '#94a3b8';
+ title.textContent = 'مهلت تأیید گذشته';
+ sub.textContent = d.pending + ' رکورد بدون تأیید باقی مونده';
+ days.textContent = '0';
+ }
+ bar.style.borderColor = color;
+ bar.style.boxShadow = '0 0 0 1px ' + color + '40, 0 20px 50px -25px rgba(0,0,0,1)';
+ days.style.color = color;
+ } catch(e){}
+}
+
+async function refresh(){
+ try {
+ var r = await fetch('/api/command-center/snapshot?last=' + lastFeedId);
+ if (r.status === 401){ location.href = '/login'; return; }
+ if (r.status === 403){
+ document.body.innerHTML = '<div style="padding:60px;text-align:center;color:#fca5a5;font-family:Vazirmatn;font-size:16px">دسترسی به اتاق فرمان برای شما فعال نیست.</div>';
+ return;
+ }
+ var d = await r.json();
+ renderKpi(d.kpi);
+ renderHeat(d.heatmap);
+ renderOnline(d.online_list);
+ renderAlerts(d.alerts);
+ renderTrend(d.trend_14d);
+ renderFeed(d.feed);
+ firstLoad = false;
+ } catch(e) { console.warn(e); }
+}
+
+(function init(){
+ var sBtn = document.getElementById('btn-sound');
+ var isSoundOff = localStorage.getItem(SOUND_KEY) === 'off';
+ sBtn.textContent = isSoundOff ? ' صدا خاموش' : ' صدا روشن';
+ sBtn.classList.toggle('on', !isSoundOff);
+
+ var isRefreshOff = localStorage.getItem(REFRESH_KEY) === 'off';
+ var rBtn = document.getElementById('btn-refresh');
+ rBtn.textContent = isRefreshOff ? '▶ ادامه' : '⏸ توقف';
+ rBtn.classList.toggle('on', !isRefreshOff);
+
+ refresh().then(function(){
+ if (!isRefreshOff) startAutoRefresh();
+ });
+ loadDeadlineBar();
+ setInterval(loadDeadlineBar, 60000);
+})();
+</script>
+</body>
+</html>

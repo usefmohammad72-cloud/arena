@@ -1,0 +1,139 @@
+/* ============================================================
+   STM LUXURY THEME 2025 (Dark/Light) - Fixed
+   ============================================================ */
+
+/* --- متغیرهای پایه که در همه حالت‌ها استفاده می‌شوند --- */
+:root,
+html[data-theme="dark"] {
+  --bg: #0b1120;
+  --bg-2: #0f172a;
+  --panel: rgba(30, 41, 59, 0.85);
+  --panel-hover: rgba(51, 65, 85, 0.95);
+  --elevated: rgba(15, 23, 42, 0.95);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.15);
+  --text: #f8fafc;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-glow: rgba(99, 102, 241, 0.25);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  --radius: 14px;
+}
+
+html[data-theme="light"] {
+  --bg: #f1f5f9;
+  --bg-2: #e2e8f0;
+  --panel: rgba(255, 255, 255, 0.98);
+  --panel-hover: #ffffff;
+  --elevated: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-2: rgba(0, 0, 0, 0.15);
+  --text: #0f172a;
+  --text-2: #475569;
+  --text-3: #94a3b8;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-glow: rgba(79, 70, 229, 0.15);
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* --- پایه --- */
+body {
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+  background-image: radial-gradient(circle at 100% 0%, var(--primary-glow) 0%, transparent 40%) !important;
+  transition: background 0.3s ease, color 0.3s ease !important;
+}
+
+/* --- هدر و ناوبری --- */
+header, nav {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+}
+header h1, header .sub, nav button { color: var(--text) !important; }
+nav button.active {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+}
+
+/* --- کارت‌ها و پنل‌ها --- */
+.card, .panel, .report-box, .chart-box, .table-wrap, .filter-item, .person-result, .bulk-item, .bulk-import-section {
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s !important;
+}
+.card:hover, .panel:hover, .chart-box:hover, .report-box:hover {
+  transform: translateY(-5px) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6) !important;
+}
+.card .value, .panel h3, .report-box h3, .chart-box h4 { color: var(--text) !important; }
+.card .label, .text-muted { color: var(--text-2) !important; }
+
+/* --- جداول و فرم‌ها --- */
+th { background: var(--bg-2) !important; color: var(--text-2) !important; }
+td { color: var(--text) !important; }
+tbody tr:hover { background: var(--panel-hover) !important; }
+input, select, .ms-header {
+  background: var(--bg-2) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 8px !important;
+}
+input:focus, select:focus, .ms-header:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+
+/* --- رفع باگ z-index منوها --- */
+.table-wrap { position: relative; z-index: 1 !important; }
+.ms-dropdown, 
+#hr-dropdown, 
+#input-tab-dropdown, 
+#input-dropdown {
+  z-index: 99999 !important; 
+  background: var(--panel) !important; 
+  border-color: var(--border-2) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+/* --- دکمه‌ها --- */
+.hbtn.gold, button.action, button.teal {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+.hbtn.gold:hover, button.action:hover, button.teal:hover {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 4px 15px var(--primary-glow) !important;
+}
+.hbtn.refresh { background: var(--success) !important; border-color: var(--success) !important; }
+
+/* --- دکمه تغییر تم --- */
+.theme-toggle {
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 50% !important;
+  width: 34px !important;
+  height: 34px !important;
+  cursor: pointer !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 16px !important;
+  transition: 0.3s !important;
+}
+.theme-toggle:hover { transform: rotate(20deg) !important; }

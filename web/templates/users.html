@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>مدیریت کاربران — STM</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+ *{box-sizing:border-box}
+ body{
+ margin:0;font-family:"Vazirmatn",Tahoma,sans-serif;color:#e5e7eb;
+ background:#0b0f19;min-height:100vh;padding:28px;
+ }
+ h1{font-size:20px;margin:0 0 6px;font-weight:700}
+ .sub{color:#9ca3af;font-size:13px;margin-bottom:22px}
+ .bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+ .btn{
+ padding:8px 14px;border-radius:8px;border:1px solid #1f2937;
+ background:transparent;color:#9ca3af;cursor:pointer;
+ font-family:inherit;font-size:13px;transition:.15s;text-decoration:none;
+ display:inline-flex;align-items:center;gap:6px;font-weight:500;
+ }
+ .btn:hover{background:#1a2332;border-color:#374151;color:#e5e7eb}
+ .btn.primary{background:#3b82f6;border-color:#3b82f6;color:#fff;font-weight:600}
+ .btn.primary:hover{background:#2563eb}
+ .btn.danger{color:#fca5a5;border-color:rgba(239,68,68,.3)}
+ .btn.danger:hover{background:rgba(239,68,68,.1)}
+ .btn.gold{background:#f59e0b;border-color:#f59e0b;color:#0b0f19;font-weight:700}
+ .btn.gold:hover{background:#fbbf24}
+ table{
+ width:100%;border-collapse:separate;border-spacing:0;
+ background:#111827;border:1px solid #1f2937;border-radius:12px;overflow:hidden;
+ }
+ th,td{padding:11px 14px;text-align:right;font-size:13px;border-bottom:1px solid #1f2937}
+ th{background:#1a2332;color:#9ca3af;font-weight:600;font-size:12.5px}
+ tr:last-child td{border-bottom:none}
+ tr:hover td{background:#1a2332}
+ .badge{padding:3px 10px;border-radius:20px;font-size:11px;display:inline-block;font-weight:600}
+ .badge.admin{background:rgba(245,158,11,.18);color:#fbbf24}
+ .badge.user{background:rgba(59,130,246,.18);color:#93c5fd}
+ .badge.on{background:rgba(16,185,129,.18);color:#6ee7b7}
+ .badge.off{background:rgba(239,68,68,.18);color:#fca5a5}
+ dialog{
+ border:1px solid #1f2937;border-radius:14px;padding:0;
+ background:#111827;color:#e5e7eb;
+ box-shadow:0 30px 80px rgba(0,0,0,.8);
+ width:min(1000px,95vw);max-height:92vh;overflow:hidden;
+ }
+ dialog::backdrop{background:rgba(0,0,0,.7)}
+ dialog .dh{
+ padding:16px 22px;border-bottom:1px solid #1f2937;
+ display:flex;align-items:center;justify-content:space-between;
+ }
+ dialog .dh h2{margin:0;font-size:16px;font-weight:700}
+ dialog .db{padding:20px 22px;max-height:70vh;overflow-y:auto}
+ dialog .df{
+ padding:14px 22px;border-top:1px solid #1f2937;
+ display:flex;gap:10px;justify-content:flex-end;
+ }
+ dialog label{display:block;font-size:12px;color:#9ca3af;margin:12px 0 6px;font-weight:500}
+ dialog input, dialog select{
+ width:100%;padding:9px 12px;border-radius:8px;
+ background:#0b0f19;border:1px solid #1f2937;color:#e5e7eb;
+ font-family:inherit;font-size:13px;
+ }
+ dialog input:focus, dialog select:focus{outline:none;border-color:#3b82f6}
+ .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+ .perm-section{
+ margin-top:20px;padding:16px;border-radius:10px;
+ background:#0b0f19;border:1px solid #1f2937;
+ }
+ .perm-section h3{
+ margin:0 0 12px;font-size:13.5px;font-weight:700;color:#fbbf24;
+ padding-bottom:10px;border-bottom:1px dashed #1f2937;
+ }
+ .perm-grid{
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;
+ }
+ .perm-item{
+ display:flex;align-items:center;gap:9px;
+ padding:9px 12px;border-radius:8px;
+ background:#1a2332;border:1px solid #1f2937;
+ cursor:pointer;font-size:12.5px;transition:.15s;
+ }
+ .perm-item:hover{border-color:#374151}
+ .perm-item input{width:auto;width:15px;height:15px;accent-color:#3b82f6;flex:none;cursor:pointer}
+ .multi-grid{
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:5px;
+ max-height:200px;overflow-y:auto;padding:8px;
+ background:#0b0f19;border-radius:8px;border:1px solid #1f2937;
+ }
+ .multi-grid label{
+ display:flex;align-items:center;gap:8px;margin:0;padding:6px 9px;
+ border-radius:6px;cursor:pointer;font-size:12px;color:#9ca3af;
+ }
+ .multi-grid label:hover{background:#1a2332;color:#e5e7eb}
+ .multi-grid input{width:14px;height:14px;accent-color:#3b82f6;flex:none}
+ .msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;font-weight:500}
+ .msg.ok{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;display:block}
+ .msg.err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:block}
+ .hint{font-size:11.5px;color:#6b7280;margin-top:6px;padding:8px 10px;background:rgba(59,130,246,.06);border-radius:6px;border-right:3px solid #3b82f6}
+ @media (max-width:780px){.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+ <h1>مدیریت کاربران و سطح دسترسی</h1>
+ <div class="sub">افزودن کاربر، تعیین سطح دسترسی، محدودسازی به معاونت‌ها و مراکز خاص</div>
+
+ <div class="bar">
+ <a href="/" class="btn">بازگشت به داشبورد</a>
+ <button class="btn primary" onclick="openCreate()">کاربر جدید</button>
+ <a href="/logout" class="btn danger">خروج</a>
+ </div>
+
+ <div id="msg" class="msg"></div>
+
+ <table>
+ <thead>
+ <tr>
+ <th>#</th>
+ <th>نام کاربری</th>
+ <th>نام و نام خانوادگی</th>
+ <th>نقش</th>
+ <th>وضعیت</th>
+ <th>معاونت‌ها</th>
+ <th>مراکز</th>
+ <th>آخرین ورود</th>
+ <th style="width:180px">عملیات</th>
+ </tr>
+ </thead>
+ <tbody id="rows"></tbody>
+ </table>
+
+ <dialog id="dlg">
+ <div class="dh">
+ <h2 id="dlg-title">کاربر جدید</h2>
+ <button class="btn" onclick="closeDlg()"></button>
+ </div>
+
+ <div class="db">
+ <input type="hidden" id="e_id">
+
+ <div class="grid-2">
+ <div>
+ <label>نام کاربری</label>
+ <input id="f_username" autocomplete="off">
+ </div>
+ <div>
+ <label>رمز عبور <span style="color:#6b7280;font-weight:400" id="pw-hint">(لازم)</span></label>
+ <input id="f_password" type="password" autocomplete="new-password">
+ </div>
+ </div>
+
+ <label>نام و نام خانوادگی</label>
+ <input id="f_fullname" autocomplete="off">
+
+ <div class="grid-2">
+ <div>
+ <label>نقش</label>
+ <select id="f_role">
+ <option value="user">کاربر عادی</option>
+ <option value="admin">مدیر (دسترسی کامل)</option>
+ </select>
+ </div>
+ <div>
+ <label>وضعیت</label>
+ <select id="f_active">
+ <option value="1">فعال</option>
+ <option value="0">غیرفعال</option>
+ </select>
+ </div>
+ </div>
+
+ <div style="margin-top:14px">
+ <label style="margin-top:0">پیش‌فرض سریع:</label>
+ <div style="display:flex;gap:6px;flex-wrap:wrap">
+ <button class="btn" onclick="presetRole('viewer')" type="button">فقط مشاهده</button>
+ <button class="btn" onclick="presetRole('approver')" type="button">تأییدکننده</button>
+ <button class="btn" onclick="presetRole('uploader')" type="button">بارگذار</button>
+ <button class="btn" onclick="presetRole('editor')" type="button">ویرایشگر</button>
+ <button class="btn" onclick="presetRole('full')" type="button">دسترسی کامل معاونت</button>
+ </div>
+ </div>
+
+ <div class="perm-section">
+ <h3>سطح دسترسی</h3>
+ <div id="perm-groups"></div>
+ </div>
+
+ <div class="perm-section">
+ <h3>محدودهٔ معاونت‌ها</h3>
+ <div class="hint" style="margin-bottom:10px">
+ اگه «دسترسی به همهٔ معاونت‌ها» روشن باشه، این بخش نادیده گرفته می‌شه.
+ </div>
+ <div class="multi-grid" id="deputies-grid"></div>
+ </div>
+
+ <div class="perm-section">
+ <h3>محدودهٔ مراکز و شبکه‌ها</h3>
+ <div class="hint" style="margin-bottom:10px">
+ اگه «دسترسی به همهٔ مراکز» روشن باشه، این بخش نادیده گرفته می‌شه.
+ در غیر این‌صورت کاربر فقط داده‌های مراکز تیک‌خورده رو می‌بینه.
+ </div>
+ <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+ <input id="center-search" placeholder="جستجوی مرکز..." style="flex:1;min-width:200px" oninput="filterCenters()">
+ <select id="center-deputy-filter" onchange="filterCenters()" style="max-width:200px">
+ <option value="">همه معاونت‌ها</option>
+ </select>
+ </div>
+ <div class="multi-grid" id="centers-grid" style="max-height:260px"></div>
+ </div>
+ </div>
+
+ <div class="df">
+ <button class="btn" onclick="closeDlg()">انصراف</button>
+ <button class="btn primary" onclick="saveUser()">ذخیره</button>
+ </div>
+ </dialog>
+
+<script>
+var PERM_GROUPS = {
+ 'دسترسی به تب‌ها': ['tab_dashboard', 'tab_report', 'tab_input', 'command_center'],
+ 'داخل داشبورد': ['dash_charts', 'dash_summary', 'dash_approval'],
+ 'عملیات روی داده‌ها': ['can_approve', 'can_upload', 'can_edit_pricing',
+ 'can_edit_ceilings', 'can_edit_specialists',
+ 'can_edit_payments', 'can_clear_month'],
+ 'مدیریت': ['can_manage_users', 'can_view_audit'],
+ 'دامنهٔ دسترسی': ['scope_all_deputies', 'scope_all_centers']
+};
+var PERM_LABELS = {
+ tab_dashboard: 'مشاهدهٔ تب داشبورد',
+ tab_report: 'مشاهدهٔ تب گزارش خروجی',
+ tab_input: 'مشاهدهٔ تب اطلاعات ورودی',
+ command_center: 'اتاق فرمان لحظه‌ای',
+ dash_charts: 'نمودارهای داشبورد',
+ dash_summary: 'جدول خلاصه تفکیکی',
+ dash_approval: 'وضعیت تأیید معاونت/مرکز',
+ can_approve: 'تأیید/رد رکوردها',
+ can_upload: 'بارگذاری فایل اکسل',
+ can_edit_pricing: 'ویرایش قوانین قیمت‌گذاری',
+ can_edit_ceilings: 'ویرایش سقف ماهانه دستی',
+ can_edit_specialists: 'ویرایش کارشناسان/تجهیزات',
+ can_edit_payments: 'ویرایش پرداختی‌های ماهانه',
+ can_clear_month: 'پاک کردن داده‌های ماه',
+ can_manage_users: 'مدیریت کاربران',
+ can_view_audit: 'مشاهدهٔ لاگ عملیات',
+ scope_all_deputies: 'دسترسی به همهٔ معاونت‌ها',
+ scope_all_centers: 'دسترسی به همهٔ مراکز'
+};
+
+var PRESETS = {
+ viewer: ['tab_dashboard', 'tab_report'],
+ approver: ['tab_dashboard', 'tab_report', 'can_approve'],
+ uploader: ['tab_dashboard', 'tab_report', 'tab_input', 'can_upload'],
+ editor: ['tab_dashboard', 'tab_report', 'tab_input', 'can_edit_ceilings',
+ 'can_edit_specialists', 'can_edit_payments', 'can_edit_pricing'],
+ full: Object.keys(PERM_LABELS)
+};
+
+var DEPUTIES = [];
+var CENTERS = []; // [{name, deputy}]
+var _editing_id = null;
+
+function showMsg(text, ok) {
+ var m = document.getElementById('msg');
+ m.className = 'msg ' + (ok ? 'ok' : 'err');
+ m.textContent = text;
+ setTimeout(function(){ m.className = 'msg'; }, 4500);
+}
+
+function buildPermUI() {
+ var html = '';
+ for (var groupName in PERM_GROUPS) {
+ html += '<div style="margin-bottom:16px">';
+ html += '<div style="font-size:12px;color:#9ca3af;font-weight:600;margin-bottom:8px">' + groupName + '</div>';
+ html += '<div class="perm-grid">';
+ PERM_GROUPS[groupName].forEach(function(key){
+ html += '<label class="perm-item" data-perm="' + key + '">' +
+ '<input type="checkbox" id="perm_' + key + '" onchange="onPermChange(this)">' +
+ '<span>' + PERM_LABELS[key] + '</span>' +
+ '</label>';
+ });
+ html += '</div></div>';
+ }
+ document.getElementById('perm-groups').innerHTML = html;
+}
+
+function onPermChange(inp) {
+ if (inp.id === 'perm_scope_all_deputies') updateDeputyUIState();
+ if (inp.id === 'perm_scope_all_centers') updateCenterUIState();
+}
+
+function updateDeputyUIState() {
+ var all = document.getElementById('perm_scope_all_deputies').checked;
+ var grid = document.getElementById('deputies-grid');
+ grid.style.opacity = all ? '0.35' : '1';
+ grid.style.pointerEvents = all ? 'none' : 'auto';
+}
+function updateCenterUIState() {
+ var all = document.getElementById('perm_scope_all_centers').checked;
+ var grid = document.getElementById('centers-grid');
+ grid.style.opacity = all ? '0.35' : '1';
+ grid.style.pointerEvents = all ? 'none' : 'auto';
+}
+
+function buildDeputiesUI(selected) {
+ selected = selected || [];
+ document.getElementById('deputies-grid').innerHTML = DEPUTIES.map(function(d){
+ var checked = selected.indexOf(d) !== -1 ? 'checked' : '';
+ return '<label><input type="checkbox" class="dep-cb" value="' + d + '" ' + checked + '> ' + d + '</label>';
+ }).join('') || '<div style="padding:12px;color:#6b7280;font-size:12px">هیچ معاونتی نیست</div>';
+}
+
+function buildCentersUI(selected) {
+ selected = selected || [];
+ window._selectedCenters = selected;
+ document.getElementById('center-deputy-filter').innerHTML =
+ '<option value="">همه معاونت‌ها</option>' +
+ DEPUTIES.map(function(d){ return '<option value="' + d + '">' + d + '</option>'; }).join('');
+ filterCenters();
+}
+
+function filterCenters() {
+ var q = (document.getElementById('center-search').value || '').trim().toLowerCase();
+ var depFilter = document.getElementById('center-deputy-filter').value;
+ var selected = window._selectedCenters || [];
+ var list = CENTERS;
+ if (depFilter) list = list.filter(function(c){ return c.deputy === depFilter; });
+ if (q) list = list.filter(function(c){ return c.name.toLowerCase().indexOf(q) !== -1; });
+ if (!list.length) {
+ document.getElementById('centers-grid').innerHTML =
+ '<div style="padding:12px;color:#6b7280;font-size:12px;grid-column:1/-1">مرکزی یافت نشد</div>';
+ return;
+ }
+ document.getElementById('centers-grid').innerHTML = list.map(function(c){
+ var checked = selected.indexOf(c.name) !== -1 ? 'checked' : '';
+ return '<label title="' + (c.deputy||'') + '"><input type="checkbox" class="cen-cb" value="' + c.name + '" ' + checked + '> ' + c.name + '</label>';
+ }).join('');
+}
+
+function presetRole(name) {
+ var keys = PRESETS[name] || [];
+ for (var k in PERM_LABELS) {
+ var inp = document.getElementById('perm_' + k);
+ if (inp) inp.checked = (keys.indexOf(k) !== -1);
+ }
+ updateDeputyUIState();
+ updateCenterUIState();
+}
+
+function readPerms() {
+ var out = {};
+ for (var k in PERM_LABELS) {
+ var inp = document.getElementById('perm_' + k);
+ out[k] = inp ? !!inp.checked : false;
+ }
+ return out;
+}
+
+function readDeputies() {
+ var out = [];
+ document.querySelectorAll('.dep-cb:checked').forEach(function(el){ out.push(el.value); });
+ return out;
+}
+
+function readCenters() {
+ var out = [];
+ document.querySelectorAll('.cen-cb:checked').forEach(function(el){ out.push(el.value); });
+ return out;
+}
+
+function openCreate() {
+ _editing_id = null;
+ document.getElementById('dlg-title').textContent = 'کاربر جدید';
+ document.getElementById('e_id').value = '';
+ document.getElementById('f_username').value = '';
+ document.getElementById('f_username').disabled = false;
+ document.getElementById('f_password').value = '';
+ document.getElementById('pw-hint').textContent = '(لازم)';
+ document.getElementById('f_fullname').value = '';
+ document.getElementById('f_role').value = 'user';
+ document.getElementById('f_active').value = '1';
+ presetRole('viewer');
+ buildDeputiesUI([]);
+ buildCentersUI([]);
+ updateDeputyUIState();
+ updateCenterUIState();
+ document.getElementById('dlg').showModal();
+}
+
+function openEdit(u) {
+ _editing_id = u.id;
+ document.getElementById('dlg-title').textContent = 'ویرایش: ' + u.username;
+ document.getElementById('e_id').value = u.id;
+ document.getElementById('f_username').value = u.username;
+ document.getElementById('f_username').disabled = true;
+ document.getElementById('f_password').value = '';
+ document.getElementById('pw-hint').textContent = '(خالی = بدون تغییر)';
+ document.getElementById('f_fullname').value = u.full_name || '';
+ document.getElementById('f_role').value = u.role || 'user';
+ document.getElementById('f_active').value = u.is_active ? '1' : '0';
+
+ var perms = {};
+ try { perms = JSON.parse(u.permissions || '{}'); } catch(e){}
+ for (var k in PERM_LABELS) {
+ var inp = document.getElementById('perm_' + k);
+ if (inp) inp.checked = !!perms[k];
+ }
+ var deps = [];
+ try { deps = JSON.parse(u.allowed_deputies || '[]'); } catch(e){}
+ var cens = [];
+ try { cens = JSON.parse(u.allowed_centers || '[]'); } catch(e){}
+ buildDeputiesUI(deps);
+ buildCentersUI(cens);
+ updateDeputyUIState();
+ updateCenterUIState();
+ document.getElementById('dlg').showModal();
+}
+
+function closeDlg() { document.getElementById('dlg').close(); }
+
+async function saveUser() {
+ var payload = {
+ username: document.getElementById('f_username').value.trim(),
+ password: document.getElementById('f_password').value,
+ full_name: document.getElementById('f_fullname').value.trim(),
+ role: document.getElementById('f_role').value,
+ is_active: document.getElementById('f_active').value === '1',
+ permissions: readPerms(),
+ allowed_deputies: readDeputies(),
+ allowed_centers: readCenters()
+ };
+ var url = '/api/users';
+ var method = 'POST';
+ if (_editing_id) {
+ url = '/api/users/' + _editing_id;
+ method = 'PUT';
+ payload.new_password = payload.password;
+ delete payload.password;
+ delete payload.username;
+ }
+ var r = await fetch(url, {
+ method: method,
+ headers: {'Content-Type': 'application/json'},
+ body: JSON.stringify(payload)
+ });
+ var d = await r.json();
+ if (r.ok) {
+ closeDlg();
+ showMsg(_editing_id ? 'کاربر ویرایش شد' : 'کاربر ساخته شد', true);
+ loadUsers();
+ } else {
+ showMsg(d.error || 'خطا', false);
+ }
+}
+
+async function doDelete(id, username) {
+ if (!confirm('حذف کاربر «' + username + '»؟')) return;
+ var r = await fetch('/api/users/' + id, {method: 'DELETE'});
+ var d = await r.json();
+ if (r.ok) { showMsg('حذف شد', true); loadUsers(); }
+ else showMsg(d.error || 'خطا', false);
+}
+
+async function loadUsers() {
+ var r = await fetch('/api/users');
+ if (r.status === 401) { location.href = '/login'; return; }
+ if (r.status === 403) { showMsg('فقط مدیر می‌تواند کاربران را ببیند', false); return; }
+ var users = await r.json();
+ var tbody = document.getElementById('rows');
+ tbody.innerHTML = '';
+ for (var i = 0; i < users.length; i++) {
+ var u = users[i];
+ var deps = [];
+ try { deps = JSON.parse(u.allowed_deputies || '[]'); } catch(e){}
+ var cens = [];
+ try { cens = JSON.parse(u.allowed_centers || '[]'); } catch(e){}
+ var perms = {};
+ try { perms = JSON.parse(u.permissions || '{}'); } catch(e){}
+
+ var depText;
+ if (u.role === 'admin' || perms.scope_all_deputies) depText = '<span style="color:#fbbf24">همه</span>';
+ else if (deps.length === 0) depText = '<span style="color:#6b7280">همه</span>';
+ else depText = deps.length + ' مورد';
+
+ var cenText;
+ if (u.role === 'admin' || perms.scope_all_centers) cenText = '<span style="color:#fbbf24">همه</span>';
+ else if (cens.length === 0) cenText = '<span style="color:#6b7280">همه</span>';
+ else cenText = cens.length + ' مورد';
+
+ var tr = document.createElement('tr');
+ tr.innerHTML =
+ '<td>' + u.id + '</td>' +
+ '<td style="font-family:Segoe UI,Tahoma;direction:ltr;text-align:right">' + u.username + '</td>' +
+ '<td>' + (u.full_name || '—') + '</td>' +
+ '<td><span class="badge ' + u.role + '">' + (u.role === 'admin' ? 'مدیر' : 'کاربر') + '</span></td>' +
+ '<td><span class="badge ' + (u.is_active ? 'on' : 'off') + '">' + (u.is_active ? 'فعال' : 'غیرفعال') + '</span></td>' +
+ '<td style="font-size:12px">' + depText + '</td>' +
+ '<td style="font-size:12px">' + cenText + '</td>' +
+ '<td style="font-size:11.5px;color:#6b7280">' + (u.last_login || '—') + '</td>' +
+ '<td>' +
+ '<button class="btn" data-edit="' + i + '">ویرایش</button> ' +
+ '<button class="btn danger" data-del="' + u.id + '" data-uname="' + u.username + '">حذف</button>' +
+ '</td>';
+ tbody.appendChild(tr);
+
+ tr.querySelector('[data-edit]').addEventListener('click', (function(u){ return function(){ openEdit(u); }; })(u));
+ tr.querySelector('[data-del]').addEventListener('click', (function(id, un){ return function(){ doDelete(id, un); }; })(u.id, u.username));
+ }
+}
+
+async function loadOptions() {
+ try {
+ var r = await fetch('/api/filter-options');
+ var d = await r.json();
+ DEPUTIES = (d.deputies || []).filter(function(x){ return x !== 'همه'; });
+
+ // گرفتن لیست همه مراکز با معاونتشون از API
+ var r2 = await fetch('/api/all-centers');
+ if (r2.ok) {
+ CENTERS = await r2.json();
+ } else {
+ CENTERS = [];
+ }
+ } catch(e) {
+ DEPUTIES = [];
+ CENTERS = [];
+ }
+ buildDeputiesUI([]);
+}
+
+(async function init(){
+ buildPermUI();
+ await loadOptions();
+ loadUsers();
+})();
+</script>
+</body>
+</html>

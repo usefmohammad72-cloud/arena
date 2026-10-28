@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ورود | سامانه تحلیلی مقاطعه</title>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Vazirmatn", sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.1) 100%), url('/static/stm-hero.jpg') center/cover no-repeat;
+    }
+    .login-box {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      color: #f8fafc;
+    }
+    .brand { text-align: center; margin-bottom: 30px; }
+    .brand h1 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .brand .sub { color: #94a3b8; font-size: 14px; font-weight: 600; direction: ltr; }
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 13px; margin-bottom: 8px; color: #cbd5e1; }
+    .field input {
+      width: 100%; padding: 12px 16px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);
+      color: #fff; font-family: inherit; outline: none; transition: 0.2s;
+    }
+    .field input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 10px;
+      background: #6366f1; color: #fff; font-family: inherit; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: 0.2s;
+    }
+    .btn:hover { background: #4f46e5; box-shadow: 0 0 20px rgba(99,102,241,0.4); }
+    .err { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <div class="brand">
+      <h1>سامانه تحلیلی مقاطعه</h1>
+      <div class="sub">STM-v3</div>
+    </div>
+    {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    <form method="post" action="/login">
+      <div class="field"><label>نام کاربری</label><input type="text" name="username" required autocomplete="username"></div>
+      <div class="field"><label>رمز عبور</label><input type="password" name="password" required autocomplete="current-password"></div>
+      <button class="btn" type="submit">ورود به سامانه</button>
+    </form>
+  </div>
+</body>
+</html>

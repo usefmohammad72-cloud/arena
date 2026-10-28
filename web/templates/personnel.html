@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<link href="/static/theme.css" rel="stylesheet" type="text/css" />
+<meta charset="UTF-8">
+<title>بانک نفرات — STM</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090b;--bg2:#0f0f11;--panel:#131316;--panel-h:#18181b;
+  --el:#1f1f23;--br:#23232a;--br2:#33333d;--br3:#4a4a56;
+  --tx:#fafafa;--tx2:#a1a1aa;--tx3:#71717a;
+  --blue:#3b82f6;--blue2:#60a5fa;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+}
+html,body{font-family:"Vazirmatn",Tahoma,sans-serif;background:var(--bg);color:var(--tx);direction:rtl;font-size:14px;line-height:1.6;min-height:100vh}
+.wrap{max-width:1900px;margin:0 auto;padding:20px 24px 60px}
+
+.top-bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.top-bar h1{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.top-bar .sub{color:var(--tx3);font-size:12.5px;margin-top:2px}
+.top-bar .spacer{flex:1}
+
+.btn{padding:9px 16px;border-radius:8px;border:1px solid var(--br);background:transparent;
+  color:var(--tx2);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;
+  text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.btn:hover{background:var(--panel);border-color:var(--br2);color:var(--tx)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.btn.primary:hover{background:var(--blue2)}
+.btn.gold{background:var(--amber);border-color:var(--amber);color:#09090b;font-weight:700}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.btn.red{color:#fca5a5;border-color:rgba(239,68,68,.3)}
+.btn.red:hover{background:rgba(239,68,68,.1)}
+.btn.sm{padding:5px 9px;font-size:11px}
+
+.main-layout{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+@media (max-width:1200px){.main-layout{grid-template-columns:1fr}}
+
+.filters{background:var(--panel);border:1px solid var(--br);border-radius:12px;padding:14px 16px;
+  margin-bottom:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.filters label{font-size:11px;color:var(--tx3);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px}
+.filters input,.filters select{width:100%;padding:8px 10px;border:1px solid var(--br);border-radius:6px;
+  background:var(--bg2);color:var(--tx);font-family:inherit;font-size:12.5px}
+.filters input:focus,.filters select:focus{outline:none;border-color:var(--blue)}
+
+.table-wrap{overflow:auto;max-height:calc(100vh - 260px);border-radius:12px;
+  border:1px solid var(--br);background:var(--panel)}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}
+th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--br);vertical-align:middle;white-space:nowrap}
+th{background:var(--bg2);color:var(--tx3);font-weight:600;font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;z-index:5}
+tbody tr{transition:.12s;cursor:pointer}
+tbody tr:hover{background:var(--panel-h)}
+tbody tr.selected{background:rgba(59,130,246,.08);border-right:3px solid var(--blue)}
+td.code{font-family:ui-monospace,Consolas,monospace;direction:ltr;text-align:right;font-size:11.5px}
+td.small{font-size:11.5px;color:var(--tx2)}
+td.date{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;direction:ltr;text-align:right}
+td.flow{font-size:11px;color:var(--tx2);max-width:200px;overflow:hidden;text-overflow:ellipsis}
+
+.badge{padding:2px 8px;border-radius:12px;font-size:10.5px;font-weight:700;display:inline-block}
+.badge.رسمی{background:rgba(16,185,129,.18);color:#6ee7b7}
+.badge.پیمانی{background:rgba(59,130,246,.18);color:#93c5fd}
+.badge.شرکتی{background:rgba(245,158,11,.18);color:#fbbf24}
+.badge.m28{background:rgba(239,68,68,.18);color:#fca5a5}
+.badge.buy{background:rgba(168,85,247,.18);color:#d8b4fe}
+.badge.none{background:rgba(113,113,122,.15);color:var(--tx3)}
+.badge.supply-تامین{background:rgba(34,211,238,.18);color:#67e8f9}
+.badge.supply-پخش{background:rgba(245,158,11,.18);color:#fbbf24}
+.badge.supply-تولید{background:rgba(16,185,129,.18);color:#6ee7b7}
+
+.empty{text-align:center;padding:60px 20px;color:var(--tx3)}
+.empty .big{font-size:36px;margin-bottom:12px;opacity:.4}
+
+.side-card{background:var(--panel);border:1px solid var(--br);border-radius:12px;
+  padding:18px 20px;margin-bottom:14px;position:relative;overflow:hidden}
+.side-card::before{content:"";position:absolute;top:0;right:0;left:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--blue),transparent)}
+.side-card h3{font-size:13.5px;font-weight:800;color:var(--tx);margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px dashed var(--br);display:flex;align-items:center;gap:8px}
+.side-card h3 .ico{width:28px;height:28px;border-radius:8px;
+  background:rgba(59,130,246,.15);color:var(--blue2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+
+.person-info{background:linear-gradient(135deg,rgba(59,130,246,.05),transparent);
+  border:1px solid rgba(59,130,246,.3)}
+.person-info .name{font-size:15px;font-weight:800;color:var(--tx);margin-bottom:4px}
+.person-info .meta{font-size:12px;color:var(--tx3);direction:ltr;text-align:right;
+  font-family:ui-monospace,monospace}
+.person-info .details{margin-top:12px;font-size:12px;line-height:2}
+.person-info .details .row{display:flex;justify-content:space-between;
+  padding:4px 0;border-bottom:1px dashed rgba(255,255,255,.05)}
+.person-info .details .row:last-child{border-bottom:none}
+.person-info .details .row .k{color:var(--tx3)}
+.person-info .details .row .v{color:var(--tx);font-weight:600}
+
+.transfer-box{background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(59,130,246,.01))!important;
+  border:1px solid rgba(59,130,246,.4)!important}
+.transfer-box::before{background:linear-gradient(90deg,transparent,var(--blue),var(--blue2),transparent)!important}
+
+.status-box{background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(245,158,11,.01))!important;
+  border:1px solid rgba(245,158,11,.4)!important}
+.status-box::before{background:linear-gradient(90deg,transparent,var(--amber),#fbbf24,transparent)!important}
+
+.arrow-flow{display:flex;align-items:stretch;gap:8px;margin:12px 0;padding:12px;
+  background:var(--bg2);border-radius:10px;border:1px solid var(--br)}
+.arrow-flow .src,.arrow-flow .dst{flex:1;padding:8px 10px;border-radius:8px;
+  background:var(--panel);border:1px solid var(--br);text-align:center}
+.arrow-flow .src{border-color:rgba(113,113,122,.4)}
+.arrow-flow .dst{border-color:rgba(16,185,129,.5);background:rgba(16,185,129,.05)}
+.arrow-flow .lbl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;font-weight:600}
+.arrow-flow .val{font-size:12px;font-weight:700;color:var(--tx);line-height:1.4}
+.arrow-flow .arr{flex:0 0 30px;color:var(--blue2);font-size:18px;
+  display:flex;align-items:center;justify-content:center;font-weight:800}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.field label{font-size:11px;color:var(--tx3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1px solid var(--br);
+  border-radius:7px;background:var(--bg2);color:var(--tx);font-family:inherit;font-size:13px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+.field input[readonly]{background:rgba(255,255,255,.02);color:var(--tx2);cursor:not-allowed}
+.field.row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.history{margin-top:14px;padding-top:14px;border-top:1px dashed var(--br);max-height:180px;overflow-y:auto}
+.history h4{font-size:11px;font-weight:700;color:var(--tx3);margin-bottom:8px;
+  text-transform:uppercase;letter-spacing:.05em}
+.history .h-item{padding:8px 10px;background:var(--bg2);border-radius:8px;
+  margin-bottom:6px;border-right:3px solid var(--blue2);font-size:11.5px}
+.history .h-item.green{border-right-color:var(--green)}
+.history .h-item.amber{border-right-color:var(--amber)}
+.history .h-item .h-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.history .h-item .h-desc{font-weight:700;color:var(--tx)}
+.history .h-item .h-date{color:var(--tx3);font-size:10.5px;
+  font-family:ui-monospace,monospace;direction:ltr}
+.history .h-item .h-note{color:var(--tx3);font-size:10.5px;font-style:italic}
+
+.no-selection{text-align:center;padding:40px 20px;color:var(--tx3)}
+.no-selection .big{font-size:36px;margin-bottom:12px;opacity:.35}
+
+dialog{border:1px solid var(--br2);border-radius:14px;padding:0;background:var(--panel);
+  color:var(--tx);width:min(760px,95vw);max-height:92vh;overflow:hidden;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.9)}
+dialog::backdrop{background:rgba(0,0,0,.75);backdrop-filter:blur(4px)}
+.dh{padding:16px 22px;border-bottom:1px solid var(--br);display:flex;
+  align-items:center;justify-content:space-between}
+.dh h2{font-size:15px;font-weight:700}
+.dh .close{background:none;border:none;color:var(--tx3);font-size:22px;cursor:pointer;padding:2px 6px}
+.dh .close:hover{color:var(--red)}
+.db{padding:20px 24px;max-height:70vh;overflow-y:auto}
+.df{padding:12px 22px;border-top:1px solid var(--br);display:flex;gap:10px;justify-content:flex-end}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:600px){.grid-2{grid-template-columns:1fr}}
+
+.supply-field{transition:opacity .2s;overflow:hidden}
+.supply-field.hidden{display:none}
+.supply-field[disabled]{opacity:.5}
+
+.toast{position:fixed;top:20px;left:20px;padding:13px 18px;border-radius:10px;
+  font-size:12.5px;font-weight:600;z-index:9999;max-width:400px;
+  box-shadow:0 20px 50px -10px rgba(0,0,0,.7);animation:tin .3s}
+.toast.ok{background:#064e3b;color:#6ee7b7;border:1px solid var(--green)}
+.toast.err{background:#7f1d1d;color:#fca5a5;border:1px solid var(--red)}
+.toast.warn{background:#78350f;color:#fbbf24;border:1px solid var(--amber)}
+@keyframes tin{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--br2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--br3)}
+
+.hr-subnav{display:flex;gap:4px;margin-bottom:16px;padding:5px;background:var(--panel);border:1px solid var(--br);border-radius:10px;width:fit-content}
+.hr-subnav-btn{padding:8px 20px;border-radius:7px;border:none;background:transparent;color:var(--tx2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.hr-subnav-btn:hover{background:var(--panel-h);color:var(--tx)}
+.hr-subnav-btn.active{background:var(--blue);color:#fff}
+.tpl-row-num{font-family:ui-monospace,Consolas,monospace;direction:ltr;text-align:right;font-size:12px}
+
+</style>
+</head>
+<body>
+<script>
+(function() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var theme = urlParams.get('theme') || localStorage.getItem('stm_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.action === 'setTheme') {
+      document.documentElement.setAttribute('data-theme', e.data.theme);
+    }
+  });
+})();
+</script>
+<div class="wrap">
+  <div class="top-bar" id="main-topbar">
+    <div>
+      <h1>منابع انسانی</h1>
+      <div class="sub" id="count-sub">— نفر ثبت‌شده</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" onclick="openImport()">ایمپورت اکسل</button>
+    <button class="btn gold" onclick="location.href='/api/personnel/export'">خروجی اکسل</button>
+    <button class="btn primary" onclick="openAddPerson()">افزودن نفر</button>
+  </div>
+  <div id="view-bank">
+  <div class="main-layout">
+    <div class="table-side">
+      <div class="filters">
+        <div><label>کد ملی / نام</label><input id="f-search" placeholder="جستجو..." oninput="debouncedLoad()"></div>
+        <div><label>معاونت</label><select id="f-deputy" onchange="onDeputyChange()"><option value="همه">همه</option></select></div>
+        <div><label>شبکه / مرکز</label><select id="f-center" onchange="loadList()"><option value="همه">همه</option></select></div>
+        <div><label>عنوان شغلی</label><select id="f-job" onchange="loadList()"><option value="همه">همه</option></select></div>
+        <div><label>نوع قرارداد</label><select id="f-contract" onchange="loadList()"><option value="همه">همه</option></select></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>کد ملی</th>
+              <th>نام</th>
+              <th>نام خانوادگی</th>
+              <th>عنوان شغلی</th>
+              <th>نوع قرارداد</th>
+              <th>معاونت</th>
+              <th>شبکه / مرکز</th>
+              <th>تامین/پخش</th>
+              <th>تاریخ تبدیل وضعیت</th>
+              <th>آخرین انتقال</th>
+              <th>آخرین تبدیل وضعیت</th>
+              <th style="width:60px">حذف</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="side-panel" id="side-panel">
+      <div class="no-selection" id="no-select">
+        <div class="big">👤</div>
+        <div style="font-weight:600;color:var(--tx2)">یک نفر را از جدول انتخاب کنید</div>
+        <div style="font-size:11.5px;margin-top:6px">برای مشاهدهٔ جزئیات، ثبت انتقال و تبدیل وضعیت</div>
+      </div>
+
+      <div id="side-content" style="display:none">
+
+        <div class="side-card person-info">
+          <h3><span class="ico">👤</span><span>اطلاعات نفر</span></h3>
+          <div class="name" id="pi-name">—</div>
+          <div class="meta" id="pi-nc">—</div>
+          <div class="details">
+            <div class="row"><span class="k">عنوان شغلی</span><span class="v" id="pi-job">—</span></div>
+            <div class="row"><span class="k">نوع قرارداد</span><span class="v" id="pi-contract">—</span></div>
+            <div class="row"><span class="k">معاونت</span><span class="v" id="pi-deputy">—</span></div>
+            <div class="row"><span class="k">شبکه / مرکز</span><span class="v" id="pi-center">—</span></div>
+            <div class="row" id="pi-supply-row" style="display:none"><span class="k">تامین/پخش</span><span class="v" id="pi-supply">—</span></div>
+          </div>
+        </div>
+
+        <div class="side-card transfer-box">
+          <h3><span class="ico">↔</span><span>انتقال نیرو</span></h3>
+
+          <div class="arrow-flow">
+            <div class="src">
+              <div class="lbl">از (مبدأ)</div>
+              <div class="val" id="tr-from">—</div>
+            </div>
+            <div class="arr">←</div>
+            <div class="dst">
+              <div class="lbl">به (مقصد)</div>
+              <div class="val" id="tr-to">—</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>معاونت مقصد</label>
+            <select id="tr-deputy" onchange="onTransferDeputyChange()"><option value="">—</option></select>
+          </div>
+          <div class="field">
+            <label>شبکه / مرکز مقصد *</label>
+            <select id="tr-center" onchange="updateTransferDest()"><option value="">—</option></select>
+          </div>
+          <div class="field" id="tr-supply-wrapper" style="display:none">
+            <label>تامین / پخش / تولید *</label>
+            <select id="tr-supply" onchange="updateTransferDest()">
+              <option value="">— انتخاب —</option>
+              <option value="تامین">تامین</option>
+              <option value="پخش">پخش</option>
+              <option value="تولید">تولید</option>
+            </select>
+            <div style="font-size:11px;color:var(--amber);margin-top:4px">⚠️ برای معاونت سیما الزامی است</div>
+          </div>
+          <div class="field row-2">
+            <div>
+              <label>تاریخ انتقال *</label>
+              <input id="tr-date" placeholder="1405/06/15" dir="ltr">
+            </div>
+            <div>
+              <label>نحوه انتقال</label>
+              <select id="tr-method">
+                <option>ابلاغ</option>
+                <option>درخواست خود</option>
+                <option>حکم انتصاب</option>
+                <option>تشکیلاتی</option>
+                <option>سایر</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>توضیحات</label>
+            <textarea id="tr-note" rows="2" placeholder="اختیاری..."></textarea>
+          </div>
+
+          <button class="btn primary" style="width:100%;justify-content:center" onclick="doTransfer()">ثبت انتقال</button>
+
+          <div class="history" id="tr-history-box" style="display:none">
+            <h4>سابقهٔ انتقالات</h4>
+            <div id="tr-history"></div>
+          </div>
+        </div>
+
+        <div class="side-card status-box">
+          <h3><span class="ico">⇄</span><span>تبدیل وضعیت</span></h3>
+
+          <div class="arrow-flow">
+            <div class="src">
+              <div class="lbl">وضعیت فعلی</div>
+              <div class="val" id="st-from">—</div>
+            </div>
+            <div class="arr">←</div>
+            <div class="dst">
+              <div class="lbl">وضعیت جدید</div>
+              <div class="val" id="st-to">—</div>
+            </div>
+          </div>
+
+          <div class="field row-2">
+            <div>
+              <label>وضعیت جدید *</label>
+              <select id="st-type" onchange="updateStatusDest()"><option value="">—</option></select>
+            </div>
+            <div>
+              <label>تاریخ تبدیل وضعیت *</label>
+              <input id="st-date" placeholder="1405/06/15" dir="ltr">
+            </div>
+          </div>
+          <div class="field">
+            <label>نحوهٔ تبدیل</label>
+            <select id="st-method">
+              <option>ابلاغ</option>
+              <option>دستور مدیر</option>
+              <option>مقررات</option>
+              <option>سایر</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>توضیحات</label>
+            <textarea id="st-note" rows="2" placeholder="اختیاری..."></textarea>
+          </div>
+
+          <button class="btn green" style="width:100%;justify-content:center" onclick="doStatusChange()">ثبت تبدیل وضعیت</button>
+
+          <div class="history" id="st-history-box" style="display:none">
+            <h4>سابقهٔ تبدیل وضعیت</h4>
+            <div id="st-history"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn" style="flex:1;justify-content:center" onclick="openEdit(currentPersonId)">ویرایش اطلاعات</button>
+          <button class="btn red" onclick="doDelete(currentPersonId)">حذف</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /view-bank -->
+
+  <div id="view-templates" style="display:none">
+    <div style="background:var(--panel);border:1px solid var(--br);border-radius:12px;padding:16px 18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <div style="font-size:15px;font-weight:800">الگوی مصوب سازمانی</div>
+        <div style="font-size:11.5px;color:var(--tx3)" id="tpl-count">—</div>
+        <div style="flex:1"></div>
+        <button class="btn" onclick="openTemplateImport()">ایمپورت اکسل</button>
+        <button class="btn gold" onclick="location.href='/api/templates/sample'">خروجی اکسل</button>
+        <button class="btn primary" onclick="saveAllTemplates()">ثبت تغییرات</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+        <div>
+          <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">معاونت</label>
+          <select id="tpl-filter-deputy" onchange="onTemplateDeputyChange()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-family:inherit;font-size:12.5px">
+            <option value="">همه</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">شبکه / مرکز</label>
+          <select id="tpl-filter-center" onchange="loadMatrix()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-family:inherit;font-size:12.5px">
+            <option value="">همه</option>
+          </select>
+        </div>
+        <div id="tpl-supply-wrapper" style="display:none">
+          <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">تامین / پخش / تولید</label>
+          <select id="tpl-filter-supply" onchange="loadMatrix()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-family:inherit;font-size:12.5px">
+            <option value="">همه</option>
+            <option value="تامین">تامین</option>
+            <option value="پخش">پخش</option>
+            <option value="تولید">تولید</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">جستجو در عنوان شغلی</label>
+          <input id="tpl-filter-search" placeholder="جستجو..." oninput="filterMatrix()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-family:inherit;font-size:12.5px">
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="max-height:calc(100vh - 300px)">
+      <table id="tpl-matrix-table">
+        <thead>
+          <tr>
+            <th style="width:50px">#</th>
+            <th style="width:130px">معاونت</th>
+            <th style="width:150px">شبکه / مرکز</th>
+            <th style="width:90px">تامین/پخش</th>
+            <th style="width:180px">عنوان شغلی</th>
+            <th style="width:110px">الگو مصوب</th>
+            <th style="width:80px">رسمی</th>
+            <th style="width:80px">پیمانی</th>
+            <th style="width:120px">خرید خدمات</th>
+            <th style="width:80px">شرکتی</th>
+            <th style="width:80px">ماده ۲۸</th>
+            <th style="width:100px">مجموع رسمی</th>
+          </tr>
+        </thead>
+        <tbody id="tpl-matrix-body">
+          <tr><td colspan="12" style="text-align:center;padding:40px;color:var(--tx3)">در حال بارگذاری...</td></tr>
+        </tbody>
+        <tfoot>
+          <tr id="tpl-matrix-tfoot" style="background:var(--bg2)">
+            <td colspan="5" style="font-weight:800;color:var(--blue2)">جمع کل</td>
+            <td id="sum-template" style="font-weight:800;direction:ltr;text-align:center;color:var(--blue2)">0</td>
+            <td id="sum-formal" style="font-weight:800;direction:ltr;text-align:center">0</td>
+            <td id="sum-contractual" style="font-weight:800;direction:ltr;text-align:center">0</td>
+            <td id="sum-buy" style="font-weight:800;direction:ltr;text-align:center">0</td>
+            <td id="sum-corp" style="font-weight:800;direction:ltr;text-align:center">0</td>
+            <td id="sum-28" style="font-weight:800;direction:ltr;text-align:center">0</td>
+            <td id="sum-total" style="font-weight:800;direction:ltr;text-align:center;color:var(--green)">0</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  
+
+  <div id="view-shifts" style="display:none">
+    <div style="background:var(--panel);border:1px solid var(--br);border-radius:12px;padding:16px 18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <div style="font-size:15px;font-weight:800">مبالغ و تعداد شیفت</div>
+        <div style="font-size:11.5px;color:var(--tx3)" id="shifts-count">—</div>
+        <div style="flex:1"></div>
+        <button class="btn primary" onclick="loadShifts()">بروزرسانی</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+        <div>
+          <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">معاونت</label>
+          <select id="shifts-filter-deputy" onchange="onShiftsDeputyChange()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-family:inherit;font-size:12.5px">
+            <option value="">همه</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">شبکه / مرکز</label>
+          <select id="shifts-filter-center" onchange="loadShifts()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-family:inherit;font-size:12.5px">
+            <option value="">همه</option>
+          </select>
+        </div>
+        <div id="shifts-supply-wrapper" style="display:none">
+          <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">تامین / پخش / تولید</label>
+          <select id="shifts-filter-supply" onchange="loadShifts()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-family:inherit;font-size:12.5px">
+            <option value="">همه</option>
+            <option value="تامین">تامین</option>
+            <option value="پخش">پخش</option>
+            <option value="تولید">تولید</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="max-height:calc(100vh - 300px)">
+      <table id="shifts-matrix-table">
+        <thead>
+          <tr>
+            <th style="width:50px">#</th>
+            <th style="width:120px">معاونت</th>
+            <th style="width:130px">شبکه / مرکز</th>
+            <th style="width:170px">عنوان شغلی</th>
+            <th style="width:80px">تامین/پخش</th>
+            <th style="width:100px">نوع استخدام</th>
+            <th style="width:130px">مبلغ هر شیفت (ریال)</th>
+            <th style="width:90px">تعداد شیفت</th>
+            <th style="width:80px">عملیات</th>
+          </tr>
+        </thead>
+        <tbody id="shifts-matrix-body">
+          <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--tx3)">در حال بارگذاری...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <dialog id="dlg-person">
+  <div class="dh">
+    <h2 id="person-title">افزودن نفر</h2>
+    <button class="close" onclick="document.getElementById('dlg-person').close()">×</button>
+  </div>
+  <div class="db">
+    <input type="hidden" id="p-id">
+    <div class="grid-2">
+      <div class="field"><label>کد ملی *</label><input id="p-nc" maxlength="10" dir="ltr"></div>
+      <div class="field"><label>نام</label><input id="p-first"></div>
+      <div class="field"><label>نام خانوادگی</label><input id="p-last"></div>
+      <div class="field"><label>عنوان شغلی</label><select id="p-job"></select></div>
+      <div class="field"><label>نوع قرارداد</label><select id="p-contract"></select></div>
+      <div class="field"><label>تاریخ تبدیل وضعیت</label><input id="p-statusdate" placeholder="1405/06/15" dir="ltr"></div>
+      <div class="field"><label>معاونت</label><select id="p-deputy" onchange="onPersonDeputyChange()"><option value="">—</option></select></div>
+      <div class="field"><label>شبکه / مرکز</label><select id="p-center"><option value="">—</option></select></div>
+      <div class="field supply-field" id="p-supply-wrapper" style="grid-column:1/-1">
+        <label>تامین / پخش / تولید *</label>
+        <select id="p-supply"><option value="">—</option></select>
+        <div style="font-size:11px;color:var(--amber);margin-top:4px">⚠️ فقط برای «معاونت سیما» — برای بقیه معاونت‌ها خالی بماند</div>
+      </div>
+    </div>
+  </div>
+  <div class="df">
+    <button class="btn" onclick="document.getElementById('dlg-person').close()">انصراف</button>
+    <button class="btn primary" onclick="savePerson()">ذخیره</button>
+  </div>
+</dialog>
+
+<script>
+var JOB_TITLES = [];
+var CONTRACT_TYPES = [];
+var SUPPLY_TYPES = [];
+var SIMA_DEPUTY = "معاونت سیما";
+var DEPUTIES = [];
+var ALL_CENTERS = [];
+var CURRENT_ROWS = [];
+var currentPersonId = null;
+var _debTimer = null;
+
+function toast(msg, kind){
+  var t = document.createElement('div');
+  t.className = 'toast ' + (kind || 'ok');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 4000);
+}
+function fmt(n){
+  if (n === null || n === undefined || n === '') return '0';
+  var num = Number(n);
+  if (isNaN(num)) return String(n);
+  return num.toLocaleString('fa-IR');
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function badgeFor(ct){
+  if (!ct) return '<span class="badge none">—</span>';
+  var cls = 'badge';
+  if (ct === 'رسمی') cls += ' رسمی';
+  else if (ct === 'پیمانی') cls += ' پیمانی';
+  else if (ct === 'شرکتی') cls += ' شرکتی';
+  else if (ct === 'ماده 28') cls += ' m28';
+  else if (ct === 'قرارداد خرید خدمات') cls += ' buy';
+  return '<span class="'+cls+'">'+esc(ct)+'</span>';
+}
+function supplyBadge(s){
+  if (!s) return '<span class="badge none">—</span>';
+  return '<span class="badge supply-'+esc(s)+'">'+esc(s)+'</span>';
+}
+
+async function loadMeta(){
+  var r = await fetch('/api/personnel/meta');
+  var d = await r.json();
+  JOB_TITLES = d.job_titles || [];
+  CONTRACT_TYPES = d.contract_types || [];
+  SUPPLY_TYPES = d.supply_types || ["تامین", "پخش", "تولید"];
+  SIMA_DEPUTY = d.sima_deputy || "معاونت سیما";
+
+  document.getElementById('f-job').innerHTML = '<option value="همه">همه</option>' +
+    JOB_TITLES.map(function(j){ return '<option>'+j+'</option>'; }).join('');
+  document.getElementById('f-contract').innerHTML = '<option value="همه">همه</option>' +
+    CONTRACT_TYPES.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+  document.getElementById('p-job').innerHTML = '<option value="">— انتخاب —</option>' +
+    JOB_TITLES.map(function(j){ return '<option>'+j+'</option>'; }).join('');
+  document.getElementById('p-contract').innerHTML = '<option value="">— انتخاب —</option>' +
+    CONTRACT_TYPES.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+  document.getElementById('p-supply').innerHTML = '<option value="">— انتخاب —</option>' +
+    SUPPLY_TYPES.map(function(s){ return '<option>'+s+'</option>'; }).join('');
+  document.getElementById('st-type').innerHTML = '<option value="">— انتخاب —</option>' +
+    CONTRACT_TYPES.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+
+  var c2 = await (await fetch('/api/all-centers')).json();
+  ALL_CENTERS = c2;
+  DEPUTIES = Array.from(new Set(c2.map(function(x){ return x.deputy; }).filter(Boolean))).sort();
+
+  document.getElementById('f-deputy').innerHTML = '<option value="همه">همه</option>' +
+    DEPUTIES.map(function(d){ return '<option>'+d+'</option>'; }).join('');
+  document.getElementById('p-deputy').innerHTML = '<option value="">—</option>' +
+    DEPUTIES.map(function(d){ return '<option>'+d+'</option>'; }).join('');
+  document.getElementById('tr-deputy').innerHTML = '<option value="">—</option>' +
+    DEPUTIES.map(function(d){ return '<option>'+d+'</option>'; }).join('');
+}
+
+function toggleSupplyVisibility(){
+  // باکس همیشه نمایش داده میشه، فقط برای غیرسیما غیرفعال
+  var dep = document.getElementById('p-deputy').value;
+  var sel = document.getElementById('p-supply');
+  if (dep === SIMA_DEPUTY){
+    sel.disabled = false;
+    sel.style.opacity = '1';
+  } else {
+    sel.disabled = true;
+    sel.value = '';
+    sel.style.opacity = '0.5';
+  }
+}
+
+function onDeputyChange(){
+  var dep = document.getElementById('f-deputy').value;
+  var centers = (dep === 'همه') ? ALL_CENTERS : ALL_CENTERS.filter(function(c){ return c.deputy === dep; });
+  document.getElementById('f-center').innerHTML = '<option value="همه">همه</option>' +
+    centers.map(function(c){ return '<option>'+c.name+'</option>'; }).join('');
+  loadList();
+}
+function onPersonDeputyChange(){
+  var dep = document.getElementById('p-deputy').value;
+  var centers = dep ? ALL_CENTERS.filter(function(c){ return c.deputy === dep; }) : ALL_CENTERS;
+  document.getElementById('p-center').innerHTML = '<option value="">—</option>' +
+    centers.map(function(c){ return '<option>'+c.name+'</option>'; }).join('');
+  toggleSupplyVisibility();
+}
+function onTransferDeputyChange(){
+  var dep = document.getElementById('tr-deputy').value;
+  var centers = dep ? ALL_CENTERS.filter(function(c){ return c.deputy === dep; }) : ALL_CENTERS;
+  document.getElementById('tr-center').innerHTML = '<option value="">—</option>' +
+    centers.map(function(c){ return '<option>'+c.name+'</option>'; }).join('');
+
+  // نمایش/مخفی کردن فیلد تامین/پخش
+  var supWrap = document.getElementById('tr-supply-wrapper');
+  var supSel = document.getElementById('tr-supply');
+  if (supWrap){
+    if (dep === SIMA_DEPUTY){
+      supWrap.style.display = '';
+    } else {
+      supWrap.style.display = 'none';
+      if (supSel) supSel.value = '';
+    }
+  }
+
+  updateTransferDest();
+}
+function updateTransferDest(){
+  var v = document.getElementById('tr-center').value;
+  var supEl = document.getElementById('tr-supply');
+  var supWrap = document.getElementById('tr-supply-wrapper');
+  var sup = (supEl && supWrap && supWrap.style.display !== 'none') ? supEl.value : '';
+  var text = v || '—';
+  if (sup) text += ' / ' + sup;
+  document.getElementById('tr-to').textContent = text;
+}
+function updateStatusDest(){
+  var v = document.getElementById('st-type').value;
+  document.getElementById('st-to').textContent = v || '—';
+}
+function debouncedLoad(){
+  clearTimeout(_debTimer);
+  _debTimer = setTimeout(loadList, 400);
+}
+
+async function loadList(){
+  var params = new URLSearchParams();
+  var s = document.getElementById('f-search').value.trim();
+  if (s) params.set('search', s);
+  var d = document.getElementById('f-deputy').value; if (d && d !== 'همه') params.set('deputy', d);
+  var c = document.getElementById('f-center').value; if (c && c !== 'همه') params.set('center', c);
+  var j = document.getElementById('f-job').value; if (j && j !== 'همه') params.set('job_title', j);
+  var k = document.getElementById('f-contract').value; if (k && k !== 'همه') params.set('contract_type', k);
+
+  var r = await fetch('/api/personnel/enriched?' + params.toString());
+  var data = await r.json();
+  CURRENT_ROWS = data.items || [];
+  document.getElementById('count-sub').textContent = data.total + ' نفر ثبت‌شده';
+
+  var tbody = document.getElementById('rows');
+  if (!CURRENT_ROWS.length){
+    tbody.innerHTML = '<tr><td colspan="13"><div class="empty"><div class="big">🗂️</div>هیچ نفری یافت نشد</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = CURRENT_ROWS.map(function(r, i){
+    var trFlow = r.tr_count > 0
+      ? '<span style="color:var(--green)">'+esc(r.tr_from_center||'—')+' ← '+esc(r.tr_to_center||'—')+'</span>'
+      : '<span style="color:var(--tx3)">—</span>';
+    var trDate = r.tr_date
+      ? '<span class="date" style="color:var(--blue2)">'+esc(r.tr_date)+'</span>'
+      : '<span style="color:var(--tx3)">—</span>';
+    var stFlow = r.st_count > 0
+      ? '<span style="color:var(--amber)">'+esc(r.st_from||'—')+' ← '+esc(r.st_to||'—')+'</span>'
+      : '<span style="color:var(--tx3)">—</span>';
+    var stDate = r.st_date
+      ? '<span class="date" style="color:var(--amber)">'+esc(r.st_date)+'</span>'
+      : '<span style="color:var(--tx3)">—</span>';
+
+    var supplyCell = (r.deputy === SIMA_DEPUTY) ? supplyBadge(r.supply_type) : '<span class="badge none">—</span>';
+
+    return '<tr data-id="'+r.id+'" onclick="selectPerson('+r.id+')">' +
+      '<td>'+(i+1)+'</td>' +
+      '<td class="code">'+esc(r.national_code)+'</td>' +
+      '<td>'+esc(r.first_name)+'</td>' +
+      '<td>'+esc(r.last_name)+'</td>' +
+      '<td class="small">'+esc(r.job_title||'—')+'</td>' +
+      '<td>'+badgeFor(r.contract_type)+'</td>' +
+      '<td class="small">'+esc(r.deputy||'—')+'</td>' +
+      '<td class="small">'+esc(r.center||'—')+'</td>' +
+      '<td>'+supplyCell+'</td>' +
+      '<td class="date">'+esc(r.status_changed_date||'—')+'</td>' +
+      '<td class="flow" title="'+esc(r.tr_from_center||'')+' ← '+esc(r.tr_to_center||'')+'">'+trFlow+' <span style="color:var(--tx3);font-size:10px">'+trDate+'</span></td>' +
+      '<td class="flow" title="'+esc(r.st_from||'')+' ← '+esc(r.st_to||'')+'">'+stFlow+' <span style="color:var(--tx3);font-size:10px">'+stDate+'</span></td>' +
+      '<td onclick="event.stopPropagation();">' +
+        '<button class="btn sm red" onclick="doDelete('+r.id+', \''+esc(r.national_code)+'\')" title="حذف">🗑</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function selectPerson(id){
+  document.querySelectorAll('#rows tr').forEach(function(tr){ tr.classList.remove('selected'); });
+  var tr = document.querySelector('#rows tr[data-id="'+id+'"]');
+  if (tr) tr.classList.add('selected');
+
+  currentPersonId = id;
+
+  var r = await (await fetch('/api/personnel/' + id)).json();
+
+  document.getElementById('pi-name').textContent = (r.first_name||'') + ' ' + (r.last_name||'');
+  document.getElementById('pi-nc').textContent = r.national_code || '';
+  document.getElementById('pi-job').textContent = r.job_title || '—';
+  document.getElementById('pi-contract').innerHTML = badgeFor(r.contract_type);
+  document.getElementById('pi-deputy').textContent = r.deputy || '—';
+  document.getElementById('pi-center').textContent = r.center || '—';
+
+  // تامین/پخش — فقط برای سیما
+  var supplyRow = document.getElementById('pi-supply-row');
+  if (r.deputy === SIMA_DEPUTY){
+    supplyRow.style.display = '';
+    document.getElementById('pi-supply').innerHTML = supplyBadge(r.supply_type);
+  } else {
+    supplyRow.style.display = 'none';
+  }
+
+  document.getElementById('tr-from').textContent = (r.deputy||'—') + ' / ' + (r.center||'—');
+  document.getElementById('tr-deputy').value = '';
+  document.getElementById('tr-center').innerHTML = '<option value="">—</option>';
+  document.getElementById('tr-date').value = '';
+  document.getElementById('tr-note').value = '';
+  document.getElementById('tr-to').textContent = '—';
+  document.getElementById('tr-method').value = 'ابلاغ';
+  var _supEl2 = document.getElementById('tr-supply');
+  if (_supEl2) _supEl2.value = '';
+  var _supWrap2 = document.getElementById('tr-supply-wrapper');
+  if (_supWrap2) _supWrap2.style.display = 'none';
+
+  document.getElementById('st-from').textContent = r.contract_type || '—';
+  document.getElementById('st-type').value = '';
+  document.getElementById('st-date').value = '';
+  document.getElementById('st-note').value = '';
+  document.getElementById('st-to').textContent = '—';
+  document.getElementById('st-method').value = 'ابلاغ';
+
+  document.getElementById('no-select').style.display = 'none';
+  document.getElementById('side-content').style.display = '';
+
+  await loadTransfers(id);
+  await loadStatusChanges(id);
+}
+
+async function loadTransfers(id){
+  var rows = await (await fetch('/api/personnel/' + id + '/transfers')).json();
+  var box = document.getElementById('tr-history-box');
+  var inner = document.getElementById('tr-history');
+  if (!rows.length){
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+  inner.innerHTML = rows.map(function(t){
+    return '<div class="h-item green">' +
+      '<div class="h-meta">' +
+        '<div class="h-desc">'+esc(t.from_center||'—')+' ← '+esc(t.to_center||'—')+'</div>' +
+        '<div class="h-date">'+esc(t.transfer_date)+'</div>' +
+      '</div>' +
+      '<div class="h-note">'+esc(t.transfer_method||'')+(t.note ? ' — '+esc(t.note) : '')+'</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function loadStatusChanges(id){
+  var rows = await (await fetch('/api/personnel/' + id + '/status-changes')).json();
+  var box = document.getElementById('st-history-box');
+  var inner = document.getElementById('st-history');
+  if (!rows.length){
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+  inner.innerHTML = rows.map(function(t){
+    return '<div class="h-item amber">' +
+      '<div class="h-meta">' +
+        '<div class="h-desc">'+esc(t.from_contract_type||'—')+' ← '+esc(t.to_contract_type)+'</div>' +
+        '<div class="h-date">'+esc(t.change_date)+'</div>' +
+      '</div>' +
+      '<div class="h-note">'+esc(t.change_method||'')+(t.note ? ' — '+esc(t.note) : '')+'</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function doTransfer(){
+  if (!currentPersonId){ toast('اول یک نفر را انتخاب کنید', 'warn'); return; }
+  var dep = document.getElementById('tr-deputy').value;
+  var supEl = document.getElementById('tr-supply');
+  var supWrap = document.getElementById('tr-supply-wrapper');
+  var supply = (supEl && supWrap && supWrap.style.display !== 'none') ? supEl.value : '';
+
+  var payload = {
+    to_deputy: dep,
+    to_center: document.getElementById('tr-center').value.trim(),
+    to_supply_type: supply,
+    transfer_date: document.getElementById('tr-date').value.trim(),
+    transfer_method: document.getElementById('tr-method').value,
+    note: document.getElementById('tr-note').value.trim(),
+  };
+
+  // اعتبارسنجی
+  if (!payload.to_center || !payload.transfer_date){
+    toast('مقصد و تاریخ انتقال الزامی است', 'warn');
+    return;
+  }
+  if (dep === SIMA_DEPUTY && !payload.to_supply_type){
+    toast('برای معاونت سیما، تامین/پخش/تولید الزامی است', 'warn');
+    return;
+  }
+  var r = await fetch('/api/personnel/' + currentPersonId + '/transfer', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  var d = await r.json();
+  if (r.ok){
+    toast('انتقال ثبت شد', 'ok');
+    document.getElementById('tr-deputy').value = '';
+    document.getElementById('tr-center').innerHTML = '<option value="">—</option>';
+    document.getElementById('tr-date').value = '';
+    document.getElementById('tr-note').value = '';
+    document.getElementById('tr-to').textContent = '—';
+    var _supEl = document.getElementById('tr-supply');
+    if (_supEl) _supEl.value = '';
+    var _supWrap = document.getElementById('tr-supply-wrapper');
+    if (_supWrap) _supWrap.style.display = 'none';
+    await loadTransfers(currentPersonId);
+    await loadList();
+    var r2 = await (await fetch('/api/personnel/' + currentPersonId)).json();
+    document.getElementById('tr-from').textContent = (r2.deputy||'—') + ' / ' + (r2.center||'—');
+    document.getElementById('pi-deputy').textContent = r2.deputy || '—';
+    document.getElementById('pi-center').textContent = r2.center || '—';
+  } else {
+    toast(d.error || 'خطا', 'err');
+  }
+}
+
+async function doStatusChange(){
+  if (!currentPersonId){ toast('اول یک نفر را انتخاب کنید', 'warn'); return; }
+  var payload = {
+    to_contract_type: document.getElementById('st-type').value.trim(),
+    change_date: document.getElementById('st-date').value.trim(),
+    change_method: document.getElementById('st-method').value,
+    note: document.getElementById('st-note').value.trim(),
+  };
+  if (!payload.to_contract_type || !payload.change_date){
+    toast('وضعیت جدید و تاریخ الزامی است', 'warn');
+    return;
+  }
+  var r = await fetch('/api/personnel/' + currentPersonId + '/status-change', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  var d = await r.json();
+  if (r.ok){
+    toast('تبدیل وضعیت ثبت شد', 'ok');
+    document.getElementById('st-type').value = '';
+    document.getElementById('st-date').value = '';
+    document.getElementById('st-note').value = '';
+    document.getElementById('st-to').textContent = '—';
+    await loadStatusChanges(currentPersonId);
+    await loadList();
+    var r2 = await (await fetch('/api/personnel/' + currentPersonId)).json();
+    document.getElementById('st-from').textContent = r2.contract_type || '—';
+    document.getElementById('pi-contract').innerHTML = badgeFor(r2.contract_type);
+  } else {
+    toast(d.error || 'خطا', 'err');
+  }
+}
+
+function openAddPerson(){
+  document.getElementById('person-title').textContent = 'افزودن نفر';
+  document.getElementById('p-id').value = '';
+  ['p-nc','p-first','p-last','p-statusdate'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('p-nc').disabled = false;
+  document.getElementById('p-job').value = '';
+  document.getElementById('p-contract').value = '';
+  document.getElementById('p-deputy').value = '';
+  document.getElementById('p-center').innerHTML = '<option value="">—</option>';
+  document.getElementById('p-supply').value = '';
+  toggleSupplyVisibility();
+  document.getElementById('dlg-person').showModal();
+}
+
+async function openEdit(id){
+  if (!id){ toast('اول یک نفر را انتخاب کنید', 'warn'); return; }
+  var r = await (await fetch('/api/personnel/' + id)).json();
+  document.getElementById('person-title').textContent = 'ویرایش نفر';
+  document.getElementById('p-id').value = r.id;
+  document.getElementById('p-nc').value = r.national_code || '';
+  document.getElementById('p-nc').disabled = true;
+  document.getElementById('p-first').value = r.first_name || '';
+  document.getElementById('p-last').value = r.last_name || '';
+  document.getElementById('p-job').value = r.job_title || '';
+  document.getElementById('p-contract').value = r.contract_type || '';
+  document.getElementById('p-statusdate').value = r.status_changed_date || '';
+  document.getElementById('p-deputy').value = r.deputy || '';
+  onPersonDeputyChange();
+  document.getElementById('p-center').value = r.center || '';
+  document.getElementById('p-supply').value = r.supply_type || '';
+  toggleSupplyVisibility();
+  document.getElementById('dlg-person').showModal();
+}
+
+async function savePerson(){
+  var id = document.getElementById('p-id').value;
+  var dep = document.getElementById('p-deputy').value;
+  var supply = (dep === SIMA_DEPUTY) ? document.getElementById('p-supply').value : '';
+
+  var payload = {
+    national_code: document.getElementById('p-nc').value.trim(),
+    first_name: document.getElementById('p-first').value.trim(),
+    last_name: document.getElementById('p-last').value.trim(),
+    job_title: document.getElementById('p-job').value,
+    contract_type: document.getElementById('p-contract').value,
+    deputy: dep,
+    center: document.getElementById('p-center').value,
+    supply_type: supply,
+    status_changed_date: document.getElementById('p-statusdate').value.trim(),
+  };
+  var url = '/api/personnel';
+  var method = 'POST';
+  if (id){ url = '/api/personnel/' + id; method = 'PUT'; }
+  var r = await fetch(url, {
+    method: method, headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  var d = await r.json();
+  if (r.ok){
+    document.getElementById('dlg-person').close();
+    toast(id ? 'ویرایش شد' : 'نفر اضافه شد', 'ok');
+    loadList();
+    if (id && currentPersonId === Number(id)){
+      selectPerson(Number(id));
+    }
+  } else {
+    toast(d.error || 'خطا', 'err');
+  }
+}
+
+async function doDelete(id, nc){
+  if (!id){ toast('اول یک نفر را انتخاب کنید', 'warn'); return; }
+  var msg = 'حذف این نفر؟';
+  if (nc) msg = 'حذف نفر با کد ملی ' + nc + '؟\n\nتمام سابقهٔ انتقالات و تبدیل وضعیت هم پاک میشه.';
+  else msg = 'حذف این نفر؟\n\nتمام سابقهٔ انتقالات و تبدیل وضعیت هم پاک میشه.';
+  if (!confirm(msg)) return;
+
+  var r = await fetch('/api/personnel/' + id, {method: 'DELETE'});
+  if (r.ok){
+    toast('حذف شد', 'ok');
+    if (currentPersonId === Number(id)){
+      document.getElementById('no-select').style.display = '';
+      document.getElementById('side-content').style.display = 'none';
+      currentPersonId = null;
+    }
+    loadList();
+  } else {
+    toast('خطا در حذف', 'err');
+  }
+}
+
+function openImport(){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.xlsx';
+  input.onchange = async function(){
+    if (!input.files.length) return;
+    var fd = new FormData();
+    fd.append('file', input.files[0]);
+    toast('در حال ایمپورت...', 'ok');
+    var r = await fetch('/api/personnel/import', {method: 'POST', body: fd});
+    var d = await r.json();
+    if (r.ok){
+      toast(d.result.ok + ' نفر جدید، ' + d.result.updated + ' به‌روز', 'ok');
+      loadList();
+    } else {
+      toast(d.error || 'خطا', 'err');
+    }
+  };
+  input.click();
+}
+
+// STM_V3_MSG — گوش دادن به پیام parent برای تغییر view
+window.addEventListener('message', function(e){
+  if (e.data && e.data.action === 'openHRView'){
+    switchView(e.data.view);
+  }
+});
+
+// STM_V3_MSG — خواندن view از URL
+(function(){
+  try {
+    var p = new URLSearchParams(window.location.search);
+    var v = p.get('view');
+    if (v === 'templates') {
+      setTimeout(function(){ switchView('templates'); }, 300);
+    }
+  } catch(e){}
+})();
+
+(async function(){
+  await loadMeta();
+  await loadTemplateFilters();
+  await loadShiftsFilters();
+  loadList();
+})();
+
+// ============================================================
+// الگو مصوب — ماتریس کامل
+// ============================================================
+var MATRIX_ROWS = [];
+var MATRIX_LIMIT = 500;
+var MATRIX_OFFSET = 0;
+
+function switchView(v){
+  var viewBank = document.getElementById('view-bank');
+  var viewTpl = document.getElementById('view-templates');
+  var viewShifts = document.getElementById('view-shifts');
+  if (!viewBank) return;
+
+  viewBank.style.display = (v === 'bank') ? '' : 'none';
+  if (viewTpl) viewTpl.style.display = (v === 'templates') ? '' : 'none';
+  if (viewShifts) viewShifts.style.display = (v === 'shifts') ? '' : 'none';
+
+  var mainTB = document.getElementById('main-topbar');
+  if (mainTB) mainTB.style.display = (v === 'bank') ? '' : 'none';
+
+  if (v === 'templates') loadMatrix();
+  if (v === 'shifts') loadShifts();
+}
+
+async function loadMatrix(){
+  var tbody = document.getElementById('tpl-matrix-body');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--tx3)">در حال بارگذاری...</td></tr>';
+
+  var depEl = document.getElementById('tpl-filter-deputy');
+  var cenEl = document.getElementById('tpl-filter-center');
+  var supEl = document.getElementById('tpl-filter-supply');
+  var dep = depEl ? depEl.value : '';
+  var cen = cenEl ? cenEl.value : '';
+  var sup = supEl ? supEl.value : '';
+
+  var params = new URLSearchParams();
+  if (dep) params.set('deputy', dep);
+  if (cen) params.set('center', cen);
+  // تامین/پخش فقط برای سیما فرستاده می‌شه
+  if (dep === SIMA_DEPUTY && sup) params.set('supply_type', sup);
+
+  try {
+    var r = await fetch('/api/templates/matrix?' + params.toString());
+    var data = await r.json();
+    if (!Array.isArray(data)){
+      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:40px;color:#fca5a5">خطا در دریافت داده</td></tr>';
+      return;
+    }
+    MATRIX_ROWS = data;
+    MATRIX_OFFSET = 0;
+    renderMatrix();
+    var cnt = document.getElementById('tpl-count');
+    if (cnt) cnt.textContent = data.length + ' ردیف کل';
+  } catch(e){
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:40px;color:#fca5a5">خطا: ' + e + '</td></tr>';
+  }
+}
+
+function renderMatrix(){
+  var tbody = document.getElementById('tpl-matrix-body');
+  if (!tbody) return;
+
+  var searchEl = document.getElementById('tpl-filter-search');
+  var search = searchEl ? searchEl.value : '';
+  search = (search || '').trim().toLowerCase();
+
+  var rows = MATRIX_ROWS;
+  if (search){
+    rows = rows.filter(function(r){
+      return (r.job_title || '').toLowerCase().indexOf(search) !== -1
+          || (r.center || '').toLowerCase().indexOf(search) !== -1
+          || (r.deputy || '').toLowerCase().indexOf(search) !== -1;
+    });
+  }
+
+  if (!rows.length){
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--tx3)">داده‌ای یافت نشد</td></tr>';
+    updateMatrixSum();
+    return;
+  }
+
+  // نمایش همه یا محدود
+  var visible = rows;
+  if (rows.length > MATRIX_LIMIT){
+    visible = rows.slice(0, MATRIX_LIMIT);
+  }
+
+  tbody.innerHTML = visible.map(function(r, i){
+    var supplyCell = (r.deputy === SIMA_DEPUTY && r.supply_type)
+      ? supplyBadge(r.supply_type)
+      : '<span style="color:var(--tx3)">—</span>';
+
+    return '<tr>' +
+      '<td>' + (i+1) + '</td>' +
+      '<td class="small">' + esc(r.deputy) + '</td>' +
+      '<td class="small">' + esc(r.center) + '</td>' +
+      '<td>' + supplyCell + '</td>' +
+      '<td class="small" style="font-weight:600">' + esc(r.job_title) + '</td>' +
+      '<td>' +
+        '<input type="text" inputmode="numeric" class="tpl-matrix-input" ' +
+        'data-deputy="' + esc(r.deputy) + '" ' +
+        'data-center="' + esc(r.center) + '" ' +
+        'data-supply="' + esc(r.supply_type || '') + '" ' +
+        'data-job="' + esc(r.job_title) + '" ' +
+        'value="' + (r.template || 0) + '" ' +
+        'oninput="updateMatrixSum()" ' +
+        'style="width:90px;padding:6px 9px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;direction:ltr;text-align:center;font-family:ui-monospace,monospace;font-size:12.5px">' +
+      '</td>' +
+      '<td class="num" style="direction:ltr;text-align:center">' + fmt(r.formal) + '</td>' +
+      '<td class="num" style="direction:ltr;text-align:center">' + fmt(r.contractual) + '</td>' +
+      '<td class="num" style="direction:ltr;text-align:center">' + fmt(r.buy_services) + '</td>' +
+      '<td class="num" style="direction:ltr;text-align:center">' + fmt(r.corporate) + '</td>' +
+      '<td class="num" style="direction:ltr;text-align:center">' + fmt(r.article28) + '</td>' +
+      '<td class="num" style="direction:ltr;text-align:center;font-weight:700;color:var(--green)">' + fmt(r.total_formal) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  updateMatrixSum();
+
+  if (rows.length > MATRIX_LIMIT){
+    tbody.innerHTML += '<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--tx3);background:var(--bg2)">' +
+      'نمایش ' + MATRIX_LIMIT + ' ردیف از ' + rows.length + ' — برای دیدن بقیه از فیلتر استفاده کنید' +
+      '</td></tr>';
+  }
+
+  var cnt = document.getElementById('tpl-count');
+  if (cnt) cnt.textContent = rows.length + ' ردیف نمایش داده می‌شود';
+}
+
+function filterMatrix(){
+  renderMatrix();
+}
+
+function updateMatrixSum(){
+  var inputs = document.querySelectorAll('#tpl-matrix-body input.tpl-matrix-input');
+  var sumTpl = 0, sumFormal = 0, sumContr = 0, sumBuy = 0, sumCorp = 0, sum28 = 0, sumTotal = 0;
+  inputs.forEach(function(inp){
+    var v = parseInt((inp.value || '0').replace(/[^0-9]/g, ''), 10) || 0;
+    sumTpl += v;
+    var row = MATRIX_ROWS.find(function(r){
+      return r.deputy === inp.dataset.deputy
+          && r.center === inp.dataset.center
+          && (r.supply_type || '') === (inp.dataset.supply || '')
+          && r.job_title === inp.dataset.job;
+    });
+    if (row){
+      sumFormal += row.formal || 0;
+      sumContr += row.contractual || 0;
+      sumBuy += row.buy_services || 0;
+      sumCorp += row.corporate || 0;
+      sum28 += row.article28 || 0;
+      sumTotal += row.total_formal || 0;
+    }
+  });
+  var el;
+  if ((el = document.getElementById('sum-template'))) el.textContent = fmt(sumTpl);
+  if ((el = document.getElementById('sum-formal'))) el.textContent = fmt(sumFormal);
+  if ((el = document.getElementById('sum-contractual'))) el.textContent = fmt(sumContr);
+  if ((el = document.getElementById('sum-buy'))) el.textContent = fmt(sumBuy);
+  if ((el = document.getElementById('sum-corp'))) el.textContent = fmt(sumCorp);
+  if ((el = document.getElementById('sum-28'))) el.textContent = fmt(sum28);
+  if ((el = document.getElementById('sum-total'))) el.textContent = fmt(sumTotal);
+}
+
+async function saveAllTemplates(){
+  var inputs = document.querySelectorAll('#tpl-matrix-body input.tpl-matrix-input');
+  if (!inputs.length){
+    toast('چیزی برای ذخیره نیست', 'warn');
+    return;
+  }
+
+  var rows = [];
+  inputs.forEach(function(inp){
+    var v = parseInt((inp.value || '0').replace(/[^0-9]/g, ''), 10) || 0;
+    rows.push({
+      deputy: inp.dataset.deputy,
+      center: inp.dataset.center,
+      supply_type: inp.dataset.supply,
+      job_title: inp.dataset.job,
+      count: v
+    });
+  });
+
+  var nonZero = rows.filter(function(r){ return r.count > 0; }).length;
+  if (!confirm('ذخیره ' + rows.length + ' ردیف؟\n(تعداد ردیف‌های با مقدار: ' + nonZero + ')')) return;
+
+  try {
+    var r = await fetch('/api/templates/save-matrix', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ rows: rows })
+    });
+    var d = await r.json();
+    if (r.ok){
+      toast('ذخیره شد — ' + d.saved + ' ردیف', 'ok');
+      loadMatrix();
+    } else {
+      toast(d.error || 'خطا در ذخیره', 'err');
+    }
+  } catch(e){
+    toast('خطا: ' + e, 'err');
+  }
+}
+
+function openTemplateImport(){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.xlsx';
+  input.onchange = async function(){
+    if (!input.files.length) return;
+    var fd = new FormData();
+    fd.append('file', input.files[0]);
+    toast('در حال ایمپورت...', 'ok');
+    try {
+      var r = await fetch('/api/templates/import', {method: 'POST', body: fd});
+      var d = await r.json();
+      if (r.ok){
+        toast(d.result.ok + ' ردیف ذخیره شد', 'ok');
+        loadMatrix();
+      } else {
+        toast(d.error || 'خطا', 'err');
+      }
+    } catch(e){
+      toast('خطا: ' + e, 'err');
+    }
+  };
+  input.click();
+}
+
+function onTemplateDeputyChange(){
+  var depEl = document.getElementById('tpl-filter-deputy');
+  var cenSel = document.getElementById('tpl-filter-center');
+  var supWrap = document.getElementById('tpl-supply-wrapper');
+  var supSel = document.getElementById('tpl-filter-supply');
+  if (!depEl || !cenSel) return;
+
+  var dep = depEl.value;
+  var centers = (dep && dep !== 'همه')
+    ? ALL_CENTERS.filter(function(c){ return c.deputy === dep; })
+    : ALL_CENTERS;
+
+  cenSel.innerHTML = '<option value="">همه</option>' +
+    centers.map(function(c){ return '<option value="'+c.name+'">'+c.name+'</option>'; }).join('');
+
+  // نمایش select تامین/پخش فقط برای سیما
+  if (supWrap){
+    if (dep === SIMA_DEPUTY){
+      supWrap.style.display = '';
+    } else {
+      supWrap.style.display = 'none';
+      if (supSel) supSel.value = '';
+    }
+  }
+
+  loadMatrix();
+}
+
+async function loadTemplateFilters(){
+  var depSel = document.getElementById('tpl-filter-deputy');
+  var cenSel = document.getElementById('tpl-filter-center');
+  if (!depSel || !cenSel) return;
+  depSel.innerHTML = '<option value="">همه</option>' +
+    DEPUTIES.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+  cenSel.innerHTML = '<option value="">همه</option>' +
+    ALL_CENTERS.map(function(c){ return '<option value="'+c.name+'">'+c.name+'</option>'; }).join('');
+}
+
+
+
+
+// ============================================================
+// مبالغ و تعداد شیفت
+// ============================================================
+var SHIFTS_ROWS = [];
+
+async function loadShifts(){
+  var tbody = document.getElementById('shifts-matrix-body');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--tx3)">در حال بارگذاری...</td></tr>';
+
+  var depEl = document.getElementById('shifts-filter-deputy');
+  var cenEl = document.getElementById('shifts-filter-center');
+  var supEl = document.getElementById('shifts-filter-supply');
+  var dep = depEl ? depEl.value : '';
+  var cen = cenEl ? cenEl.value : '';
+  var sup = supEl ? supEl.value : '';
+
+  var params = new URLSearchParams();
+  if (dep) params.set('deputy', dep);
+  if (cen) params.set('center', cen);
+  if (dep === SIMA_DEPUTY && sup) params.set('supply_type', sup);
+
+  try {
+    var r = await fetch('/api/shifts/matrix?' + params.toString());
+    var data = await r.json();
+    if (!Array.isArray(data)){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#fca5a5">خطا در دریافت داده</td></tr>';
+      return;
+    }
+    SHIFTS_ROWS = data;
+    renderShifts();
+    var cnt = document.getElementById('shifts-count');
+    if (cnt) cnt.textContent = data.length + ' ردیف';
+  } catch(e){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#fca5a5">خطا: ' + e + '</td></tr>';
+  }
+}
+
+function renderShifts(){
+  var tbody = document.getElementById('shifts-matrix-body');
+  if (!tbody) return;
+
+  var rows = SHIFTS_ROWS;
+  if (!rows.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--tx3)">داده‌ای یافت نشد</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(function(r, i){
+    var supplyCell = (r.deputy === SIMA_DEPUTY && r.supply_type)
+      ? supplyBadge(r.supply_type)
+      : '<span style="color:var(--tx3)">—</span>';
+
+    var empBadge = (r.employment_type === 'رسمی')
+      ? '<span class="badge رسمی">رسمی</span>'
+      : '<span class="badge m28">تبصره ۲۸</span>';
+
+    var jobCell = r.job_title
+      ? esc(r.job_title)
+      : '<span style="color:var(--tx3)">—</span>';
+
+    return '<tr>' +
+      '<td>' + (i+1) + '</td>' +
+      '<td class="small">' + esc(r.deputy) + '</td>' +
+      '<td class="small">' + esc(r.center) + '</td>' +
+      '<td class="small" style="font-weight:600">' + jobCell + '</td>' +
+      '<td>' + supplyCell + '</td>' +
+      '<td>' + empBadge + '</td>' +
+      '<td>' +
+        '<input type="text" inputmode="numeric" class="shifts-amount-input" ' +
+        'value="' + (r.shift_amount || 0) + '" ' +
+        'style="width:130px;padding:6px 9px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;direction:ltr;text-align:left;font-family:ui-monospace,monospace;font-size:12.5px">' +
+      '</td>' +
+      '<td>' +
+        '<input type="text" inputmode="numeric" class="shifts-count-input" ' +
+        'value="' + (r.shift_count || 0) + '" ' +
+        'style="width:90px;padding:6px 9px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;direction:ltr;text-align:center;font-family:ui-monospace,monospace;font-size:12.5px">' +
+      '</td>' +
+      '<td>' +
+        '<button class="btn sm green" ' +
+        'data-deputy="' + esc(r.deputy) + '" ' +
+        'data-center="' + esc(r.center) + '" ' +
+        'data-supply="' + esc(r.supply_type || '') + '" ' +
+        'data-job="' + esc(r.job_title) + '" ' +
+        'data-emp="' + esc(r.employment_type) + '" ' +
+        'onclick="saveShiftRow(this)">تایید</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function saveShiftRow(btn){
+  var deputy = btn.getAttribute('data-deputy');
+  var center = btn.getAttribute('data-center');
+  var supply = btn.getAttribute('data-supply');
+  var job_title = btn.getAttribute('data-job');
+  var empType = btn.getAttribute('data-emp');
+
+  var tr = btn.closest('tr');
+  var amtInput = tr.querySelector('.shifts-amount-input');
+  var cntInput = tr.querySelector('.shifts-count-input');
+  var amount = parseInt((amtInput.value || '0').replace(/[^0-9]/g, ''), 10) || 0;
+  var count = parseInt((cntInput.value || '0').replace(/[^0-9]/g, ''), 10) || 0;
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    var r = await fetch('/api/shifts/save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        deputy: deputy,
+        center: center,
+        supply_type: supply,
+        job_title: job_title,
+        employment_type: empType,
+        amount: amount,
+        count: count
+      })
+    });
+    var d = await r.json();
+    if (r.ok){
+      btn.textContent = '✓ ثبت شد';
+      btn.style.background = 'var(--green)';
+      setTimeout(function(){
+        btn.textContent = 'تایید';
+        btn.disabled = false;
+        btn.style.background = '';
+      }, 1500);
+    } else {
+      toast(d.error || 'خطا', 'err');
+      btn.textContent = 'تایید';
+      btn.disabled = false;
+    }
+  } catch(e){
+    toast('خطا: ' + e, 'err');
+    btn.textContent = 'تایید';
+    btn.disabled = false;
+  }
+}
+
+function onShiftsDeputyChange(){
+  var depEl = document.getElementById('shifts-filter-deputy');
+  var cenSel = document.getElementById('shifts-filter-center');
+  var supWrap = document.getElementById('shifts-supply-wrapper');
+  var supSel = document.getElementById('shifts-filter-supply');
+  if (!depEl || !cenSel) return;
+
+  var dep = depEl.value;
+  var centers = (dep && dep !== 'همه')
+    ? ALL_CENTERS.filter(function(c){ return c.deputy === dep; })
+    : ALL_CENTERS;
+
+  cenSel.innerHTML = '<option value="">همه</option>' +
+    centers.map(function(c){ return '<option value="'+c.name+'">'+c.name+'</option>'; }).join('');
+
+  if (supWrap){
+    if (dep === SIMA_DEPUTY){
+      supWrap.style.display = '';
+    } else {
+      supWrap.style.display = 'none';
+      if (supSel) supSel.value = '';
+    }
+  }
+
+  loadShifts();
+}
+
+async function loadShiftsFilters(){
+  var depSel = document.getElementById('shifts-filter-deputy');
+  var cenSel = document.getElementById('shifts-filter-center');
+  if (!depSel || !cenSel) return;
+  depSel.innerHTML = '<option value="">همه</option>' +
+    DEPUTIES.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+  cenSel.innerHTML = '<option value="">همه</option>' +
+    ALL_CENTERS.map(function(c){ return '<option value="'+c.name+'">'+c.name+'</option>'; }).join('');
+}
+
+</script>
+<script>
+(function() {
+  // ۱. تعیین تم اولیه از localStorage یا URL
+  var urlParams = new URLSearchParams(window.location.search);
+  var theme = urlParams.get('theme') || localStorage.getItem('stm_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+
+  // ۲. گوش دادن به تغییرات localStorage (وقتی کاربر در صفحه اصلی تم را عوض می‌کند)
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'stm_theme' && e.newValue) {
+      document.documentElement.setAttribute('data-theme', e.newValue);
+    }
+  });
+
+  // ۳. گوش دادن به postMessage (روش مکمل)
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.action === 'setTheme' && e.data.theme) {
+      document.documentElement.setAttribute('data-theme', e.data.theme);
+    }
+  });
+})();
+</script>
+</body>
+</html>

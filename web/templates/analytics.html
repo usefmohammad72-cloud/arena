@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>اتاق تحلیل — STM</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+ *{box-sizing:border-box;margin:0;padding:0}
+ :root{
+ --bg:#050a14;--card:rgba(13,23,40,.85);--border:#1a2a44;--border2:#22375a;
+ --text:#e8eef7;--muted:#7688a1;--blue:#2f6fdb;--blue-b:#4f8ff7;
+ --gold:#d4b062;--gold-b:#e8c877;--success:#10b981;--danger:#ef4444;
+ --warn:#f59e0b;--teal:#22d3ee;
+ }
+ html,body{height:100%}
+ body{
+ font-family:Vazirmatn,Tahoma,sans-serif;color:var(--text);
+ background:
+ radial-gradient(1200px 700px at 90% -10%, rgba(47,111,219,.16), transparent 60%),
+ radial-gradient(900px 500px at 10% 110%, rgba(212,176,98,.08), transparent 60%),
+ var(--bg);
+ background-attachment:fixed;min-height:100vh;
+ }
+ body::before{
+ content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+ background:
+ radial-gradient(400px 400px at 20% 30%, rgba(34,211,238,.04), transparent 70%),
+ radial-gradient(500px 500px at 80% 70%, rgba(212,176,98,.03), transparent 70%);
+ animation:driftBg 22s ease-in-out infinite alternate;
+ }
+ @keyframes driftBg{
+ 0%{transform:translate(0,0) scale(1)}
+ 100%{transform:translate(40px,-30px) scale(1.15)}
+ }
+ .wrap{position:relative;z-index:1;padding:18px 22px 60px;max-width:1920px;margin:0 auto}
+
+ /* ============ Hero / Deadline ============ */
+ .hero{
+ display:grid;grid-template-columns:auto 1fr auto;gap:28px;
+ padding:26px 32px;border-radius:20px;margin-bottom:20px;
+ background:
+ radial-gradient(600px 300px at 0% 0%, rgba(47,111,219,.18), transparent 60%),
+ linear-gradient(135deg,rgba(13,23,40,.96),rgba(18,32,54,.9));
+ border:1px solid var(--border);position:relative;overflow:hidden;
+ box-shadow:0 30px 80px -40px rgba(0,0,0,1),inset 0 1px 0 rgba(255,255,255,.03);
+ }
+ .hero::before{
+ content:"";position:absolute;top:0;left:0;right:0;height:2px;
+ background:linear-gradient(90deg,transparent,#2f6fdb 20%,#d4b062 50%,#22d3ee 80%,transparent);
+ }
+ .hero::after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:
+ radial-gradient(300px 300px at 100% 100%, rgba(212,176,98,.06), transparent 70%);
+ }
+ @media (max-width:900px){.hero{grid-template-columns:1fr;gap:16px}}
+
+ .ring-wrap{position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center}
+ .ring-wrap::before{
+ content:"";position:absolute;inset:-8px;border-radius:50%;
+ border:2px dashed rgba(47,111,219,.25);
+ animation:spinSlow 22s linear infinite;
+ }
+ @keyframes spinSlow{to{transform:rotate(360deg)}}
+ .ring{
+ width:180px;height:180px;border-radius:50%;position:relative;
+ transition:transform .5s cubic-bezier(.2,.8,.2,1);
+ box-shadow:0 20px 50px rgba(0,0,0,.7),inset 0 -12px 24px rgba(0,0,0,.3);
+ }
+ .ring:hover{transform:scale(1.04)}
+ .ring::after{
+ content:"";position:absolute;inset:16px;border-radius:50%;
+ background:radial-gradient(circle at 35% 25%,#0d1728,#050a14);
+ box-shadow:inset 0 3px 10px rgba(0,0,0,.8);
+ }
+ .ring-content{
+ position:absolute;inset:0;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;z-index:2;pointer-events:none;
+ }
+ .ring-content .big{
+ font-size:44px;font-weight:900;direction:ltr;line-height:1;
+ font-variant-numeric:tabular-nums;
+ background:linear-gradient(180deg,#fff,#b6c3d8);
+ -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+ }
+ .ring-content .lbl{font-size:12px;color:var(--muted);font-weight:700;margin-top:4px}
+ .ring.phase-waiting {background:conic-gradient(from -90deg,#3b82f6 var(--p),#0d1728 0)}
+ .ring.phase-received {background:conic-gradient(from -90deg,#22d3ee var(--p),#0d1728 0)}
+ .ring.phase-urgent {background:conic-gradient(from -90deg,#f59e0b var(--p),#0d1728 0)}
+ .ring.phase-critical {background:conic-gradient(from -90deg,#ef4444 var(--p),#0d1728 0);animation:pulseCrit 1.5s ease-in-out infinite}
+ .ring.phase-overdue {background:conic-gradient(from -90deg,#991b1b var(--p),#0d1728 0)}
+ @keyframes pulseCrit{
+ 0%,100%{box-shadow:0 20px 50px rgba(0,0,0,.7),0 0 0 0 rgba(239,68,68,.6)}
+ 50%{box-shadow:0 20px 50px rgba(0,0,0,.7),0 0 0 22px rgba(239,68,68,0)}
+ }
+
+ .hero-body h1{font-size:24px;font-weight:900;margin-bottom:8px;letter-spacing:-.3px}
+ .hero-body .sub{color:var(--muted);font-size:13.5px;margin-bottom:16px;line-height:1.9}
+ .hero-body .phase-badge{
+ display:inline-flex;align-items:center;gap:8px;
+ padding:8px 16px;border-radius:12px;font-size:13px;font-weight:800;
+ margin-bottom:14px;
+ }
+ .phase-badge.phase-waiting {background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.4)}
+ .phase-badge.phase-received {background:rgba(34,211,238,.15);color:#67e8f9;border:1px solid rgba(34,211,238,.4)}
+ .phase-badge.phase-urgent {background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.4)}
+ .phase-badge.phase-critical {background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.5);animation:pulseBadge 1.2s ease-in-out infinite}
+ .phase-badge.phase-overdue {background:rgba(153,27,27,.2);color:#fca5a5;border:1px solid rgba(153,27,27,.5)}
+ @keyframes pulseBadge{0%,100%{opacity:1}50%{opacity:.6}}
+
+ .hero-progress{display:flex;gap:22px;flex-wrap:wrap;margin-top:6px}
+ .prog-item{flex:1;min-width:180px}
+ .prog-item .lbl{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between}
+ .prog-item .lbl b{color:#fff;font-variant-numeric:tabular-nums;direction:ltr}
+ .prog-bar{height:8px;background:rgba(7,13,26,.7);border-radius:8px;overflow:hidden;box-shadow:inset 0 2px 6px rgba(0,0,0,.5)}
+ .prog-fill{height:100%;border-radius:8px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+ .prog-fill.blue{background:linear-gradient(90deg,#2f6fdb,#4f8ff7);box-shadow:0 0 12px rgba(47,111,219,.6)}
+ .prog-fill.green{background:linear-gradient(90deg,#047857,#10b981,#4ade80);box-shadow:0 0 12px rgba(16,185,129,.6)}
+ .prog-fill.gold{background:linear-gradient(90deg,#a8863d,#d4b062,#e8c877);box-shadow:0 0 12px rgba(212,176,98,.6)}
+
+ .hero-side{display:flex;flex-direction:column;gap:12px;align-items:flex-end;justify-content:center}
+ @media (max-width:900px){.hero-side{align-items:stretch}}
+ .hero-side .hbtn{
+ padding:12px 20px;border-radius:12px;border:1px solid var(--border2);
+ background:rgba(255,255,255,.04);color:#b6c3d8;text-decoration:none;
+ font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:8px;
+ transition:.2s;white-space:nowrap;
+ }
+ .hero-side .hbtn:hover{background:rgba(47,111,219,.12);border-color:var(--blue);color:#fff;transform:translateY(-2px)}
+ .hero-side .hbtn.gold{background:linear-gradient(135deg,#d4b062,#a8863d);border-color:transparent;color:#050a14}
+ .hero-side .hbtn.gold:hover{background:linear-gradient(135deg,#e8c877,#d4b062);box-shadow:0 12px 30px -8px rgba(212,176,98,.6)}
+ .hero-side .hbtn.teal{background:linear-gradient(135deg,#06b6d4,#0891b2);border-color:transparent;color:#fff}
+
+ /* ============ KPI Row ============ */
+ .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px}
+ @media (max-width:1400px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+ @media (max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+ .kpi{
+ padding:18px 20px;border-radius:16px;position:relative;overflow:hidden;
+ background:var(--card);border:1px solid var(--border);
+ backdrop-filter:blur(8px);
+ transition:.35s cubic-bezier(.2,.8,.2,1);
+ box-shadow:0 10px 30px -22px rgba(0,0,0,1),inset 0 1px 0 rgba(255,255,255,.03);
+ animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) backwards;
+ }
+ .kpi:nth-child(1){animation-delay:.05s}
+ .kpi:nth-child(2){animation-delay:.1s}
+ .kpi:nth-child(3){animation-delay:.15s}
+ .kpi:nth-child(4){animation-delay:.2s}
+ .kpi:nth-child(5){animation-delay:.25s}
+ .kpi:nth-child(6){animation-delay:.3s}
+ @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+ .kpi::before{
+ content:"";position:absolute;top:0;right:0;width:4px;height:100%;
+ background:linear-gradient(180deg,var(--gold),var(--blue));opacity:.6;
+ }
+ .kpi:hover{
+ transform:translateY(-6px) rotateX(3deg) rotateY(-3deg) scale(1.02);
+ box-shadow:0 30px 60px -25px rgba(0,0,0,1),0 0 0 1px rgba(79,143,247,.35);
+ border-color:var(--blue-b);
+ }
+ .kpi .lbl{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:8px;letter-spacing:.2px}
+ .kpi .val{
+ font-size:26px;font-weight:900;direction:ltr;text-align:right;
+ font-variant-numeric:tabular-nums;color:#fff;line-height:1.15;
+ text-shadow:0 2px 8px rgba(47,111,219,.25);
+ }
+ .kpi.blue .val{color:#7cb0ff}
+ .kpi.gold .val{color:var(--gold-b);text-shadow:0 2px 8px rgba(212,176,98,.3)}
+ .kpi.green .val{color:#4ade80}
+ .kpi.red .val{color:#fca5a5}
+ .kpi.warn .val{color:#fbbf24}
+ .kpi.teal .val{color:#67e8f9}
+ .kpi .sub{font-size:11px;color:var(--muted);margin-top:5px}
+
+ /* ============ Grid ============ */
+ .grid2{display:grid;gap:16px;margin-bottom:20px}
+ .g-half{grid-template-columns:1fr 1fr}
+ .g-2-1{grid-template-columns:2fr 1fr}
+ .g-1-2{grid-template-columns:1fr 2fr}
+ @media (max-width:1000px){.g-half,.g-2-1,.g-1-2{grid-template-columns:1fr}}
+
+ .panel{
+ background:var(--card);border-radius:16px;border:1px solid var(--border);
+ backdrop-filter:blur(8px);padding:20px 22px;position:relative;overflow:hidden;
+ box-shadow:0 10px 30px -22px rgba(0,0,0,1),inset 0 1px 0 rgba(255,255,255,.03);
+ animation:fadeUp .7s cubic-bezier(.2,.8,.2,1) backwards;
+ }
+ .panel:nth-child(1){animation-delay:.1s}
+ .panel:nth-child(2){animation-delay:.15s}
+ .panel h3{
+ font-size:14px;font-weight:800;margin-bottom:16px;padding-bottom:12px;
+ border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;color:#fff;
+ }
+ .panel h3::before{
+ content:"";width:4px;height:16px;border-radius:2px;
+ background:linear-gradient(180deg,var(--gold),var(--blue));
+ box-shadow:0 2px 8px rgba(212,176,98,.4);
+ }
+ .panel h3 .badge{
+ margin-inline-start:auto;font-size:11px;font-weight:700;
+ padding:4px 11px;border-radius:20px;
+ background:rgba(47,111,219,.15);color:#7cb0ff;
+ border:1px solid rgba(47,111,219,.3);
+ }
+ .empty{text-align:center;padding:40px;color:var(--muted);font-size:12.5px}
+
+ /* ============ Bars ============ */
+ .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:12.5px}
+ .bar-row .name{flex:0 0 140px;color:#d0daea;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .bar-row .wrap{flex:1;background:rgba(7,13,26,.7);border-radius:8px;overflow:hidden;height:26px;box-shadow:inset 0 2px 6px rgba(0,0,0,.5)}
+ .bar-row .bar{
+ height:100%;border-radius:8px;transition:width 1s cubic-bezier(.2,.8,.2,1);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 8px rgba(0,0,0,.3);
+ background:linear-gradient(90deg,#1a4ea8,#2f6fdb,#4f8ff7);
+ }
+ .bar-row .bar.gold{background:linear-gradient(90deg,#a8863d,#d4b062,#e8c877)}
+ .bar-row .bar.teal{background:linear-gradient(90deg,#0891b2,#06b6d4,#22d3ee)}
+ .bar-row .bar.green{background:linear-gradient(90deg,#047857,#10b981,#4ade80)}
+ .bar-row .bar.warn{background:linear-gradient(90deg,#b45309,#f59e0b,#fcd34d)}
+ .bar-row .bar.red{background:linear-gradient(90deg,#991b1b,#ef4444,#f87171)}
+ .bar-row .val{flex:0 0 90px;text-align:left;direction:ltr;color:#b6c3d8;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:700}
+
+ /* ============ Donut ============ */
+ .donut-wrap{display:flex;gap:22px;flex-wrap:wrap;align-items:center;justify-content:center;padding:8px}
+ .donut{
+ width:170px;height:170px;border-radius:50%;position:relative;flex:none;
+ box-shadow:0 20px 50px rgba(0,0,0,.7),inset 0 -12px 24px rgba(0,0,0,.35);
+ transition:transform .5s cubic-bezier(.2,.8,.2,1);
+ }
+ .donut:hover{transform:scale(1.05) rotateZ(-3deg)}
+ .donut::after{
+ content:"";position:absolute;inset:18%;border-radius:50%;
+ background:radial-gradient(circle at 35% 25%,#0d1728,#050a14);
+ box-shadow:inset 0 3px 8px rgba(0,0,0,.7);
+ }
+ .donut-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;pointer-events:none}
+ .donut-c .v{font-size:22px;font-weight:900;direction:ltr;color:#fff;font-variant-numeric:tabular-nums}
+ .donut-c .l{font-size:10.5px;color:var(--muted);margin-top:3px;font-weight:700}
+ .legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px;flex:1;min-width:180px}
+ .legend .item{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:8px;transition:background .2s}
+ .legend .item:hover{background:rgba(47,111,219,.08)}
+ .legend .dot{width:14px;height:14px;border-radius:5px;flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+ .legend .lbl{flex:1;color:#d0daea;font-weight:600}
+ .legend .v{color:#7cb0ff;font-weight:800;direction:ltr;font-variant-numeric:tabular-nums;font-size:12px}
+
+ /* ============ Table ============ */
+ .twrap{overflow:auto;max-height:460px;border-radius:12px;border:1px solid var(--border);background:rgba(11,21,38,.5)}
+ table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}
+ th,td{padding:10px 12px;text-align:right;border-bottom:1px solid #12203a;color:#d0daea}
+ th{background:linear-gradient(180deg,#070d1a,#0d1728);color:#a8b8d0;font-weight:700;font-size:11.5px;position:sticky;top:0;z-index:2}
+ tr:last-child td{border-bottom:none}
+ tbody tr{background:rgba(13,23,40,.3);transition:background .15s}
+ tbody tr:nth-child(even){background:rgba(13,23,40,.5)}
+ tbody tr:hover{background:rgba(47,111,219,.08)}
+ td.num,th.num{direction:ltr;text-align:left;font-variant-numeric:tabular-nums;font-family:"Segoe UI",Tahoma;white-space:nowrap}
+ .pill{padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:800}
+ .pill.ok{background:rgba(16,185,129,.18);color:#6ee7b7}
+ .pill.wait{background:rgba(245,158,11,.18);color:#fbbf24}
+ .pill.bad{background:rgba(239,68,68,.18);color:#fca5a5}
+
+ /* ============ Hourly heatmap ============ */
+ .hourly{display:grid;grid-template-columns:auto repeat(24,1fr);gap:3px;padding:8px;background:rgba(7,13,26,.4);border-radius:12px;border:1px solid var(--border)}
+ .hourly .hd{font-size:9px;color:var(--muted);text-align:center;font-weight:700}
+ .hourly .hl{font-size:10px;color:var(--muted);text-align:right;padding-left:6px;font-weight:700;display:flex;align-items:center}
+ .hh{aspect-ratio:1;border-radius:3px;background:rgba(13,23,40,.5);transition:.2s}
+ .hh:hover{transform:scale(1.35);z-index:5;position:relative;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+
+ /* ============ Trend line ============ */
+ .trend-svg{width:100%;height:200px;overflow:visible}
+ .trend-svg .axis{stroke:#1a2a44;stroke-width:1}
+ .trend-svg .line{fill:none;stroke:url(#lineGrad);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;
+ stroke-dasharray:2000;stroke-dashoffset:2000;animation:drawLine 2s ease-out forwards}
+ @keyframes drawLine{to{stroke-dashoffset:0}}
+ .trend-svg .area{fill:url(#areaGrad);opacity:0;animation:fadeInArea 2s ease-out .5s forwards}
+ @keyframes fadeInArea{to{opacity:.35}}
+ .trend-svg .dot{fill:#fff;stroke:#2f6fdb;stroke-width:2.5;opacity:0;animation:fadeInArea 1s ease-out 1.4s forwards}
+ .trend-svg .lbl{fill:#7688a1;font-size:10px;font-family:Vazirmatn;text-anchor:middle}
+
+ /* ============ Toast ============ */
+ #toasts{position:fixed;top:20px;left:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:360px}
+ .toast{
+ padding:14px 18px;border-radius:12px;
+ background:linear-gradient(135deg,rgba(13,23,40,.98),rgba(18,32,54,.95));
+ border:1px solid var(--blue);color:#fff;
+ box-shadow:0 20px 50px -15px rgba(0,0,0,.8);
+ animation:toastIn .5s cubic-bezier(.2,.8,.2,1);
+ position:relative;overflow:hidden;
+ }
+ .toast::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:linear-gradient(180deg,var(--gold),var(--blue))}
+ .toast.ok{border-color:var(--success)}
+ .toast.warn{border-color:var(--warn)}
+ .toast.err{border-color:var(--danger)}
+ .toast .tit{font-size:13px;font-weight:800;margin-bottom:3px}
+ .toast .msg{font-size:12px;color:#b6c3d8;line-height:1.5}
+ .toast.out{animation:toastOut .4s ease forwards}
+ @keyframes toastIn{from{transform:translateX(-30px);opacity:0}to{transform:translateX(0);opacity:1}}
+ @keyframes toastOut{to{transform:translateX(-30px);opacity:0;height:0;padding:0;margin:0}}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+<div class="wrap">
+
+ <!-- HERO -->
+ <div class="hero">
+ <div class="ring-wrap">
+ <div class="ring" id="deadline-ring">
+ <div class="ring-content">
+ <div class="big" id="days-left">—</div>
+ <div class="lbl" id="ring-lbl">روز مانده</div>
+ </div>
+ </div>
+ </div>
+
+ <div class="hero-body">
+ <h1> مهلت ماهانهٔ <span id="period-name">—</span></h1>
+ <div class="sub" id="phase-label">در حال بارگذاری...</div>
+
+ <div class="phase-badge" id="phase-badge">—</div>
+
+ <div class="hero-progress">
+ <div class="prog-item">
+ <div class="lbl"><span>پیشرفت ماه</span><b><span id="mp-v">0</span>%</b></div>
+ <div class="prog-bar"><div class="prog-fill blue" id="mp-bar" style="width:0%"></div></div>
+ </div>
+ <div class="prog-item">
+ <div class="lbl"><span>تأییدشده</span><b><span id="ap-v">0</span>/<span id="tot-v">0</span></b></div>
+ <div class="prog-bar"><div class="prog-fill green" id="ap-bar" style="width:0%"></div></div>
+ </div>
+ <div class="prog-item">
+ <div class="lbl"><span>باقی‌مانده برای تأیید</span><b id="pend-v">0</b></div>
+ <div class="prog-bar"><div class="prog-fill gold" id="pend-bar" style="width:0%"></div></div>
+ </div>
+ </div>
+ </div>
+
+ <div class="hero-side">
+ <a href="/command-center" class="hbtn teal"> اتاق فرمان</a>
+ <a href="/" class="hbtn"> داشبورد</a>
+ <button class="hbtn gold" onclick="exportAnalytics()"> خروجی JSON</button>
+ </div>
+ </div>
+
+ <!-- KPI -->
+ <div class="kpi-row" id="kpi-row"></div>
+
+ <!-- Row 1: Monthly comparison + Risk -->
+ <div class="grid2 g-2-1">
+ <div class="panel">
+ <h3> مقایسهٔ ماهانه <span class="badge" id="monthly-badge">—</span></h3>
+ <div id="chart-monthly"></div>
+ </div>
+ <div class="panel">
+ <h3> توزیع ریسک <span class="badge" id="risk-badge">—</span></h3>
+ <div class="donut-wrap" id="risk-donut"></div>
+ </div>
+ </div>
+
+ <!-- Row 2: Top wages + Wage histogram -->
+ <div class="grid2 g-half">
+ <div class="panel">
+ <h3> ۱۵ دستمزد برتر <span class="badge">میلیون ریال</span></h3>
+ <div class="twrap" style="max-height:400px">
+ <table id="top-wages-table">
+ <thead><tr>
+ <th>رتبه</th><th>نام</th><th>معاونت</th><th>مرکز</th>
+ <th class="num">دستمزد</th><th>وضعیت</th>
+ </tr></thead>
+ <tbody></tbody>
+ </table>
+ </div>
+ </div>
+ <div class="panel">
+ <h3> توزیع دستمزد <span class="badge">بازه‌ها</span></h3>
+ <div id="chart-wage-hist"></div>
+ </div>
+ </div>
+
+ <!-- Row 3: Employment + Legal articles -->
+ <div class="grid2 g-half">
+ <div class="panel">
+ <h3> توزیع وضعیت اشتغال <span class="badge" id="emp-badge">—</span></h3>
+ <div class="donut-wrap" id="employment-donut"></div>
+ </div>
+ <div class="panel">
+ <h3> توزیع مبنای قانونی <span class="badge" id="legal-badge">—</span></h3>
+ <div class="donut-wrap" id="legal-donut"></div>
+ </div>
+ </div>
+
+ <!-- Row 4: Deputy performance -->
+ <div class="grid2">
+ <div class="panel">
+ <h3> عملکرد معاونت‌ها <span class="badge" id="dep-badge">—</span></h3>
+ <div class="twrap" style="max-height:500px">
+ <table id="dep-table">
+ <thead><tr>
+ <th>معاونت</th>
+ <th class="num">کل</th>
+ <th class="num">تأیید</th>
+ <th class="num">درصد تأیید</th>
+ <th class="num">مجموع دستمزد (ریال)</th>
+ <th class="num">میانگین</th>
+ <th class="num">سقف</th>
+ <th>وضعیت</th>
+ </tr></thead>
+ <tbody></tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+
+ <!-- Row 5: Year cumulative -->
+ <div class="grid2">
+ <div class="panel">
+ <h3> روند تجمعی سالانه <span class="badge" id="cum-badge">—</span></h3>
+ <svg class="trend-svg" id="cum-svg" viewBox="0 0 900 220" preserveAspectRatio="none">
+ <defs>
+ <linearGradient id="lineGrad" x1="0" x2="1">
+ <stop offset="0" stop-color="#2f6fdb"/>
+ <stop offset="0.5" stop-color="#22d3ee"/>
+ <stop offset="1" stop-color="#d4b062"/>
+ </linearGradient>
+ <linearGradient id="areaGrad" x1="0" x2="0" y1="0" y2="1">
+ <stop offset="0" stop-color="#4f8ff7" stop-opacity=".8"/>
+ <stop offset="1" stop-color="#4f8ff7" stop-opacity="0"/>
+ </linearGradient>
+ </defs>
+ <g id="cum-grid"></g>
+ <path class="area" id="cum-area" d=""/>
+ <path class="line" id="cum-line" d=""/>
+ <g id="cum-dots"></g>
+ <g id="cum-labels"></g>
+ </svg>
+ </div>
+ </div>
+
+ <!-- Row 6: Hourly heatmap + Top centers -->
+ <div class="grid2 g-1-2">
+ <div class="panel">
+ <h3>⏰ فعالیت ساعتی <span class="badge">۳۰ روز اخیر</span></h3>
+ <div class="hourly" id="hourly-grid"></div>
+ <div style="margin-top:12px;font-size:11px;color:var(--muted);text-align:center">
+ کمتر &nbsp;&nbsp; متوسط &nbsp;&nbsp; زیاد &nbsp;&nbsp; بیشترین
+ </div>
+ </div>
+ <div class="panel">
+ <h3> پرتراکم‌ترین مراکز <span class="badge" id="cent-badge">—</span></h3>
+ <div id="chart-centers"></div>
+ </div>
+ </div>
+
+</div>
+
+<script>
+function num(n){return n==null?'0':Number(n).toLocaleString('fa-IR');}
+function moneyShort(n){
+ n = Number(n)||0;
+ if (n>=1e12) return (n/1e12).toFixed(2)+' همت';
+ if (n>=1e9) return (n/1e9).toFixed(2)+' م.ت';
+ if (n>=1e6) return (n/1e6).toFixed(0)+' م.ر';
+ return num(Math.round(n));
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function toast(tit,msg,kind){
+ var t=document.createElement('div');
+ t.className='toast '+(kind||'ok');
+ t.innerHTML='<div class="tit">'+esc(tit)+'</div><div class="msg">'+esc(msg)+'</div>';
+ document.getElementById('toasts').appendChild(t);
+ setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),450);},5500);
+}
+
+function renderBars(elId, data, opts){
+ opts=opts||{};
+ var el=document.getElementById(elId);
+ if(!data.length){el.innerHTML='<div class="empty">داده‌ای نیست</div>';return;}
+ var maxV=Math.max(...data.map(x=>x.value).concat([1]));
+ var formatter=opts.formatter||num;
+ var cls=opts.cls||'';
+ el.innerHTML=data.map(x=>{
+ var pct=maxV>0?(x.value/maxV)*100:0;
+ return '<div class="bar-row">'+
+ '<div class="name" title="'+esc(x.label)+'">'+esc(x.label)+'</div>'+
+ '<div class="wrap"><div class="bar '+cls+'" style="width:'+pct+'%"></div></div>'+
+ '<div class="val">'+formatter(x.value)+'</div>'+
+ '</div>';
+ }).join('');
+}
+
+var COLOR_PALETTE = ['#2f6fdb','#d4b062','#22d3ee','#10b981','#f59e0b','#ef4444','#a78bfa','#f472b6','#84cc16','#fb923c'];
+
+function renderDonut(elId, data, centerVal){
+ var el=document.getElementById(elId);
+ var parts=data.filter(x=>x.value>0);
+ var total=parts.reduce((s,p)=>s+p.value,0);
+ if(total<=0){el.innerHTML='<div class="empty">داده‌ای نیست</div>';return;}
+ var stops=[],acc=0;
+ parts.forEach(function(p,i){
+ var col=p.color||COLOR_PALETTE[i%COLOR_PALETTE.length];
+ p._color=col;
+ var st=(acc/total)*100;
+ acc+=p.value;
+ var en=(acc/total)*100;
+ stops.push(col+' '+st+'% '+en+'%');
+ });
+ var donut='<div class="donut" style="background:conic-gradient(from -90deg,'+stops.join(',')+')">'+
+ '<div class="donut-c"><div class="v">'+num(centerVal||total)+'</div><div class="l">'+(centerVal?'':'کل')+'</div></div>'+
+ '</div>';
+ var legend='<div class="legend">'+parts.map(function(p){
+ var pct=((p.value/total)*100).toFixed(1);
+ return '<div class="item">'+
+ '<span class="dot" style="background:'+p._color+'"></span>'+
+ '<span class="lbl">'+esc(p.label)+'</span>'+
+ '<span class="v">'+num(p.value)+' ('+pct+'٪)</span>'+
+ '</div>';
+ }).join('')+'</div>';
+ el.innerHTML=donut+legend;
+}
+
+async function loadDeadline(){
+ try{
+ var r=await fetch('/api/deadline');
+ if(r.status===401){location.href='/login';return;}
+ var d=await r.json();
+
+ document.getElementById('period-name').textContent=d.period;
+ document.getElementById('phase-label').textContent=d.phase_label;
+
+ var dl=document.getElementById('days-left');
+ if(d.phase==='overdue'){
+ dl.textContent='⏰';
+ document.getElementById('ring-lbl').textContent='تمام شد';
+ } else if(d.phase==='waiting'){
+ dl.textContent=d.days_to_receive;
+ document.getElementById('ring-lbl').textContent='روز تا دریافت';
+ } else {
+ dl.textContent=d.days_left>=0?d.days_left:'0';
+ document.getElementById('ring-lbl').textContent='روز تا مهلت';
+ }
+
+ var ring=document.getElementById('deadline-ring');
+ ring.className='ring phase-'+d.phase;
+ var targetPct = d.phase==='waiting' ? (100 - d.month_progress_pct) : (d.progress_pct||0);
+ ring.style.setProperty('--p', targetPct+'%');
+
+ document.getElementById('phase-badge').className='phase-badge phase-'+d.phase;
+ document.getElementById('phase-badge').textContent=' '+d.phase_label+' • روز '+d.jalali_day+' از '+d.jalali_month_name;
+
+ document.getElementById('mp-v').textContent=d.month_progress_pct;
+ document.getElementById('mp-bar').style.width=d.month_progress_pct+'%';
+ document.getElementById('ap-v').textContent=num(d.approved);
+ document.getElementById('tot-v').textContent=num(d.total);
+ document.getElementById('ap-bar').style.width=(d.progress_pct||0)+'%';
+ document.getElementById('pend-v').textContent=num(d.pending);
+ document.getElementById('pend-bar').style.width=(d.total?((d.pending/d.total)*100):0)+'%';
+
+ // هشدار به کاربر
+ if(d.phase==='critical'){
+ toast(' آخرین روز!','همین امروز '+d.pending+' رکورد باید تأیید شه.','err');
+ } else if(d.phase==='urgent' && d.pending>0){
+ toast(' زمان فوری','فقط '+d.days_left+' روز مونده. '+d.pending+' رکورد در انتظار.','warn');
+ }
+ }catch(e){console.warn(e);}
+}
+
+function renderKpi(k){
+ var defs=[
+ {lbl:'کل اشخاص',v:num(k.total_persons),cls:'blue'},
+ {lbl:'کل رکوردها',v:num(k.total_records),cls:'teal'},
+ {lbl:'تأییدشده',v:num(k.total_approved),cls:'green'},
+ {lbl:'مجموع دستمزد',v:moneyShort(k.total_amount),cls:'gold'},
+ {lbl:'میانگین دستمزد',v:moneyShort(k.avg_wage),cls:'warn'},
+ {lbl:'بالاترین دستمزد',v:moneyShort(k.max_wage),cls:'red'},
+ ];
+ document.getElementById('kpi-row').innerHTML=defs.map(d=>
+ '<div class="kpi '+d.cls+'"><div class="lbl">'+d.lbl+'</div><div class="val">'+d.v+'</div></div>'
+ ).join('');
+}
+
+function renderMonthly(rows){
+ var el=document.getElementById('chart-monthly');
+ document.getElementById('monthly-badge').textContent=rows.length+' ماه';
+ if(!rows.length){el.innerHTML='<div class="empty">داده‌ای نیست</div>';return;}
+ var maxT=Math.max(...rows.map(r=>r.total||0).concat([1]));
+ var maxA=Math.max(...rows.map(r=>r.wage_sum||0).concat([1]));
+ el.innerHTML=rows.map(function(r){
+ var tPct=((r.total||0)/maxT)*100;
+ var aPct=((r.wage_sum||0)/maxA)*100;
+ var apPct=r.total?((r.approved/r.total)*100).toFixed(0):0;
+ return '<div style="margin-bottom:14px;padding:11px 13px;background:rgba(11,21,38,.6);border-radius:11px;border:1px solid #12203a;transition:.25s" onmouseover="this.style.borderColor=\'#2f6fdb\'" onmouseout="this.style.borderColor=\'#12203a\'">'+
+ '<div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:8px">'+
+ '<span style="font-weight:800;color:#fff">'+esc(r.period_month)+'</span>'+
+ '<span style="color:#7688a1">'+num(r.total)+' نفر • تأیید '+apPct+'٪</span>'+
+ '</div>'+
+ '<div style="height:7px;background:rgba(7,13,26,.7);border-radius:6px;overflow:hidden;margin-bottom:5px">'+
+ '<div style="height:100%;width:'+tPct+'%;background:linear-gradient(90deg,#2f6fdb,#4f8ff7);border-radius:6px;box-shadow:0 0 10px rgba(47,111,219,.5)"></div>'+
+ '</div>'+
+ '<div style="height:7px;background:rgba(7,13,26,.7);border-radius:6px;overflow:hidden">'+
+ '<div style="height:100%;width:'+aPct+'%;background:linear-gradient(90deg,#a8863d,#d4b062,#e8c877);border-radius:6px;box-shadow:0 0 10px rgba(212,176,98,.5)"></div>'+
+ '</div>'+
+ '<div style="display:flex;justify-content:space-between;font-size:11px;color:#7688a1;margin-top:6px;direction:ltr">'+
+ '<span>'+moneyShort(r.wage_sum)+'</span>'+
+ '<span>میانگین '+moneyShort(r.wage_avg)+'</span>'+
+ '</div>'+
+ '</div>';
+ }).join('');
+}
+
+function renderRisk(r){
+ var parts=[
+ {label:'تأییدشده', value:r.approved, color:'#10b981'},
+ {label:'سقف منفی', value:r.negative_ceiling,color:'#f59e0b'},
+ {label:'دستمزد>سقف', value:r.wage_over_ceiling,color:'#ef4444'},
+ {label:'شاغل', value:r.employed, color:'#a78bfa'},
+ {label:'بدون سقف', value:r.unresolved, color:'#94a3b8'},
+ ];
+ renderDonut('risk-donut', parts);
+ document.getElementById('risk-badge').textContent=num(parts.reduce((s,p)=>s+p.value,0))+' مورد';
+}
+
+function renderTopWages(rows){
+ var tb=document.querySelector('#top-wages-table tbody');
+ if(!rows.length){tb.innerHTML='<tr><td colspan="6" class="empty">داده‌ای نیست</td></tr>';return;}
+ tb.innerHTML=rows.map(function(r,i){
+ var st=r.approved?'<span class="pill ok"> تأیید</span>':'<span class="pill wait">در انتظار</span>';
+ var medal=['','',''][i]||(i+1);
+ return '<tr>'+
+ '<td style="font-weight:800;color:'+(i<3?'#d4b062':'#7688a1')+'">'+medal+'</td>'+
+ '<td>'+(esc((r.first_name||'')+' '+(r.last_name||'')))+'</td>'+
+ '<td style="font-size:11.5px">'+esc(r.deputy||'')+'</td>'+
+ '<td style="font-size:11.5px">'+esc(r.cost_center||'')+'</td>'+
+ '<td class="num" style="color:#d4b062;font-weight:800">'+moneyShort(r.monthly_wage)+'</td>'+
+ '<td>'+st+'</td>'+
+ '</tr>';
+ }).join('');
+}
+
+function renderHist(rows){
+ renderBars('chart-wage-hist', rows.map(r=>({label:r.label,value:r.count})), {cls:'teal'});
+}
+
+function renderEmp(rows){
+ renderDonut('employment-donut', rows.map(r=>({label:r.label,value:r.count})));
+ document.getElementById('emp-badge').textContent=num(rows.reduce((s,r)=>s+r.count,0))+' نفر';
+}
+
+function renderLegal(rows){
+ renderDonut('legal-donut', rows.map(r=>({label:r.label,value:r.count})));
+ document.getElementById('legal-badge').textContent=num(rows.reduce((s,r)=>s+r.count,0))+' مورد';
+}
+
+function renderDepTable(rows){
+ var tb=document.querySelector('#dep-table tbody');
+ document.getElementById('dep-badge').textContent=rows.length+' معاونت';
+ if(!rows.length){tb.innerHTML='<tr><td colspan="8" class="empty">داده‌ای نیست</td></tr>';return;}
+ tb.innerHTML=rows.map(function(r){
+ var pct=r.total?((r.approved/r.total)*100):0;
+ var pill=pct>=90?'<span class="pill ok"> کامل</span>'
+ :pct>=50?'<span class="pill wait">◐ جزئی</span>'
+ :pct>0?'<span class="pill bad"> کم</span>'
+ :'<span class="pill bad"> هیچ</span>';
+ return '<tr>'+
+ '<td>'+esc(r.deputy)+'</td>'+
+ '<td class="num">'+num(r.total)+'</td>'+
+ '<td class="num" style="color:#4ade80">'+num(r.approved)+'</td>'+
+ '<td class="num">'+pct.toFixed(0)+'٪</td>'+
+ '<td class="num" style="color:#d4b062;font-weight:700">'+moneyShort(r.wage_sum)+'</td>'+
+ '<td class="num">'+moneyShort(r.wage_avg)+'</td>'+
+ '<td class="num">'+moneyShort(r.wage_max)+'</td>'+
+ '<td>'+pill+'</td>'+
+ '</tr>';
+ }).join('');
+}
+
+function renderCumulative(rows){
+ var svg=document.getElementById('cum-svg');
+ var line=document.getElementById('cum-line');
+ var area=document.getElementById('cum-area');
+ var dots=document.getElementById('cum-dots');
+ var labels=document.getElementById('cum-labels');
+ var grid=document.getElementById('cum-grid');
+ if(!rows.length){
+ line.setAttribute('d','');area.setAttribute('d','');
+ dots.innerHTML='';labels.innerHTML='';grid.innerHTML='';
+ document.getElementById('cum-badge').textContent='داده‌ای نیست';
+ return;
+ }
+ document.getElementById('cum-badge').textContent=moneyShort(rows[rows.length-1].cumulative)+' مجموع';
+ var W=900,H=220,pad=40;
+ var maxV=Math.max(...rows.map(r=>r.cumulative).concat([1]));
+ var stepX=(W-pad*2)/Math.max(rows.length-1,1);
+ var points=rows.map(function(r,i){
+ return {x:pad+i*stepX,y:H-pad-(r.cumulative/maxV)*(H-pad*1.6),r:r};
+ });
+ var d='M'+points.map(p=>p.x+' '+p.y).join(' L');
+ line.setAttribute('d',d);
+ area.setAttribute('d',d+' L'+(pad+(rows.length-1)*stepX)+' '+(H-pad)+' L'+pad+' '+(H-pad)+' Z');
+ dots.innerHTML=points.map(p=>
+ '<circle class="dot" cx="'+p.x+'" cy="'+p.y+'" r="5"></circle>'
+ ).join('');
+ labels.innerHTML=points.map(p=>
+ '<text class="lbl" x="'+p.x+'" y="'+(H-15)+'">'+esc(p.r.period.split('-').slice(-1)[0])+'</text>'
+ ).join('');
+ grid.innerHTML='';
+ for(var i=0;i<=3;i++){
+ var y=pad*0.6+i*((H-pad*1.6)/3);
+ grid.innerHTML+='<line class="axis" x1="'+pad+'" y1="'+y+'" x2="'+(W-pad)+'" y2="'+y+'" stroke-dasharray="3 5" opacity=".4"/>';
+ }
+}
+
+function renderCenters(rows){
+ var data=rows.map(r=>({label:r.center+' ('+r.deputy+')',value:r.total}));
+ renderBars('chart-centers', data, {cls:'gold'});
+ document.getElementById('cent-badge').textContent=rows.length+' مرکز';
+}
+
+var DAY_LABELS=['ی','د','س','چ','پ','ج','ش'];
+function renderHourly(grid){
+ var el=document.getElementById('hourly-grid');
+ var maxV=0;
+ grid.forEach(row=>row.forEach(v=>{if(v>maxV)maxV=v;}));
+ var html='<div></div>';
+ for(var h=0;h<24;h++){
+ html+='<div class="hd">'+h+'</div>';
+ }
+ for(var w=0;w<7;w++){
+ html+='<div class="hl">'+DAY_LABELS[w]+'</div>';
+ for(var hh=0;hh<24;hh++){
+ var v=grid[w][hh];
+ var a=maxV>0?(v/maxV):0;
+ var col;
+ if(v===0) col='rgba(13,23,40,.5)';
+ else if(a<0.25) col='rgba(59,130,246,'+(0.3+a*2)+')';
+ else if(a<0.5) col='rgba(212,176,98,'+(0.35+a)+')';
+ else if(a<0.75) col='rgba(245,158,11,'+(0.5+a)+')';
+ else col='rgba(239,68,68,'+(0.55+a*0.5)+')';
+ html+='<div class="hh" style="background:'+col+'" title="'+DAY_LABELS[w]+' '+hh+':00 — '+v+' مورد"></div>';
+ }
+ }
+ el.innerHTML=html;
+}
+
+async function loadAnalytics(){
+ try{
+ var r=await fetch('/api/analytics/all');
+ if(r.status===401){location.href='/login';return;}
+ if(r.status===403){
+ document.body.innerHTML='<div style="padding:80px;text-align:center;color:#fca5a5;font-family:Vazirmatn;font-size:16px">دسترسی به اتاق تحلیل برای شما فعال نیست.</div>';
+ return;
+ }
+ var d=await r.json();
+ renderKpi(d.kpi);
+ renderMonthly(d.monthly);
+ renderRisk(d.risk);
+ renderTopWages(d.top_wages);
+ renderHist(d.wage_histogram);
+ renderEmp(d.employment);
+ renderLegal(d.legal_articles);
+ renderDepTable(d.deputy_performance);
+ renderCumulative(d.year_cumulative);
+ renderCenters(d.top_centers);
+ renderHourly(d.hourly);
+ }catch(e){console.warn(e);}
+}
+
+function exportAnalytics(){
+ fetch('/api/analytics/all').then(r=>r.json()).then(d=>{
+ var blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+ var a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='analytics-'+new Date().toISOString().slice(0,10)+'.json';
+ a.click();
+ toast(' خروجی','فایل JSON تحلیل دانلود شد.','ok');
+ });
+}
+
+(function init(){
+ loadDeadline();
+ loadAnalytics();
+ setInterval(loadDeadline, 60000);
+ setInterval(loadAnalytics, 120000);
+})();
+</script>
+</body>
+</html>

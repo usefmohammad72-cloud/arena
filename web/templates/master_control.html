@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>کنترل مالک — STM</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Vazirmatn",Tahoma,sans-serif;
+    background:#09090b;color:#fafafa;
+    min-height:100vh;padding:32px;
+    display:flex;justify-content:center;align-items:flex-start;
+  }
+  .box{max-width:1000px;width:100%}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px}
+  .sub{color:#71717a;font-size:13.5px;margin-bottom:28px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+  @media(max-width:700px){.grid{grid-template-columns:1fr}}
+  .card{
+    background:#131316;border:1px solid #23232a;border-radius:12px;
+    padding:18px 20px;
+  }
+  .card h3{font-size:11.5px;font-weight:700;color:#71717a;margin-bottom:12px;
+    letter-spacing:.6px;text-transform:uppercase}
+  .card .val{font-size:17px;font-weight:700;word-break:break-all}
+  .card .val.ok{color:#10b981}
+  .card .val.err{color:#ef4444}
+  .card .val.warn{color:#f59e0b}
+  .card .hint{font-size:11.5px;color:#52525b;line-height:1.6;margin-top:6px}
+  .panel{
+    background:#131316;border:1px solid #23232a;border-radius:12px;
+    padding:20px 22px;margin-bottom:18px;
+  }
+  .panel h2{font-size:15px;font-weight:700;margin-bottom:16px;color:#fafafa;
+    padding-bottom:12px;border-bottom:1px solid #23232a;
+    display:flex;align-items:center;gap:10px}
+  .panel h2::before{content:"";width:3px;height:14px;background:#3b82f6;border-radius:2px}
+  .panel .hint{font-size:12px;color:#71717a;line-height:1.7;margin-bottom:16px;
+    padding:10px 14px;background:#0f0f11;border-radius:8px;
+    border-right:3px solid #3b82f6}
+  .btn{
+    padding:9px 18px;border-radius:6px;border:none;
+    font-family:inherit;font-size:13px;font-weight:500;
+    cursor:pointer;transition:.15s;margin-inline-end:6px;margin-bottom:6px;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
+  .btn.primary{background:#3b82f6;color:#fff}
+  .btn.primary:hover{background:#2563eb}
+  .btn.danger{background:#ef4444;color:#fff}
+  .btn.danger:hover{background:#dc2626}
+  .btn.success{background:#10b981;color:#fff}
+  .btn.success:hover{background:#059669}
+  .btn.ghost{background:transparent;color:#a1a1aa;border:1px solid #33333d}
+  .btn.ghost:hover{background:#1f1f23;color:#fafafa}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .path{
+    background:#0a0a0a;padding:12px 14px;border-radius:8px;
+    font-family:Consolas,monospace;font-size:12px;
+    color:#60a5fa;direction:ltr;text-align:left;
+    border:1px solid #23232a;margin-top:10px;word-break:break-all;
+  }
+  /* ==== دوره‌ها ==== */
+  .years-nav{
+    display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;
+    padding-bottom:14px;border-bottom:1px solid #23232a;
+  }
+  .year-btn{
+    padding:7px 16px;border-radius:6px;
+    background:#0f0f11;border:1px solid #23232a;
+    color:#a1a1aa;font-family:inherit;font-size:13px;font-weight:600;
+    cursor:pointer;transition:.15s;
+  }
+  .year-btn:hover{border-color:#33333d;color:#fafafa}
+  .year-btn.active{background:#1f1f23;color:#fafafa;border-color:#33333d}
+  .months-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:10px;
+  }
+  .month-tile{
+    padding:14px 16px;border-radius:10px;
+    background:#0f0f11;border:1px solid #23232a;
+    cursor:pointer;transition:all .2s cubic-bezier(.2,.8,.2,1);
+    display:flex;align-items:center;justify-content:space-between;
+    user-select:none;
+  }
+  .month-tile:hover{border-color:#33333d;transform:translateY(-1px)}
+  .month-tile .mname{font-size:13.5px;font-weight:600;color:#a1a1aa}
+  .month-tile .status{
+    font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;
+  }
+  .month-tile .status.open{background:rgba(16,185,129,.18);color:#6ee7b7}
+  .month-tile .status.closed{background:rgba(113,113,122,.15);color:#71717a}
+  .month-tile.opened{
+    background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(16,185,129,.02));
+    border-color:rgba(16,185,129,.35);
+  }
+  .month-tile.opened .mname{color:#fafafa}
+  #msg{
+    position:fixed;top:20px;left:20px;padding:14px 20px;
+    border-radius:10px;font-size:13px;font-weight:600;
+    display:none;max-width:400px;z-index:9999;
+    box-shadow:0 20px 50px -10px rgba(0,0,0,.7);
+  }
+  #msg.ok{background:#064e3b;color:#6ee7b7;border:1px solid #10b981;display:block}
+  #msg.err{background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444;display:block}
+  #msg.warn{background:#78350f;color:#fbbf24;border:1px solid #f59e0b;display:block}
+  .link-back{color:#3b82f6;text-decoration:none;font-size:13.5px}
+  .link-back:hover{text-decoration:underline}
+  .danger-zone{
+    background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.3);
+    border-radius:12px;padding:18px 20px;margin-top:18px;
+  }
+  .danger-zone h2{color:#fca5a5}
+  .danger-zone .hint{color:#fca5a5;opacity:.8}
+</style>
+</head>
+<body>
+<div id="msg"></div>
+<div class="box">
+  <a href="/" class="link-back">← بازگشت به داشبورد</a>
+  <h1 style="margin-top:16px">کنترل مالک سامانه</h1>
+  <div class="sub">این پنل فقط برای مالک سامانه قابل دسترسی است</div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>وضعیت کلید مالک</h3>
+      <div class="val" id="key-status">در حال بررسی...</div>
+      <div class="hint" id="key-msg"></div>
+    </div>
+
+    <div class="card">
+      <h3>وضعیت مالکیت</h3>
+      <div class="val" id="owner-status">در حال بررسی...</div>
+      <div class="hint">این نشست شما به عنوان مالک فعال است یا نه</div>
+    </div>
+
+    <div class="card">
+      <h3>اثر انگشت سخت‌افزاری</h3>
+      <div class="val" style="font-family:Consolas,monospace;font-size:13px;color:#60a5fa;direction:ltr" id="hw-id">—</div>
+      <div class="hint">فایل کلید فقط روی این سیستم کار می‌کند</div>
+    </div>
+
+    <div class="card">
+      <h3>وضعیت قفل اضطراری</h3>
+      <div class="val" id="lock-status">در حال بررسی...</div>
+      <div class="hint">در حالت قفل، کاربران عادی نمی‌توانند وارد شوند</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>مدیریت دوره‌ها — باز کردن ماه برای کاربران</h2>
+    <div class="hint">
+      فقط ماه‌هایی که اینجا فعال می‌کنید برای کاربران قابل ویرایش و بارگذاری هستند.
+      در غیر این‌صورت، حتی اگر فایل بارگذاری کنند سیستم اجازه نمی‌دهد.
+    </div>
+
+    <div class="years-nav" id="years-nav"></div>
+    <div class="months-grid" id="months-grid"></div>
+  </div>
+
+  <div class="card">
+    <h3>مسیر فایل کلید</h3>
+    <div class="path" id="key-path">—</div>
+    <div class="hint">
+      این فایل روی دسکتاپ شماست. اگر پاکش کنید یا سیستم را عوض کنید،
+      سامانه فقط read-only می‌شود. همیشه بکاپ بگیرید.
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h2>عملیات مالک</h2>
+    <button class="btn primary" onclick="refreshStatus()">بروزرسانی وضعیت</button>
+    <button class="btn success" onclick="doActivate()" id="btn-activate">فعال‌سازی حالت مالک</button>
+    <button class="btn ghost" onclick="doDeactivate()" id="btn-deactivate">خروج از حالت مالک</button>
+  </div>
+
+  <div class="danger-zone">
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:10px">منطقه خطر</h2>
+    <div class="hint" style="margin-bottom:14px;font-size:12px;line-height:1.7">
+      قفل اضطراری کل سامانه را برای همه کاربران (به‌جز مالک) غیرقابل دسترس می‌کند.
+      فقط در مواقع اضطراری استفاده کنید.
+    </div>
+    <button class="btn danger" onclick="toggleLockdown()" id="btn-lock">قفل اضطراری</button>
+  </div>
+</div>
+
+<script>
+var CURRENT_YEAR = "1405";
+var YEARS = ["1404", "1405", "1406", "1407"];
+var MONTHS = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+var OPENED_PERIODS = [];
+
+function showMsg(text, kind){
+  var m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = kind || 'ok';
+  setTimeout(function(){ m.className = ''; }, 4000);
+}
+
+async function refreshStatus(){
+  try {
+    var r = await fetch('/api/master/status');
+    var d = await r.json();
+    render(d);
+  } catch(e) {
+    showMsg('خطا در دریافت وضعیت: ' + e, 'err');
+  }
+}
+
+function render(d){
+  var keyEl = document.getElementById('key-status');
+  var keyMsg = document.getElementById('key-msg');
+  var ownerEl = document.getElementById('owner-status');
+  var lockEl = document.getElementById('lock-status');
+  var pathEl = document.getElementById('key-path');
+  var hwEl = document.getElementById('hw-id');
+
+  hwEl.textContent = d.hardware_id || '—';
+  pathEl.textContent = d.master_key_path || '—';
+
+  if (d.master_key_exists && d.master_key_valid){
+    keyEl.className = 'val ok'; keyEl.textContent = 'معتبر';
+    keyMsg.textContent = d.master_key_message || '';
+  } else if (d.master_key_exists && !d.master_key_valid){
+    keyEl.className = 'val err'; keyEl.textContent = 'نامعتبر';
+    keyMsg.textContent = d.master_key_message || '';
+  } else {
+    keyEl.className = 'val err'; keyEl.textContent = 'وجود ندارد';
+    keyMsg.textContent = 'فایل کلید پیدا نشد.';
+  }
+
+  if (d.is_owner){
+    ownerEl.className = 'val ok'; ownerEl.textContent = 'فعال';
+    document.getElementById('btn-activate').disabled = true;
+    document.getElementById('btn-deactivate').disabled = false;
+  } else {
+    ownerEl.className = 'val warn'; ownerEl.textContent = 'غیرفعال';
+    document.getElementById('btn-activate').disabled = false;
+    document.getElementById('btn-deactivate').disabled = true;
+  }
+
+  if (d.lockdown){
+    lockEl.className = 'val err'; lockEl.textContent = 'قفل فعال';
+    document.getElementById('btn-lock').textContent = 'باز کردن قفل';
+    document.getElementById('btn-lock').className = 'btn success';
+  } else {
+    lockEl.className = 'val ok'; lockEl.textContent = 'آزاد';
+    document.getElementById('btn-lock').textContent = 'قفل اضطراری';
+    document.getElementById('btn-lock').className = 'btn danger';
+  }
+}
+
+async function loadPeriods(){
+  try {
+    var r = await fetch('/api/periods');
+    var d = await r.json();
+    OPENED_PERIODS = (d.opened || []).map(function(x){ return x.period_month; });
+    renderYears();
+    renderMonths();
+  } catch(e) {
+    showMsg('خطا در دریافت دوره‌ها: ' + e, 'err');
+  }
+}
+
+function renderYears(){
+  var box = document.getElementById('years-nav');
+  box.innerHTML = YEARS.map(function(y){
+    var cls = (y === CURRENT_YEAR) ? 'year-btn active' : 'year-btn';
+    return '<button class="' + cls + '" onclick="setYear(\'' + y + '\')">' + y + '</button>';
+  }).join('');
+}
+
+function setYear(y){
+  CURRENT_YEAR = y;
+  renderYears();
+  renderMonths();
+}
+
+function renderMonths(){
+  var box = document.getElementById('months-grid');
+  box.innerHTML = MONTHS.map(function(m){
+    var pm = CURRENT_YEAR + '-' + m;
+    var isOpen = OPENED_PERIODS.indexOf(pm) !== -1;
+    var tileCls = isOpen ? 'month-tile opened' : 'month-tile';
+    var statusCls = isOpen ? 'status open' : 'status closed';
+    var statusTxt = isOpen ? 'باز' : 'بسته';
+    return '<div class="' + tileCls + '" onclick="toggleMonth(\'' + pm + '\')" title="کلیک برای ' +
+      (isOpen ? 'بستن' : 'باز کردن') + '">' +
+      '<span class="mname">' + m + '</span>' +
+      '<span class="' + statusCls + '">' + statusTxt + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+async function toggleMonth(pm){
+  var isOpen = OPENED_PERIODS.indexOf(pm) !== -1;
+  var action = isOpen ? 'بستن' : 'باز کردن';
+  if (!confirm('آیا می‌خواهید ماه «' + pm + '» را ' + action + ' کنید؟')) return;
+
+  try {
+    var r = await fetch('/api/periods/toggle', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ period_month: pm })
+    });
+    var d = await r.json();
+    if (r.ok){
+      showMsg('ماه ' + pm + ' ' + (d.action === 'opened' ? 'باز شد' : 'بسته شد'),
+              d.action === 'opened' ? 'ok' : 'warn');
+      await loadPeriods();
+    } else {
+      showMsg(d.error || 'خطا', 'err');
+    }
+  } catch(e) {
+    showMsg('خطا: ' + e, 'err');
+  }
+}
+
+async function doActivate(){
+  var pw = prompt('رمز مالک را وارد کنید:');
+  if (!pw) return;
+  var r = await fetch('/api/master/activate', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({password: pw})
+  });
+  var d = await r.json();
+  if (r.ok){ showMsg('حالت مالک فعال شد', 'ok'); refreshStatus(); }
+  else { showMsg(d.error || 'خطا', 'err'); }
+}
+
+async function doDeactivate(){
+  if (!confirm('خروج از حالت مالک؟')) return;
+  var r = await fetch('/api/master/deactivate', {method:'POST'});
+  var d = await r.json();
+  if (r.ok){ showMsg('از حالت مالک خارج شدید', 'warn'); refreshStatus(); }
+}
+
+async function toggleLockdown(){
+  var currentLock = document.getElementById('btn-lock').textContent.indexOf('باز') !== -1;
+  var newState = !currentLock;
+  if (newState){
+    if (!confirm('قفل اضطراری کل سامانه؟\nهمه کاربران (به‌جز شما) غیرفعال می‌شن.')) return;
+  } else {
+    if (!confirm('قفل باز شود؟')) return;
+  }
+  var pw = prompt('رمز مالک برای تأیید:');
+  if (!pw) return;
+  var r = await fetch('/api/master/lockdown', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({password: pw, state: newState})
+  });
+  var d = await r.json();
+  if (r.ok){
+    showMsg(newState ? 'قفل فعال شد' : 'قفل باز شد', newState ? 'err' : 'ok');
+    refreshStatus();
+  } else {
+    showMsg(d.error || 'خطا', 'err');
+  }
+}
+
+refreshStatus();
+loadPeriods();
+</script>
+</body>
+</html>
