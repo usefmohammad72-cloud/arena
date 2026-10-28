@@ -2,6 +2,7 @@
 اجرای سامانه برای توسعه/تست، بدون باز کردن مرورگر و روی پورت دلخواه.
 
     python tools/dev_server.py                 # 0.0.0.0:8080
+    python tools/dev_server.py --demo          # با داده و کاربران نمونه
     STM_PORT=5000 python tools/dev_server.py
 
 با متغیر STM_DATA_DIR می‌توان دیتابیس تست را جای دیگری گذاشت تا به
@@ -26,6 +27,7 @@ import web.approval as approval  # noqa: E402
 import web.periods as periods  # noqa: E402
 import web.personnel as personnel  # noqa: E402
 import web.personnel_templates as personnel_templates  # noqa: E402
+import web.scope as scope  # noqa: E402
 from web.app import app  # noqa: E402
 
 
@@ -36,6 +38,7 @@ def bootstrap():
     conn.close()
     auth.init_users_table()
     perms.init_permissions()
+    scope.ensure_schema()
     periods.init_periods_table()
     personnel.init_personnel_tables()
     personnel_templates.init_templates_table()
@@ -48,6 +51,9 @@ def bootstrap():
 
 if __name__ == "__main__":
     bootstrap()
+    if "--demo" in sys.argv:
+        from tools.demo_seed import seed_demo, print_demo_box
+        print_demo_box(seed_demo())
     port = int(os.environ.get("STM_PORT", "8080"))
     print(f"DB: {DEFAULT_DB_PATH}")
     print(f"http://0.0.0.0:{port}")
