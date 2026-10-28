@@ -162,32 +162,33 @@ PASSWORD = "Test!2345"
 
 
 def _pick_scope():
-    """یک معاونت و یک مرکزِ واقعی از پایگاه‌داده انتخاب می‌کند"""
+    """یک معاونت و یک مرکزِ واقعی که داده دارد انتخاب می‌کند"""
     con = get_connection(DEFAULT_DB_PATH)
     try:
         deputies = [r[0] for r in con.execute(
-            "SELECT DISTINCT deputy FROM centers_structure WHERE COALESCE(deputy,'')<>''")]
-        center = None
+            "SELECT deputy, COUNT(*) c FROM records WHERE COALESCE(deputy,'')<>'' "
+            "GROUP BY deputy ORDER BY c DESC")]
         dep = None
-        for want in ("معاونت برون‌مرزی", "معاونت برون مرزی"):
-            if want in deputies:
-                dep = want
+        for want in ("برون‌مرزی", "برون مرزی"):
+            for d in deputies:
+                if want in d:
+                    dep = d
+                    break
+            if dep:
                 break
         if dep is None and deputies:
             dep = deputies[0]
+        center = None
         if dep:
-            for want in ("شبکه فیلم", "شبکه فیلم و سریال"):
-                row = con.execute(
-                    "SELECT center_name FROM centers_structure WHERE deputy=? AND center_name LIKE ? LIMIT 1",
-                    (dep, f"%{want}%")).fetchone()
-                if row:
-                    center = row[0]
+            centers = [r[0] for r in con.execute(
+                "SELECT cost_center, COUNT(*) c FROM records WHERE deputy=? AND COALESCE(cost_center,'')<>'' "
+                "GROUP BY cost_center ORDER BY c DESC", (dep,))]
+            for cn in centers:
+                if "شبکه" in cn and "فیلم" in cn:
+                    center = cn
                     break
-            if center is None:
-                row = con.execute(
-                    "SELECT center_name FROM centers_structure WHERE deputy=? LIMIT 1",
-                    (dep,)).fetchone()
-                center = row[0] if row else None
+            if center is None and centers:
+                center = centers[0]
         return dep, center
     finally:
         con.close()
