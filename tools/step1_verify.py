@@ -21,9 +21,11 @@
     python step1_verify.py --write-test
 """
 
+import os
 import sys
 import re
 import json
+import shutil
 import argparse
 import pathlib
 import urllib.request
@@ -198,6 +200,55 @@ def detect_url(explicit=None):
     )
 
 
+
+def _db_candidates():
+    """مسیرهای ممکن فایل دیتابیس، به ترتیب اولویت."""
+    out = []
+    env_db = os.environ.get("STM_DB")
+    if env_db:
+        out.append(pathlib.Path(env_db))
+
+    # همان منطقی که app_paths استفاده می‌کند
+    try:
+        sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+        from app_paths import get_db_path  # noqa: E402
+        out.append(pathlib.Path(get_db_path()))
+    except Exception:
+        pass
+
+    home = pathlib.Path.home()
+    for base in (os.environ.get("LOCALAPPDATA"), os.environ.get("APPDATA"),
+                 os.environ.get("XDG_DATA_HOME"), str(home / ".local" / "share"),
+                 str(home)):
+        if base:
+            out.append(pathlib.Path(base) / "STM" / "data" / "app.db")
+
+    seen, uniq = set(), []
+    for p in out:
+        if str(p) not in seen:
+            seen.add(str(p))
+            uniq.append(p)
+    return uniq
+
+
+def _backup_db():
+    """پیش از آزمونِ نوشتن، از فایل دیتابیس یک نسخهٔ پشتیبان می‌گیرد."""
+    try:
+        tried = _db_candidates()
+        db = next((p for p in tried if p.is_file()), None)
+        if not db:
+            print("  ℹ فایل دیتابیس پیدا نشد؛ بکاپ گرفته نشد. مسیرهای بررسی‌شده:")
+            for p in tried[:4]:
+                print("      ", p)
+            return
+        stamp = __import__("datetime").datetime.now().strftime("%Y%m%d_%H%M%S")
+        dst = db.with_name(db.name + ".bak_step1verify_" + stamp)
+        shutil.copy2(db, dst)
+        print(f"  ⛨ بکاپ دیتابیس: {dst}")
+    except Exception as exc:
+        print(f"  ℹ بکاپ دیتابیس ممکن نشد: {exc}")
+
+
 # ------------------------------------------------------------------ اصلی
 def main():
     ap = argparse.ArgumentParser(add_help=True)
@@ -270,9 +321,24 @@ def main():
         deputy = max(counts, key=counts.get)
 
         candidates = [r for r in rows if row_deputy(r) == deputy]
-        # ترجیح می‌دهیم روی رکوردی آزمون کنیم که از قبل تأیید نشده باشد،
-        # تا آزمون هیچ تغییری در دادهٔ واقعی ایجاد نکند.
-        in_scope = next((r for r in candidates if not r.get("manager_approved")), None)
+
+        # رکوردهایی که از قبل پرداختی ثبت‌شده دارند، برای آزمون «تأیید» مناسب نیستند
+        # (ممکن است پرداختی واقعی دست بخورد). فهرست این افراد را می‌گیریم.
+        paid_now = set()
+        code_pay, pays = admin.json(
+            "/api/payments?" + urllib.parse.urlencode({"period": period})
+        )
+        if code_pay == 200 and isinstance(pays, list):
+            paid_now = {str(x.get("national_code")) for x in pays}
+
+        def _safe(r):
+            """نه تأییدشده باشد، نه پرداختی ثبت‌شده داشته باشد."""
+            return (not r.get("manager_approved")
+                    and str(r.get("national_code")) not in paid_now)
+
+        in_scope = next((r for r in candidates if _safe(r)), None)
+        if in_scope is None:
+            in_scope = next((r for r in candidates if not r.get("manager_approved")), None)
         if in_scope is None and candidates:
             in_scope = candidates[0]
         outside = next((r for r in rows if row_deputy(r) not in ("", deputy)), None)
@@ -368,6 +434,7 @@ def main():
 
         # ---------- آزمون کامل (اختیاری) ----------
         if args.write_test:
+            _backup_db()
             print("\n۶) آزمون کامل: تأیید → ثبت در پرداختی → برگرداندن")
             code, body = approver.json(
                 "/api/toggle-approval",
