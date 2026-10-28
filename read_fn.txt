@@ -1,0 +1,85 @@
+======================================================================
+def _read_employment_file
+======================================================================
+def _read_employment_file(ws, max_scan_rows=8):
+    for ri in range(1, max_scan_rows + 1):
+        try:
+            row = next(ws.iter_rows(min_row=ri, max_row=ri, values_only=True))
+        except StopIteration:
+            break
+        row_text = " ".join(str(v) for v in row if v is not None)
+        if "کد" in row_text and "ملی" in row_text:
+            detected = _detect_employment_columns(row)
+            if "nc" in detected:
+                return ri + 1, detected
+    # fallback: ترتیب پیش‌فرض کاربر
+    return 1, {"nc": 0, "status": 1, "first_name": 2, "last_name": 3, "center": 4}
+
+
+# ============================================================
+# مراکز و تشخیص معاونت
+# ============================================================
+
+
+======================================================================
+def _to_national_code
+======================================================================
+def _to_national_code(value):
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        try:
+            return str(int(value)).zfill(10)
+        except Exception:
+            return str(value).strip()
+    s = str(value).strip().translate(_DIGIT_MAP)
+    s = s.replace(".0", "").replace(" ", "")
+    if s.isdigit():
+        return s.zfill(10)
+    return s
+
+
+# ============================================================
+# تشخیص هوشمند ستون‌های فایل وضعیت اشتغال
+# ============================================================
+
+
+======================================================================
+def _normalize_text
+======================================================================
+def _normalize_text(value):
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return value
+    v = value.strip()
+    v = v.replace("ي", "ی").replace("ك", "ک")
+    v = v.replace("\u200c", " ")
+    v = " ".join(v.split())
+    return v if v else None
+
+
+
+
+======================================================================
+def _apply_employment_for_month
+======================================================================
+def _apply_employment_for_month(conn, period_month):
+    cur = conn.execute("""
+        UPDATE records SET
+            employment_status = COALESCE((
+                SELECT em.employment_status FROM employment_monthly em
+                JOIN persons p ON p.national_code = em.national_code
+                WHERE p.id = records.person_id AND em.period_month = records.period_month
+            ), employment_status),
+            main_cost_center = COALESCE((
+                SELECT em.main_cost_center FROM employment_monthly em
+                JOIN persons p ON p.national_code = em.national_code
+                WHERE p.id = records.person_id AND em.period_month = records.period_month
+            ), main_cost_center)
+        WHERE period_month = ?
+    """, (period_month,))
+    return cur.rowcount
+
+
+

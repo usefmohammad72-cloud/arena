@@ -1,0 +1,1440 @@
+# -*- coding: utf-8 -*-
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUT_PATH = os.path.join(BASE_DIR, "web", "templates", "index.html")
+
+HTML = r'''<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سامانه تحلیلی مقاطعه (STM) - ورژن ۳</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+<link href="/static/theme.css" rel="stylesheet" type="text/css" />
+<style>
+:root{--bg:#09090b;--bg-2:#0f0f11;--panel:#131316;--panel-hover:#18181b;--elevated:#1f1f23;--border:#23232a;--border-2:#33333d;--border-3:#4a4a56;--text:#fafafa;--text-2:#a1a1aa;--text-3:#71717a;--text-4:#52525b;--blue:#3b82f6;--blue-2:#60a5fa;--blue-bg:rgba(59,130,246,.08);--green:#10b981;--green-bg:rgba(16,185,129,.08);--amber:#f59e0b;--amber-bg:rgba(245,158,11,.08);--red:#ef4444;--red-bg:rgba(239,68,68,.08);--r:8px;--r-sm:6px;--r-lg:12px;}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:"Vazirmatn","Inter","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);direction:rtl;font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased; overflow-x: hidden;}
+header{background:rgba(9,9,11,.85);backdrop-filter:blur(16px) saturate(180%);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:1000}
+header h1{margin:0;font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+header .sub{color:var(--text-3);font-size:12px;margin-top:1px}
+.header-actions{margin-inline-start:auto;display:flex;gap:8px;align-items:center}
+.user-chip{font-size:12.5px;font-weight:500;color:var(--text-2);padding:6px 12px;border-radius:var(--r-sm);background:var(--panel);border:1px solid var(--border)}
+.hbtn{padding:7px 13px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--text-2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:all .12s ease;white-space:nowrap}
+.hbtn:hover{background:var(--panel);border-color:var(--border-2);color:var(--text)}
+.hbtn.gold{background:var(--blue);border-color:var(--blue);color:#fff}
+.hbtn.gold:hover{background:var(--blue-2);border-color:var(--blue-2)}
+.hbtn.danger{color:#fca5a5;border-color:rgba(239,68,68,.25)}
+.hbtn.danger:hover{background:var(--red-bg);border-color:var(--red)}
+.hbtn.refresh{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.hbtn.refresh:hover{background:#059669;border-color:#059669}
+nav{display:flex;gap:2px;padding:8px 28px;background:rgba(9,9,11,.7);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);flex-wrap:wrap;position:sticky;top:60px;z-index:999}
+nav button{padding:7px 14px;background:transparent;cursor:pointer;font-size:13px;font-weight:500;border-radius:var(--r-sm);color:var(--text-3);border:1px solid transparent;transition:all .12s ease;font-family:inherit}
+nav button:hover{background:var(--panel);color:var(--text-2)}
+nav button.active{background:var(--elevated);color:var(--text);border-color:var(--border-2)}
+main{padding:24px 28px 60px;max-width:1600px;margin:0 auto; position: relative; z-index: 1;}
+.hidden{display:none !important}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:22px}
+.card{background:var(--panel);border-radius:var(--r-lg);padding:18px 20px;border:1px solid var(--border);transition:all .18s ease}
+.card.clickable{cursor:pointer}
+.card.clickable:hover{transform:translateY(-2px)}
+.card .value{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .label{color:var(--text-3);font-size:11.5px;margin-top:6px;font-weight:600;letter-spacing:.02em}
+
+.card.warn-yellow-card{border:1px solid rgba(234,179,8,.55);background:linear-gradient(135deg,rgba(234,179,8,.20) 0%,rgba(234,179,8,.04) 100%);box-shadow:0 4px 20px -8px rgba(234,179,8,.45), inset 0 1px 0 rgba(255,255,255,.06);}
+.card.warn-yellow-card:hover{ box-shadow:0 10px 30px -8px rgba(234,179,8,.6), inset 0 1px 0 rgba(255,255,255,.10); }
+.card.warn-yellow-card .value{color:#fde047;}
+.card.warn-yellow-card .label{color:#fcd34d;}
+
+.card.warn-orange-card{border:1px solid rgba(249,115,22,.55);background:linear-gradient(135deg,rgba(249,115,22,.20) 0%,rgba(249,115,22,.04) 100%);box-shadow:0 4px 20px -8px rgba(249,115,22,.45), inset 0 1px 0 rgba(255,255,255,.06);}
+.card.warn-orange-card:hover{ box-shadow:0 10px 30px -8px rgba(249,115,22,.6), inset 0 1px 0 rgba(255,255,255,.10); }
+.card.warn-orange-card .value{color:#fb923c;}
+.card.warn-orange-card .label{color:#fdba74;}
+
+.card.warn-red-card{border:1px solid rgba(239,68,68,.55);background:linear-gradient(135deg,rgba(239,68,68,.20) 0%,rgba(239,68,68,.04) 100%);box-shadow:0 4px 20px -8px rgba(239,68,68,.45), inset 0 1px 0 rgba(255,255,255,.06);}
+.card.warn-red-card:hover{ box-shadow:0 10px 30px -8px rgba(239,68,68,.6), inset 0 1px 0 rgba(255,255,255,.10); }
+.card.warn-red-card .value{color:#f87171;}
+.card.warn-red-card .label{color:#fca5a5;}
+
+.card.approved-card{border:1px solid rgba(16,185,129,.55);background:linear-gradient(135deg,rgba(16,185,129,.20) 0%,rgba(16,185,129,.04) 100%);box-shadow:0 4px 20px -8px rgba(16,185,129,.45), inset 0 1px 0 rgba(255,255,255,.06);}
+.card.approved-card:hover{ box-shadow:0 10px 30px -8px rgba(16,185,129,.6), inset 0 1px 0 rgba(255,255,255,.10); }
+.card.approved-card .value{color:#34d399;}
+.card.approved-card .label{color:#6ee7b7;}
+
+.card.all-filter-card{border:1px solid rgba(59,130,246,.55);background:linear-gradient(135deg,rgba(59,130,246,.20) 0%,rgba(59,130,246,.04) 100%);box-shadow:0 4px 20px -8px rgba(59,130,246,.45), inset 0 1px 0 rgba(255,255,255,.06);}
+.card.all-filter-card:hover{ box-shadow:0 10px 30px -8px rgba(59,130,246,.6), inset 0 1px 0 rgba(255,255,255,.10); }
+.card.all-filter-card .value{color:#60a5fa;}
+.card.all-filter-card .label{color:#93c5fd;}
+
+.card.active-filter{ outline:2px solid #ffffff; outline-offset:3px; box-shadow:0 0 0 3px rgba(255,255,255,.08), 0 10px 30px -8px rgba(0,0,0,.5) !important; }
+.card.mini-uniform .value{color:var(--amber);font-size:18px}
+
+.export-btn{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 11px; border-radius:6px;
+  border:1px solid rgba(59,130,246,.35);
+  background:rgba(59,130,246,.12);
+  color:#93c5fd;
+  font-family:inherit; font-size:11.5px; font-weight:600;
+  cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.export-btn:hover{ background:rgba(59,130,246,.25); border-color:var(--blue); color:#fff; }
+.report-box h3 .export-btn{ margin-inline-start:auto; }
+
+.panel{background:var(--panel);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:18px;border:1px solid var(--border)}
+.panel h3{margin:0 0 16px;font-size:14px;color:var(--text);padding-bottom:12px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
+.panel h3::before{content:"";width:3px;height:14px;background:var(--blue);border-radius:2px}
+.panel p{margin:0 0 12px;color:var(--text-2);font-size:13px;line-height:1.7}
+.report-box{background:var(--panel);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:18px;border:1px solid var(--border); position: relative; z-index: 10; overflow: visible !important;}
+.report-box.filters-box { z-index: 1000 !important; }
+.report-box h3{margin:0 0 16px;font-size:14.5px;color:var(--text);padding-bottom:12px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
+.report-box h3::before{content:"";width:3px;height:14px;background:var(--blue);border-radius:2px}
+.report-box.compact{padding:16px 20px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--border);vertical-align:middle}
+th{background:var(--bg-2);color:var(--text-3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+tbody tr{transition:background .1s ease}
+tbody tr:hover{background:var(--panel-hover)}
+td.num,th.num{direction:ltr;text-align:left;font-variant-numeric:tabular-nums;font-family:ui-monospace,"SF Mono",Consolas,monospace;font-size:12.5px;white-space:nowrap;letter-spacing:-.01em}
+td.code{font-family:ui-monospace,"SF Mono",Consolas,monospace;direction:ltr;text-align:right;letter-spacing:.02em}
+.table-wrap{overflow:auto;max-height:640px;border-radius:var(--r);border:1px solid var(--border);background:var(--panel); position: relative; z-index: 1 !important;}
+tbody tr.warn-yellow td{background:rgba(234,179,8,.18) !important;color:#fde047 !important;font-weight:600 !important;border-right:3px solid #eab308}
+tbody tr.warn-orange td{background:rgba(249,115,22,.25) !important;color:#fdba74 !important;font-weight:700 !important;border-right:3px solid #f97316}
+tbody tr.warn-red td{background:rgba(239,68,68,.22) !important;color:#fca5a5 !important;font-weight:700 !important;border-right:3px solid #ef4444}
+tbody tr.pending-approve td{background:rgba(59,130,246,.08)!important;border-right:3px solid #3b82f6}
+tbody tr.approved td{background:rgba(16,185,129,.15) !important;color:#6ee7b7 !important;font-weight:500 !important;border-right:3px solid #10b981}
+tr.col-search-row th{background:var(--bg-2);padding:6px 8px!important;position:sticky;top:36px;z-index:9}
+tr.col-search-row input{width:100%;padding:6px 10px;font-size:11.5px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-family:inherit}
+tr.col-search-row input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+#report-table thead tr:first-child th{position:sticky;top:0;z-index:10;background:var(--bg-2)}
+input,select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--bg-2);color:var(--text);transition:all .12s ease}
+input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg);background:var(--bg)}
+select option{background:var(--elevated);color:var(--text)}
+input[type=number],input.thousand-input{font-variant-numeric:tabular-nums;direction:ltr;text-align:left;font-family:ui-monospace,monospace;letter-spacing:-.01em}
+input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--blue)}
+button.action,button.ghost,button.gold,button.teal{padding:9px 18px;border-radius:var(--r-sm);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s ease;border:none;display:inline-flex;align-items:center;gap:6px}
+button.action{background:var(--blue);color:#fff}
+button.action:hover{background:var(--blue-2)}
+button.ghost{background:transparent;color:var(--text-2);border:1px solid var(--border)}
+button.ghost:hover{background:var(--panel);border-color:var(--border-2);color:var(--text)}
+button.gold{background:var(--amber);color:#09090b;font-weight:600}
+button.gold:hover{background:#fbbf24}
+button.teal{background:var(--green);color:#fff;font-weight:600}
+button.teal:hover{background:#059669}
+.row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.row label{font-weight:500;color:var(--text-2);font-size:12.5px}
+.msg{padding:11px 15px;border-radius:var(--r-sm);margin-top:10px;font-size:12.5px;line-height:1.6;font-weight:500}
+.msg.ok{background:var(--green-bg);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
+.msg.err{background:var(--red-bg);color:#fca5a5;border:1px solid rgba(239,68,68,.25)}
+.msg.warn{background:var(--amber-bg);color:#fcd34d;border:1px solid rgba(245,158,11,.25)}
+.empty-amount{color:var(--red);font-style:italic}
+.cell-warn{font-size:11.5px;color:#fbbf24;font-weight:600;display:inline-block}
+.cell-warn.red{color:#fca5a5}
+.person-result{border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;background:var(--panel);margin-bottom:18px}
+.person-result h3{margin:0 0 12px;color:var(--text);font-size:14.5px;display:flex;align-items:center;gap:8px;justify-content:space-between;font-weight:600}
+.close-btn{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:var(--r-sm);line-height:1}
+.close-btn:hover{background:var(--red-bg);color:var(--red)}
+#report-table th.approve,#report-table td.approve{width:80px;text-align:center;padding:8px 6px}
+#report-table th.row-num,#report-table td.row-num{width:56px;text-align:center}
+.chart-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--panel);border-radius:var(--r-lg);padding:16px 20px;margin-bottom:20px;border:1px solid var(--border); position: relative; z-index: 100;}
+.chart-toolbar label{font-weight:500;color:var(--text-2);font-size:12.5px}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:16px}
+.chart-box{background:var(--panel);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);display:flex;flex-direction:column; position: relative; z-index: 1;}
+.chart-box h4{margin:0 0 16px;font-size:13.5px;color:var(--text);display:flex;align-items:center;justify-content:space-between;font-weight:600; gap:10px;}
+.chart-box h4 .badge-period{font-size:10.5px;font-weight:500;color:var(--text-3);background:var(--elevated);padding:3px 10px;border-radius:var(--r-sm);border:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:12.5px}
+.bar-row .name{flex:0 0 150px;color:var(--text);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.bar-row .bar-wrap{flex:1;background:var(--bg);border-radius:var(--r-sm);overflow:hidden;height:20px;position:relative;border:1px solid var(--border)}
+.bar-row .bar{height:100%;border-radius:var(--r-sm);transition:width .3s ease;background:linear-gradient(90deg,var(--blue),var(--blue-2))}
+.bar-row .bar.gold{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.bar-row .bar.warn{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.bar-row .bar.green{background:linear-gradient(90deg,var(--green),#34d399)}
+.bar-row .val{flex:0 0 130px;color:var(--text-3);text-align:left;font-variant-numeric:tabular-nums;direction:ltr;font-family:ui-monospace,monospace;font-size:11.5px;font-weight:500}
+.donut-wrap{display:flex;justify-content:center;align-items:center;padding:12px;gap:22px;flex-wrap:wrap}
+.donut{width:160px;height:160px;border-radius:50%;position:relative}
+.donut::after{content:"";position:absolute;inset:24%;border-radius:50%;background:var(--panel);box-shadow:inset 0 0 0 1px var(--border)}
+.donut-legend{display:flex;flex-direction:column;gap:6px;font-size:12px}
+.donut-legend .item{display:flex;align-items:center;gap:9px;padding:5px 9px;border-radius:var(--r-sm)}
+.donut-legend .dot{width:12px;height:12px;border-radius:3px;flex:none}
+.donut-legend .lbl{flex:1;color:var(--text);font-weight:500}
+.donut-legend .v{font-variant-numeric:tabular-nums;color:var(--blue-2);font-weight:600;direction:ltr;font-family:ui-monospace,monospace;font-size:11.5px}
+.donut-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2;pointer-events:none}
+.donut-center .num{font-size:20px;font-weight:700;color:var(--text);direction:ltr;font-family:ui-monospace,monospace;letter-spacing:-.02em}
+.donut-center .lbl{font-size:10.5px;color:var(--text-3);margin-top:2px;font-weight:500}
+.summary-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+.summary-3col .card{padding:16px 18px;min-height:88px;display:flex;flex-direction:column;justify-content:center}
+.summary-3col .card .value{font-size:17px;font-weight:700;text-align:center;white-space:normal;word-break:break-word}
+.summary-3col .card .label{font-size:11.5px;margin-top:6px;text-align:center;font-weight:500}
+.mini-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini-3col .card{padding:12px 16px;min-height:68px;display:flex;flex-direction:column;justify-content:center}
+.mini-3col .card .value{font-size:14.5px;text-align:center}
+.cards.tight{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:0}
+.cards.tight .card{padding:16px 18px}
+.cards.tight .card .value{font-size:22px}
+.cards.tight .card .label{font-size:12px;margin-top:6px;font-weight:700}
+.report-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.filter-item{display:flex;flex-direction:column;gap:6px;background:var(--bg-2);padding:10px 12px;border-radius:var(--r);border:1px solid var(--border); position: relative; z-index: 100;}
+.filter-item label{font-weight:500;color:var(--text-3);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+.filter-item select,.filter-item input{width:100%;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)}
+.filter-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:14px;border-top:1px solid var(--border);margin-top:4px}
+.filter-actions .spacer{flex:1}
+.filter-ncode-row{display:inline-flex;gap:8px;align-items:flex-end;padding:10px 14px;margin-bottom:4px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r)}
+.filter-ncode-row .filter-item{width:220px;flex:0 0 220px;background:transparent;border:none;padding:0}
+#ncode-input{padding:9px 12px;font-size:13.5px;font-family:ui-monospace,monospace;direction:ltr;text-align:right;letter-spacing:2px;max-width:none;background:var(--bg);color:var(--text)}
+#summary-table tfoot td{background:var(--bg-2);font-weight:700;color:var(--blue-2);border-top:1px solid var(--border)}
+#toasts{position:fixed;top:20px;left:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:380px;pointer-events:none}
+.toast{padding:13px 18px;border-radius:var(--r);background:var(--elevated);border:1px solid var(--border-2);color:var(--text);box-shadow:0 12px 32px -8px rgba(0,0,0,.7);animation:tIn .25s ease-out;pointer-events:auto}
+.toast.ok{border-right:3px solid var(--green)}
+.toast.err{border-right:3px solid var(--red)}
+.toast.warn{border-right:3px solid var(--amber)}
+.toast.info{border-right:3px solid var(--blue)}
+.toast .tt{font-size:13px;font-weight:600;margin-bottom:3px}
+.toast .tm{font-size:12px;color:var(--text-2);line-height:1.5}
+@keyframes tIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--border-3)}
+::selection{background:var(--blue-bg);color:var(--text)}
+.bulk-import-section{margin-bottom:18px;padding:16px;background:var(--bg-2);border-radius:var(--r);border:1px solid var(--border)}
+.bulk-import-section .bulk-title{font-weight:700;font-size:13px;color:var(--text);margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed var(--border)}
+.bulk-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:900px){.bulk-grid{grid-template-columns:1fr}}
+.bulk-item{padding:12px;background:var(--panel);border-radius:var(--r-sm);border:1px solid var(--border)}
+.bulk-item .bi-label{font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:8px}
+.bulk-item input[type=file]{font-size:11.5px;margin-bottom:8px;padding:6px}
+.bulk-item button{width:100%}
+@media (max-width:900px){
+  header,nav,main{padding-right:14px;padding-left:14px}
+  .summary-3col,.mini-3col{grid-template-columns:1fr}
+  .report-filters{grid-template-columns:1fr}
+}
+.hr-dd-item:hover{background:var(--panel-h);color:var(--text)}
+.hr-dd-item.active{background:var(--elevated);color:var(--text)}
+.ms-container{position:relative;width:100%; z-index: 9999 !important;}
+.ms-header{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text);min-height:38px}
+.ms-header:hover{border-color:var(--border-2)}
+.ms-dropdown{position:absolute;top:calc(100% + 4px);right:0;left:0;background:var(--elevated);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:6px;max-height:250px;overflow-y:auto;z-index:99999 !important;display:none;box-shadow:0 10px 30px rgba(0,0,0,.8)}
+.ms-dropdown.show{display:block}
+.ms-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;cursor:pointer;font-size:12.5px;color:var(--text-2);margin-bottom:2px}
+.ms-item:hover{background:var(--bg-2);color:var(--text)}
+.ms-item input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;margin:0}
+.header-clock{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 12px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-sm);margin-left:8px}
+.header-clock .time{font-family:ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--text);direction:ltr}
+.header-clock .date{font-size:10.5px;color:var(--text-3)}
+.smart-dashboard{display:flex;flex-direction:column;gap:20px}
+.smart-header-panel{background:linear-gradient(135deg,rgba(30,30,40,.8),rgba(15,15,20,.9));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 10px 30px -10px rgba(0,0,0,.8)}
+.smart-header-panel h2{margin:0;font-size:20px;font-weight:800;background:linear-gradient(90deg,#60a5fa,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.smart-header-panel .subtitle{color:var(--text-3);font-size:13px;margin-top:4px}
+.smart-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.smart-kpi-card{background:rgba(25,25,30,.6);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:20px}
+.smart-kpi-title{font-size:12px;color:var(--text-3);text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.smart-kpi-value{font-size:26px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.smart-kpi-footer{margin-top:10px;font-size:11.5px;color:var(--text-4)}
+.smart-main-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+@media (max-width:1024px){.smart-main-grid{grid-template-columns:1fr}}
+.smart-chart-box{background:rgba(25,25,30,.6);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:24px}
+.smart-chart-box h3{margin:0 0 20px;font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;justify-content:space-between}
+.smart-chart-box h3 .badge{font-size:11px;color:var(--blue-2);background:rgba(59,130,246,.1);padding:3px 10px;border-radius:20px;border:1px solid rgba(59,130,246,.2)}
+.smart-insights{display:flex;flex-direction:column;gap:12px}
+.smart-insight-item{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.smart-insight-item::before{content:'';position:absolute;top:0;right:0;bottom:0;width:4px;background:var(--blue)}
+.smart-insight-item.green::before{background:var(--green)}
+.smart-insight-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.smart-insight-desc{font-size:12px;color:var(--text-2);line-height:1.6}
+.deputy-accordion-item{margin-bottom:12px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.deputy-header{padding:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s}
+.deputy-header:hover{background:var(--panel-hover)}
+.deputy-body{padding:0 16px 16px;border-top:1px dashed var(--border)}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+<header>
+  <div>
+    <h1>سامانه تحلیلی مقاطعه (STM)</h1>
+    <div class="sub">داشبورد مدیریتی و گزارش‌گیری - ورژن ۳</div>
+  </div>
+  <div class="header-actions">
+    <div class="header-clock">
+      <span class="time" id="live-clock">--:--:--</span>
+      <span class="date" id="live-date">در حال بارگذاری...</span>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="تغییر تم">🌙</button>
+    <span class="user-chip">{{ session.full_name or session.username }}</span>
+    <button class="hbtn refresh" id="refresh-btn" onclick="refreshAll()">تازه‌سازی</button>
+    <button class="hbtn gold" onclick="openSmartCenter()">📊 تحلیل مدیریتی</button>
+    {% if session.role == 'admin' %}
+      <a href="/users" class="hbtn gold">مدیریت کاربران</a>
+    {% endif %}
+    <a href="/logout" class="hbtn danger">خروج</a>
+  </div>
+</header>
+
+<nav>
+  <div style="position:relative;display:inline-block">
+    <button class="tab active" data-tab="dashboard" id="dash-tab">داشبورد <span style="font-size:9px;opacity:.6;margin-inline-start:4px">▼</span></button>
+    <div id="dash-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:220px;box-shadow:0 16px 40px -8px rgba(0,0,0,.8);z-index:9999">
+      <button type="button" class="dash-dd-item" data-dash-sub="overview" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;white-space:nowrap">نمودارهای تحلیلی</button>
+      <button type="button" class="dash-dd-item" data-dash-sub="submission" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">وضعیت ارسال اطلاعات</button>
+      <button type="button" class="dash-dd-item" data-dash-sub="summary" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">خلاصه تفکیکی</button>
+      <button type="button" class="dash-dd-item" data-dash-sub="approvals" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">وضعیت تأیید</button>
+    </div>
+  </div>
+  <button class="tab" data-tab="report">گزارش خروجی</button>
+  <div style="position:relative;display:inline-block">
+    <button class="tab" data-tab="input" id="input-main-tab">اطلاعات ورودی <span style="font-size:9px;opacity:.6;margin-inline-start:4px">▼</span></button>
+    <div id="input-tab-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:260px;box-shadow:0 16px 40px -8px rgba(0,0,0,.8);z-index:9999">
+      <button type="button" class="input-dd-item" data-input-sub="pricing" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">ویرایش سقف پرداختی</button>
+      <button type="button" class="input-dd-item" data-input-sub="specialists" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;margin-top:2px">کارشناسان و خدمات و تجهیزات</button>
+      <button type="button" class="input-dd-item" data-input-sub="manual" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;margin-top:2px">سقف ماهانه دستی</button>
+      <button type="button" class="input-dd-item" data-input-sub="payments" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;margin-top:2px">پرداختی‌های ماه</button>
+      <button type="button" class="input-dd-item" data-input-sub="employment" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;margin-top:2px">وضعیت اشتغال</button>
+      <button type="button" class="input-dd-item" data-input-sub="maincenter" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;margin-top:2px">مرکز هزینه اصلی</button>
+      <button type="button" class="input-dd-item" data-input-sub="import" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;margin-top:2px">اکسل ورودی</button>
+    </div>
+  </div>
+  <div style="position:relative;display:inline-block">
+    <button class="tab" data-tab="personnel" id="hr-tab">منابع انسانی <span style="font-size:9px;opacity:.6;margin-inline-start:4px">▼</span></button>
+    <div id="hr-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:190px;box-shadow:0 16px 40px -8px rgba(0,0,0,.8);z-index:9999">
+      <button type="button" class="hr-dd-item" data-hr-view="bank" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">بانک نفرات</button>
+      <button type="button" class="hr-dd-item" data-hr-view="templates" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;margin-top:2px">الگو مصوب</button>
+      <button type="button" class="hr-dd-item" data-hr-view="shifts" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;margin-top:2px">مبالغ و تعداد شیفت</button>
+    </div>
+  </div>
+</nav>
+<main>
+
+<section id="tab-smart-center" class="hidden">
+  <div class="smart-dashboard">
+    <div class="smart-header-panel">
+      <div>
+        <h2>اتاق تحلیل و فرمان هوشمند (تحلیل مدیریتی)</h2>
+        <div class="subtitle">نمای جامع و لحظه‌ای از وضعیت پرداختی‌ها، هشدارها و تحلیل‌های پیشرفته سیستم</div>
+      </div>
+      <div><button class="hbtn ghost" onclick="loadSmartCenterData()">🔄 تازه‌سازی داده‌ها</button></div>
+    </div>
+    <div class="smart-kpi-grid">
+      <div class="smart-kpi-card"><div class="smart-kpi-title">مجموع پرداختی</div><div class="smart-kpi-value" id="sa-total-paid">۰ ریال</div><div class="smart-kpi-footer">در تمام دوره‌ها</div></div>
+      <div class="smart-kpi-card"><div class="smart-kpi-title">تعداد کل رکوردها</div><div class="smart-kpi-value" id="sa-total-records">۰</div><div class="smart-kpi-footer">در دیتابیس</div></div>
+      <div class="smart-kpi-card"><div class="smart-kpi-title">نیازمند بررسی</div><div class="smart-kpi-value" id="sa-warnings">۰</div><div class="smart-kpi-footer">هشدار زرد و نارنجی</div></div>
+      <div class="smart-kpi-card"><div class="smart-kpi-title">دارای تداخل</div><div class="smart-kpi-value" id="sa-employed">۰</div><div class="smart-kpi-footer">نیازمند اقدام</div></div>
+    </div>
+    <div class="smart-main-grid">
+      <div class="smart-chart-box"><h3>روند پرداختی ماهانه <span class="badge">۱۲ ماه</span></h3><div id="sa-chart-monthly" style="min-height: 250px;"></div></div>
+      <div class="smart-chart-box"><h3>بینش‌های هوشمند <span class="badge">زنده</span></h3><div class="smart-insights" id="sa-insights"><div class="smart-insight-item"><div class="smart-insight-title">در حال تحلیل...</div></div></div></div>
+    </div>
+    <div class="smart-main-grid">
+      <div class="smart-chart-box"><h3>عملکرد معاونت‌ها <span class="badge">تفکیکی</span></h3>
+        <div class="table-wrap" style="max-height:300px"><table id="sa-dep-table"><thead><tr><th>معاونت</th><th class="num">کل</th><th class="num">تأیید</th><th class="num">درصد</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="smart-chart-box"><h3>توزیع ریسک</h3><div class="donut-wrap" id="sa-risk-donut"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-dashboard">
+  <div class="chart-toolbar" style="margin-bottom:20px;">
+    <label>دوره تحلیل داشبورد:</label>
+    <select id="dash-year" onchange="onDashFilterChange()"></select>
+    <select id="dash-month" onchange="onDashFilterChange()"></select>
+    <button class="ghost" onclick="onDashFilterChange()">بروزرسانی</button>
+    <span style="flex:1"></span>
+  </div>
+
+  <div id="dash-sub-overview" class="dash-sub-panel">
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h4>روند پرداختی ماهانه
+          <span style="display:flex;gap:8px;align-items:center">
+            <span class="badge-period" id="badge-month"></span>
+            <button class="export-btn" onclick="exportDash('by-month')" title="خروجی اکسل">خروجی اکسل</button>
+          </span>
+        </h4>
+        <div id="chart-by-month"></div>
+      </div>
+      <div class="chart-box">
+        <h4>ترکیب وضعیت رکوردها
+          <span style="display:flex;gap:8px;align-items:center">
+            <span class="badge-period" id="badge-warn"></span>
+            <button class="export-btn" onclick="exportDash('warnings')" title="خروجی اکسل">خروجی اکسل</button>
+          </span>
+        </h4>
+        <div class="donut-wrap" id="chart-donut-warnings"></div>
+      </div>
+      <div class="chart-box">
+        <h4>توزیع دستمزد ماهانه
+          <span style="display:flex;gap:8px;align-items:center">
+            <span class="badge-period" id="badge-wage"></span>
+            <button class="export-btn" onclick="exportDash('wage-dist')" title="خروجی اکسل">خروجی اکسل</button>
+          </span>
+        </h4>
+        <div id="chart-wage-dist"></div>
+      </div>
+      <div class="chart-box">
+        <h4>ترکیب وضعیت اشتغال
+          <span style="display:flex;gap:8px;align-items:center">
+            <span class="badge-period" id="badge-emp"></span>
+            <button class="export-btn" onclick="exportDash('emp-dist')" title="خروجی اکسل">خروجی اکسل</button>
+          </span>
+        </h4>
+        <div id="chart-emp-dist"></div>
+      </div>
+      <div class="chart-box">
+        <h4>پراکندگی تعداد محل خدمتی
+          <span style="display:flex;gap:8px;align-items:center">
+            <span class="badge-period" id="badge-places"></span>
+            <button class="export-btn" onclick="exportDash('places-dist')" title="خروجی اکسل">خروجی اکسل</button>
+          </span>
+        </h4>
+        <div id="chart-places-dist"></div>
+      </div>
+    </div>
+    <div class="report-box" style="margin-top:20px">
+      <h3>جزئیات مالی (کارشناسان، تجهیزات، هدایا)
+        <button class="export-btn" onclick="exportDash('financials')">خروجی اکسل</button>
+      </h3>
+      <div id="dashboard-financials" class="summary-3col"></div>
+      <div id="dashboard-top-centers" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="dash-sub-submission" class="dash-sub-panel hidden">
+    <div class="report-box">
+      <h3>وضعیت ارسال اطلاعات مراکز به تفکیک معاونت
+        <button class="export-btn" onclick="exportDash('submission')">خروجی اکسل</button>
+      </h3>
+      <p style="margin-bottom:16px;color:var(--text-2);font-size:12.5px">برای مشاهده جزئیات و لیست مراکز، روی هر معاونت کلیک کنید.</p>
+      <div id="deputy-submission-accordion"></div>
+    </div>
+  </div>
+
+  <div id="dash-sub-summary" class="dash-sub-panel hidden">
+    <div class="report-box">
+      <h3>خلاصه تفکیکی معاونت / شبکه</h3>
+      <div class="report-filters">
+        <div class="filter-item"><label>سال</label><select id="st-year" onchange="loadSummaryTable()"></select></div>
+        <div class="filter-item"><label>ماه</label><select id="st-month" onchange="loadSummaryTable()"></select></div>
+        <div class="filter-item"><label>معاونت</label><select id="st-deputy" onchange="loadSummaryTable()"></select></div>
+      </div>
+      <div class="filter-actions">
+        <span id="st-msg" style="color:var(--text-3);font-size:13px"></span>
+        <span class="spacer"></span>
+        <button class="teal" onclick="exportSummaryTable()">دریافت فایل اکسل</button>
+      </div>
+      <div class="table-wrap" style="margin-top:12px;max-height:600px">
+        <table id="summary-table">
+          <thead><tr><th style="width:180px">معاونت</th><th>شبکه / مرکز</th><th class="num">صلاحیت حرفه‌ای</th><th class="num">تخصیص ماه</th><th class="num">مجموع</th></tr></thead>
+          <tbody></tbody><tfoot></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="dash-sub-approvals" class="dash-sub-panel hidden">
+    <div class="report-box">
+      <h3>وضعیت تأیید به تفکیک معاونت / مرکز
+        <button class="export-btn" onclick="exportDash('approvals')">خروجی اکسل</button>
+      </h3>
+      <div class="report-filters">
+        <div class="filter-item"><label>سال</label><select id="appr-year" onchange="loadApprovalStatus()"></select></div>
+        <div class="filter-item"><label>ماه</label><select id="appr-month" onchange="loadApprovalStatus()"></select></div>
+        <div class="filter-item"><label>فیلتر معاونت</label><select id="appr-deputy-filter" onchange="loadApprovalStatus()"></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">تأیید به تفکیک معاونت</div>
+          <div class="table-wrap" style="max-height:420px"><table id="approval-deputies-table"><thead><tr><th>معاونت</th><th class="num">کل</th><th class="num">تأییدشده</th><th class="num">در انتظار</th></tr></thead><tbody></tbody></table></div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">تأیید به تفکیک شبکه / مرکز</div>
+          <div class="table-wrap" style="max-height:420px"><table id="approval-centers-table"><thead><tr><th>معاونت</th><th>شبکه / مرکز</th><th class="num">کل</th><th class="num">تأییدشده</th><th class="num">در انتظار</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-report" class="hidden">
+  <div class="report-box filters-box">
+    <h3>فیلترهای گزارش</h3>
+    <div class="report-filters">
+      <div class="filter-item"><label>سال</label><select id="rep-year" onchange="loadReport()"></select></div>
+      <div class="filter-item"><label>ماه</label><select id="rep-month" onchange="loadReport()"></select></div>
+      <div class="filter-item"><label>معاونت</label><div class="ms-container" id="ms-deputy"></div></div>
+      <div class="filter-item"><label>شبکه / مرکز</label><div class="ms-container" id="ms-center"></div></div>
+      <div class="filter-item"><label>تامین / پخش</label><div class="ms-container" id="ms-supply"></div></div>
+    </div>
+    <div class="filter-ncode-row">
+      <div class="filter-item"><label>کد ملی</label><input id="ncode-input" placeholder="0480060096"></div>
+      <button class="action" onclick="searchPerson()">جستجو</button>
+      <button class="ghost" onclick="clearPersonResult()">پاک کردن</button>
+    </div>
+    <div class="filter-actions">
+      <span id="confirm-msg" style="color:var(--text-3);font-size:13px"></span>
+      <span class="spacer"></span>
+      <button class="teal" onclick="exportReportExcel()">دریافت فایل اکسل</button>
+      <button class="action" id="approve-all-btn" onclick="doBulkApprove()" style="background:var(--green);border-color:var(--green);color:#fff;font-weight:600">تأییدیه مدیر</button>
+      <button class="ghost" id="unapprove-all-btn" onclick="doBulkUnapprove()" style="display:none;color:#fca5a5;border-color:rgba(239,68,68,.3)">لغو تأییدیه</button>
+      <button class="gold" onclick="openExportDialog()" style="margin-inline-start:8px">گزارش مدیریتی</button>
+    </div>
+  </div>
+
+  <div id="person-result" class="person-result hidden"></div>
+
+  <div class="report-box">
+    <h3>خلاصه تحلیلی</h3>
+    <div class="summary-3col" id="report-summary"></div>
+    <div class="mini-3col" id="report-extra"></div>
+  </div>
+
+  <div class="report-box compact">
+    <h3>فیلتر سریع (کلیک‌پذیر)</h3>
+    <div class="cards tight" id="report-warnings" style="margin-bottom:0"></div>
+  </div>
+
+  <div class="report-box">
+    <h3>جدول جزئیات</h3>
+    <div class="table-wrap">
+      <table id="report-table" style="min-width:1900px">
+        <thead>
+          <tr>
+            <th class="approve">تاییدیه مدیر</th>
+            <th class="row-num">ردیف</th>
+            <th>نام</th><th>نام خانوادگی</th><th>کد ملی</th>
+            <th>حقوق دوم</th><th>مبنای قانونی</th>
+            <th class="num">پاداش کارت مهارت</th>
+            <th class="num">بیمه کارفرما</th>
+            <th class="num">پاداش غیرمستمر</th>
+            <th class="num">دستمزد ماه</th>
+            <th>مرکز هزینه</th><th>مرکز اصلی</th><th>وضعیت اشتغال</th>
+            <th class="num">سقف پرداختی</th>
+            <th>نام برنامه</th>
+            <th class="num">نوع خطا</th>
+            <th class="num">پرداختی ماه</th>
+            <th class="num">مجموع سال</th>
+            <th class="num">سقف مستثنی</th>
+            <th class="num" id="dyn-ceiling-th">سقف ماه</th>
+            <th>محل خدمتی</th>
+          </tr>
+          <tr class="col-search-row" id="col-search-row"></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="tab-personnel" class="hidden">
+  <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);background:var(--panel)">
+    <iframe id="personnel-frame" src="" style="width:100%;height:calc(100vh - 200px);border:none;background:var(--bg)" data-loaded="0"></iframe>
+  </div>
+</section>
+
+<section id="tab-input" class="hidden">
+  <div style="position:relative;margin-bottom:16px">
+    <button class="btn primary" onclick="toggleInputDropdown()" style="padding:9px 18px;border-radius:6px;background:var(--blue);color:#fff;border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px">انتخاب بخش <span style="font-size:10px;opacity:.8">▼</span></button>
+    <div id="input-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:240px;box-shadow:0 16px 40px -8px rgba(0,0,0,.8);z-index:999">
+      <button class="hr-dd-item sub-tab active" data-sub="pricing" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">ویرایش سقف پرداختی</button>
+      <button class="hr-dd-item sub-tab" data-sub="specialists" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">کارشناسان و خدمات و تجهیزات</button>
+      <button class="hr-dd-item sub-tab" data-sub="manual" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">سقف ماهانه دستی</button>
+      <button class="hr-dd-item sub-tab" data-sub="payments" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">پرداختی‌های ماه</button>
+      <button class="hr-dd-item sub-tab" data-sub="employment" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">وضعیت اشتغال</button>
+      <button class="hr-dd-item sub-tab" data-sub="maincenter" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">مرکز هزینه اصلی</button>
+      <button class="hr-dd-item sub-tab" data-sub="import" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">اکسل ورودی</button>
+    </div>
+  </div>
+  <div>
+    <div id="sub-pricing" class="sub-panel">
+      <div class="panel">
+        <h3>ویرایش قوانین سقف پرداختی</h3>
+        <div class="row">
+          <label>فیلتر معاونت:</label><select id="pr-deputy-filter" onchange="loadPricingRules()"></select>
+          <button class="action" onclick="recalcAll()">محاسبه مجدد همه</button>
+          <span id="pr-recalc-msg" style="color:var(--text-3);font-size:13px"></span>
+        </div>
+        <div class="table-wrap"><table id="pricing-table"><thead><tr><th>معاونت</th><th>ماده قانونی</th><th>دسته</th><th class="num">مبلغ (ریال)</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+    <div id="sub-specialists" class="sub-panel hidden">
+      <div class="panel">
+        <h3>کارشناسان، خدمات و تجهیزات، جوایز و هدایا</h3>
+        <div class="bulk-import-section">
+          <div class="bulk-title">ایمپورت دسته‌جمعی از فایل اکسل</div>
+          <div class="row" style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px dashed var(--border)">
+            <label>سال هدف:</label><select id="bulk-year" style="max-width:120px"></select>
+            <label>ماه هدف:</label><select id="bulk-month" style="max-width:150px"></select>
+          </div>
+          <div class="bulk-grid">
+            <div class="bulk-item"><div class="bi-label">کارشناسان</div><input type="file" id="bulk-specialists-file" accept=".xlsx"><div style="display:flex;gap:8px;margin-top:8px"><button class="action" onclick="doBulkImport('specialists')" style="flex:1">بارگذاری</button><button class="ghost" onclick="clearBulkMonth('specialists')" style="flex:1;color:var(--red);border-color:rgba(239,68,68,.3)">پاک کردن</button></div><div id="bulk-specialists-msg" style="margin-top:6px;font-size:11px"></div></div>
+            <div class="bulk-item"><div class="bi-label">خدمات و تجهیزات</div><input type="file" id="bulk-equipment-file" accept=".xlsx"><div style="display:flex;gap:8px;margin-top:8px"><button class="action" onclick="doBulkImport('equipment')" style="flex:1">بارگذاری</button><button class="ghost" onclick="clearBulkMonth('equipment')" style="flex:1;color:var(--red);border-color:rgba(239,68,68,.3)">پاک کردن</button></div><div id="bulk-equipment-msg" style="margin-top:6px;font-size:11px"></div></div>
+            <div class="bulk-item"><div class="bi-label">جوایز و هدایا</div><input type="file" id="bulk-bonus-file" accept=".xlsx"><div style="display:flex;gap:8px;margin-top:8px"><button class="action" onclick="doBulkImport('bonus')" style="flex:1">بارگذاری</button><button class="ghost" onclick="clearBulkMonth('bonus')" style="flex:1;color:var(--red);border-color:rgba(239,68,68,.3)">پاک کردن</button></div><div id="bulk-bonus-msg" style="margin-top:6px;font-size:11px"></div></div>
+          </div>
+        </div>
+        <div class="row"><label>فیلتر معاونت:</label><select id="sp-deputy-filter" onchange="loadSpecialists()"></select></div>
+        <div class="table-wrap"><table id="specialists-table"><thead><tr><th>معاونت</th><th>مرکز/شبکه</th><th>تامین/پخش</th><th class="num">کارشناسان</th><th class="num">خدمات و تجهیزات</th><th class="num">جوایز و هدایا</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+    <div id="sub-manual" class="sub-panel hidden">
+      <div class="panel">
+        <h3>سقف ماهانه دستی</h3>
+        <div class="row">
+          <label>سال:</label><select id="mc-year" onchange="loadManualCeilings()"></select>
+          <label>ماه:</label><select id="mc-month" onchange="loadManualCeilings()"></select>
+          <label>فیلتر معاونت:</label><select id="mc-deputy-filter" onchange="loadManualCeilings()"></select>
+          <span style="flex:1"></span>
+          <button class="action" onclick="saveAllManualCeilings()">ثبت همه تغییرات</button>
+        </div>
+        <div class="table-wrap" style="max-height:640px"><table id="manual-ceilings-table"><thead><tr><th>معاونت</th><th>مرکز/شبکه</th><th>تامین/پخش</th><th class="num">سقف پیش‌فرض</th><th class="num">سقف دستی</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+    <div id="sub-payments" class="sub-panel hidden">
+      <div class="panel">
+        <h3>ایمپورت پرداختی‌های ماهانه</h3>
+        <div class="row">
+          <label>سال:</label><select id="pay-year" onchange="loadPaymentGrid()"></select>
+          <label>تاریخچه قبلی:</label><select id="pay-overwrite"><option value="false">دست نخورد</option><option value="true">پاک شود و از نو</option></select>
+        </div>
+        <div class="row"><input type="file" id="pay-file" accept=".xlsx"><button class="action" onclick="doImportPayments()">ایمپورت</button></div>
+        <div id="pay-import-msg"></div>
+      </div>
+      <div class="panel">
+        <h3>ماتریس پرداختی</h3>
+        <div class="row">
+          <input id="pg-search" placeholder="جستجو..." oninput="loadPaymentGrid()" style="max-width:400px">
+          <span style="color:var(--text-3);font-size:12px" id="pg-count"></span>
+          <span style="flex:1"></span>
+          <button class="gold" onclick="location.href='/api/payment-grid/export'">خروجی اکسل</button>
+        </div>
+        <div class="table-wrap" style="max-height:600px"><table id="payment-grid-table"><thead><tr id="pg-thead"></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+    <div id="sub-employment" class="sub-panel hidden">
+      <div class="panel">
+        <h3>وضعیت اشتغال ماهانه</h3>
+        <div class="row"><label>سال:</label><select id="emp-year"></select><label>ماه:</label><select id="emp-month"></select></div>
+        <div class="row"><input type="file" id="emp-file" accept=".xlsx"><button class="action" onclick="doImportEmployment()">بارگذاری</button></div>
+        <div id="emp-msg"></div>
+      </div>
+    </div>
+    <div id="sub-import" class="sub-panel hidden">
+      <div class="panel">
+        <h3>اکسل ورودی ماهانه</h3>
+        <div class="row"><label>سال:</label><select id="period-year"></select><label>ماه:</label><select id="period-month"></select></div>
+        <div class="row"><input type="file" id="file-input" accept=".xlsx"><button class="action" onclick="doImport()">بارگذاری</button><button class="ghost" onclick="clearMonthData('records')">پاک کردن</button></div>
+        <div id="import-msg"></div>
+      </div>
+    </div>
+    <div id="sub-maincenter" class="sub-panel hidden">
+      <div class="panel">
+        <h3>مرکز هزینه اصلی</h3>
+        <div class="row"><label>سال:</label><select id="maincenter-year"></select><label>ماه:</label><select id="maincenter-month"></select></div>
+        <div class="row"><input type="file" id="maincenter-file" accept=".xlsx"><button class="action" onclick="doImportMainCenter()">بارگذاری</button><button class="ghost" onclick="clearMonthData('maincenter')">پاک کردن</button></div>
+        <div id="maincenter-msg"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<dialog id="export-dialog" style="border:1px solid var(--border);border-radius:var(--r-lg);padding:0;background:var(--panel);color:var(--text);width:min(820px,95vw);max-height:92vh;overflow:hidden">
+  <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <h2 style="margin:0;font-size:16px;font-weight:600">گزارش مدیریتی — انتخاب ستون‌ها</h2>
+    <button onclick="closeExportDialog()" style="border:none;background:none;color:var(--text-3);font-size:20px;cursor:pointer">×</button>
+  </div>
+  <div style="padding:18px 22px;max-height:62vh;overflow-y:auto">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button onclick="exportSelectAll(true)" type="button" class="ghost">انتخاب همه</button>
+      <button onclick="exportSelectAll(false)" type="button" class="ghost">حذف همه</button>
+      <button onclick="exportSelectDefault()" type="button" class="ghost">پیش‌فرض</button>
+    </div>
+    <div id="export-cols-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px"></div>
+  </div>
+  <div style="padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+    <button onclick="closeExportDialog()" type="button" class="ghost">انصراف</button>
+    <button onclick="doCustomExport()" type="button" class="gold">دانلود اکسل</button>
+  </div>
+</dialog>
+</main>
+
+<script>
+window.addEventListener('error', function(e){ console.error('JS ERROR:', e.message, 'at', e.filename, e.lineno + ':' + e.colno); });
+
+function updateClock() {
+  var now = new Date();
+  var clockEl = document.getElementById('live-clock');
+  var dateEl = document.getElementById('live-date');
+  if (!clockEl || !dateEl) return;
+  var p = function(x) { return String(x).padStart(2, '0'); };
+  clockEl.textContent = p(now.getHours()) + ':' + p(now.getMinutes()) + ':' + p(now.getSeconds());
+  try { dateEl.textContent = now.toLocaleDateString('fa-IR', {year:'numeric',month:'long',day:'numeric',weekday:'long'}); }
+  catch(e){ dateEl.textContent = now.toLocaleDateString('fa-IR'); }
+}
+setInterval(updateClock, 1000); updateClock();
+
+var MONTHS = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+var YEARS = ["1404","1405","1406","1407"];
+var CURRENT_YEAR = "1405"; var CURRENT_MONTH = "مهر";
+function getCurrentJalali(){
+  try {
+    var fmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'long'});
+    var parts = fmt.formatToParts(new Date()); var year='',month='';
+    parts.forEach(function(p){ if(p.type==='year')year=p.value; if(p.type==='month')month=p.value; });
+    var map={'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+    year = year.replace(/[۰-۹]/g,function(d){return map[d];});
+    return {year:year,month:month};
+  } catch(e){ return {year:"1405",month:"مهر"}; }
+}
+var jalaliNow = getCurrentJalali();
+if (jalaliNow.year) CURRENT_YEAR = jalaliNow.year;
+if (jalaliNow.month && MONTHS.indexOf(jalaliNow.month) !== -1) CURRENT_MONTH = jalaliNow.month;
+
+function toggleTheme(){
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme') || 'dark';
+  var next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  var btn = document.getElementById('theme-toggle'); if (btn) btn.textContent = next === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem('stm_theme', next);
+}
+(function(){ var s = localStorage.getItem('stm_theme') || 'dark'; document.documentElement.setAttribute('data-theme', s); var b=document.getElementById('theme-toggle'); if(b) b.textContent = s==='dark'?'🌙':'☀️'; })();
+
+var activeFilter = null;
+window.activeFilter = null;
+var _lastReportRows = [];
+var currentTab = 'dashboard';
+
+var REPORT_COLS = [
+  {key:"row_num",label:"ردیف",type:"text"},{key:"first_name",label:"نام",type:"text"},
+  {key:"last_name",label:"نام خانوادگی",type:"text"},{key:"national_code",label:"کد ملی",type:"text"},
+  {key:"has_second_salary",label:"حقوق دوم",type:"text"},{key:"legal_article",label:"مبنای قانونی",type:"text"},
+  {key:"skill_card_bonus",label:"پاداش کارت مهارت",type:"num"},{key:"employer_insurance",label:"بیمه کارفرما",type:"num"},
+  {key:"non_continuous_bonus",label:"پاداش غیرمستمر",type:"num"},{key:"monthly_wage",label:"دستمزد ماه",type:"num"},
+  {key:"cost_center",label:"مرکز هزینه",type:"text"},{key:"main_cost_center",label:"مرکز اصلی",type:"text"},
+  {key:"employment_status",label:"وضعیت اشتغال",type:"text"},{key:"ceiling_status",label:"سقف پرداختی",type:"text"},
+  {key:"program_name",label:"نام برنامه",type:"text"},{key:"payment_list_status",label:"نوع خطا",type:"text"},
+  {key:"paid_amount",label:"پرداختی ماه",type:"num"},{key:"yearly_paid_total",label:"مجموع سال",type:"num"},
+  {key:"exempted_ceiling",label:"سقف مستثنی",type:"num"},{key:"six_month_ceiling",label:"سقف ماه",type:"num"},
+  {key:"service_places",label:"محل خدمتی",type:"text"}
+];
+var _colSearchValues = {};
+
+function showToast(title,msg,kind){
+  var box=document.getElementById('toasts'); if(!box)return;
+  var t=document.createElement('div'); t.className='toast '+(kind||'info');
+  t.innerHTML='<div class="tt">'+title+'</div>'+(msg?'<div class="tm">'+msg+'</div>':'');
+  box.appendChild(t); setTimeout(function(){t.remove();},3500);
+}
+function fmt(n){ if(n===null||n===undefined||n==='')return''; var num=Number(n); if(isNaN(num))return n; return num.toLocaleString('fa-IR'); }
+function fmtRial(n){ if(n===null||n===undefined||n==='')return''; var num=Number(n); if(isNaN(num))return num; return num.toLocaleString('fa-IR')+' ریال'; }
+function unformatNumber(v){ if(v===null||v===undefined)return 0; var s=String(v).replace(/[^\d\-]/g,''); var n=Number(s); return isNaN(n)?0:n; }
+
+function fillYearSelect(id,def){ var el=document.getElementById(id); if(!el)return; el.innerHTML=YEARS.map(function(y){return '<option value="'+y+'">'+y+'</option>';}).join(''); el.value=def||CURRENT_YEAR; }
+function fillMonthSelect(id,def,all){ var el=document.getElementById(id); if(!el)return; var h=''; if(all)h+='<option value="همه">همه ماه‌ها</option>'; h+=MONTHS.map(function(m){return '<option value="'+m+'">'+m+'</option>';}).join(''); el.innerHTML=h; el.value=def||CURRENT_MONTH; }
+function getPeriod(yId,mId){ var yEl=document.getElementById(yId),mEl=document.getElementById(mId); if(!yEl||!mEl)return 'همه'; var y=yEl.value,m=mEl.value; if(m==='همه'||m===''||!m)return 'همه'; return y+'-'+m; }
+
+async function refreshAll(){
+  var btn=document.getElementById('refresh-btn'); if(!btn)return;
+  var orig=btn.textContent; btn.disabled=true; btn.textContent='در حال تازه‌سازی...';
+  try {
+    var r=await fetch('/api/recalculate',{method:'POST'}); var d=await r.json();
+    if(currentTab==='dashboard') onDashFilterChange();
+    else if(currentTab==='report') await loadReport();
+    else if(currentTab==='smart-center') await loadSmartCenterData();
+    showToast('تازه‌سازی',(d.updated||0)+' رکورد بازمحاسبه شد','ok');
+  } catch(e){ showToast('خطا',String(e),'err'); }
+  finally { btn.disabled=false; btn.textContent=orig; }
+}
+
+function switchDashTab(sub){
+  document.querySelectorAll('.dash-sub-panel').forEach(function(p){p.classList.add('hidden');});
+  var target=document.getElementById('dash-sub-'+sub); if(target)target.classList.remove('hidden');
+  var dd=document.getElementById('dash-dropdown'); if(dd)dd.style.display='none';
+  if(sub==='overview') loadDashboardCharts();
+  else if(sub==='submission') loadSubmissionStatus();
+  else if(sub==='summary') loadSummaryTable();
+  else if(sub==='approvals') loadApprovalStatus();
+}
+
+function onDashFilterChange(){
+  var active='overview';
+  ['overview','submission','summary','approvals'].forEach(function(s){
+    var el=document.getElementById('dash-sub-'+s);
+    if(el && !el.classList.contains('hidden')) active=s;
+  });
+  switchDashTab(active);
+}
+
+function loadDashboard(){ switchDashTab('overview'); }
+
+// *** فیلتر ماه انتخابی برای خروجی اکسل ***
+function exportDash(kind){
+  var period = getPeriod('dash-year','dash-month');
+  window.location.href = '/api/dashboard-export/' + kind + '?period=' + encodeURIComponent(period);
+}
+
+document.querySelectorAll('.tab').forEach(function(btn){
+  btn.addEventListener('click', function(e){
+    var tabName = btn.dataset.tab;
+    if (tabName === 'dashboard') {
+      e.stopPropagation();
+      var dd = document.getElementById('dash-dropdown');
+      if (dd) dd.style.display = (dd.style.display === 'block') ? 'none' : 'block';
+      ['input-tab-dropdown','hr-dropdown'].forEach(function(x){var d=document.getElementById(x); if(d) d.style.display='none';});
+      document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+      var sec = document.getElementById('tab-dashboard'); if(sec) sec.classList.remove('hidden');
+      currentTab = 'dashboard';
+      return;
+    }
+    if (tabName === 'input') {
+      e.stopPropagation();
+      var dd2 = document.getElementById('input-tab-dropdown');
+      if (dd2) dd2.style.display = (dd2.style.display === 'block') ? 'none' : 'block';
+      ['dash-dropdown','hr-dropdown'].forEach(function(x){var d=document.getElementById(x); if(d) d.style.display='none';});
+      return;
+    }
+    if (tabName === 'personnel') {
+      e.stopPropagation();
+      document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+      var sec2 = document.getElementById('tab-personnel'); if(sec2) sec2.classList.remove('hidden');
+      currentTab='personnel';
+      var ddH = document.getElementById('hr-dropdown');
+      if (ddH) ddH.style.display = (ddH.style.display==='block')?'none':'block';
+      ['input-tab-dropdown','dash-dropdown'].forEach(function(x){var d=document.getElementById(x); if(d) d.style.display='none';});
+      var ifr=document.getElementById('personnel-frame');
+      if (ifr && ifr.dataset.loaded==='0') {
+        var curTheme=document.documentElement.getAttribute('data-theme')||'dark';
+        ifr.src='/personnel?embedded=1&view=bank&theme='+curTheme; ifr.dataset.loaded='1';
+      }
+      return;
+    }
+    document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+    var target = document.getElementById('tab-'+tabName); if(target) target.classList.remove('hidden');
+    currentTab=tabName;
+    if (tabName==='report') loadReport();
+    ['input-tab-dropdown','hr-dropdown','dash-dropdown'].forEach(function(x){var d=document.getElementById(x); if(d) d.style.display='none';});
+  });
+});
+
+document.querySelectorAll('.dash-dd-item').forEach(function(btn){
+  btn.addEventListener('click', function(e){ e.stopPropagation(); switchDashTab(btn.dataset.dashSub); });
+});
+
+document.addEventListener('click', function(e){
+  var inDd = document.getElementById('input-tab-dropdown');
+  var inBtn = document.getElementById('input-main-tab');
+  if (inDd && inDd.style.display==='block' && inBtn && !inBtn.contains(e.target) && !inDd.contains(e.target)) inDd.style.display='none';
+  var hrDd = document.getElementById('hr-dropdown');
+  var hrBtn = document.getElementById('hr-tab');
+  if (hrDd && hrDd.style.display==='block' && hrBtn && !hrBtn.contains(e.target) && !hrDd.contains(e.target)) hrDd.style.display='none';
+  var dashDd = document.getElementById('dash-dropdown');
+  var dashBtn = document.getElementById('dash-tab');
+  if (dashDd && dashDd.style.display==='block' && dashBtn && !dashBtn.contains(e.target) && !dashDd.contains(e.target)) dashDd.style.display='none';
+});
+
+function openSmartCenter(){
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+  var sec = document.getElementById('tab-smart-center'); if(sec) sec.classList.remove('hidden');
+  currentTab='smart-center'; loadSmartCenterData();
+}
+
+async function loadSmartCenterData(){
+  try {
+    var ccData = await (await fetch('/api/command-center/snapshot')).json();
+    var anData = await (await fetch('/api/analytics/all')).json();
+    var kpi = ccData.kpi || {};
+    document.getElementById('sa-total-paid').textContent = fmtRial(kpi.approved_amount||0);
+    document.getElementById('sa-total-records').textContent = fmt(kpi.total_records||0);
+    document.getElementById('sa-warnings').textContent = fmt(((anData.risk||{}).negative_ceiling||0)+((anData.risk||{}).wage_over_ceiling||0));
+    document.getElementById('sa-employed').textContent = fmt(kpi.employed||(anData.risk||{}).employed||0);
+    var monthly = anData.monthly||[];
+    var chartArea = document.getElementById('sa-chart-monthly');
+    if (!monthly.length){ chartArea.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:40px">داده‌ای نیست</div>'; }
+    else {
+      var maxV = Math.max.apply(null, monthly.map(function(x){return x.total||1;}));
+      chartArea.innerHTML = '<div style="display:flex;align-items:flex-end;gap:12px;height:250px;padding-top:20px">'+
+        monthly.map(function(item){
+          var h = maxV>0?((item.total||0)/maxV)*100:0; if(h<5&&item.total>0)h=5;
+          return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;flex:1"><div style="width:100%;max-width:40px;height:'+h+'%;background:linear-gradient(180deg,var(--blue-2),var(--blue));border-radius:6px 6px 0 0;min-height:4px" title="'+fmtRial(item.total)+'"></div><div style="font-size:11px;color:var(--text-3);margin-top:8px">'+item.period_month+'</div></div>';
+        }).join('')+'</div>';
+    }
+    var insBox = document.getElementById('sa-insights'); var insH = '';
+    if (monthly.length){
+      var mx = monthly.reduce(function(m,o){return o.total>m.total?o:m;},monthly[0]);
+      insH += '<div class="smart-insight-item"><div class="smart-insight-title">اوج پرداختی</div><div class="smart-insight-desc"><strong>'+mx.period_month+'</strong> با <strong>'+fmtRial(mx.total)+'</strong></div></div>';
+    }
+    insH += '<div class="smart-insight-item green"><div class="smart-insight-title">تأییدشده‌ها</div><div class="smart-insight-desc"><strong>'+fmt(kpi.total_approved||0)+'</strong> رکورد</div></div>';
+    insBox.innerHTML = insH;
+    var depData = anData.deputy_performance||[];
+    document.querySelector('#sa-dep-table tbody').innerHTML = depData.map(function(d){
+      var pct = d.total?Math.round((d.approved/d.total)*100):0;
+      return '<tr><td>'+d.deputy+'</td><td class="num">'+fmt(d.total)+'</td><td class="num">'+fmt(d.approved)+'</td><td class="num">'+pct+'%</td></tr>';
+    }).join('') || '<tr><td colspan="4" style="text-align:center">داده‌ای نیست</td></tr>';
+    var rP = [{label:'تأیید',value:kpi.total_approved||0,color:'#10b981'},{label:'در انتظار',value:kpi.total_pending||0,color:'#f59e0b'},{label:'شاغل',value:kpi.employed||0,color:'#ef4444'}];
+    var tot = rP.reduce(function(s,p){return s+p.value;},0);
+    var dEl = document.getElementById('sa-risk-donut');
+    if (tot>0){
+      var stops=[],acc=0; rP.forEach(function(p){var s=(acc/tot)*100;acc+=p.value;var e=(acc/tot)*100;stops.push(p.color+' '+s+'% '+e+'%');});
+      dEl.innerHTML = '<div class="donut" style="background:conic-gradient(from -90deg, '+stops.join(',')+')"><div class="donut-center"><div class="num">'+fmt(tot)+'</div><div class="lbl">کل</div></div></div>'+
+        '<div class="donut-legend">'+rP.map(function(p){return '<div class="item"><span class="dot" style="background:'+p.color+'"></span><span class="lbl">'+p.label+'</span><span class="v">'+fmt(p.value)+'</span></div>';}).join('')+'</div>';
+    } else { dEl.innerHTML = '<div style="text-align:center;color:var(--text-3)">داده‌ای نیست</div>'; }
+  } catch(e){ console.warn('loadSmartCenterData',e); }
+}
+
+async function loadSubmissionStatus(){
+  var period = getPeriod('dash-year','dash-month');
+  try {
+    var allCenters = await (await fetch('/api/all-centers')).json();
+    var sum = await (await fetch('/api/summary-table?period='+encodeURIComponent(period)+'&deputy=همه&center=همه&supply_type=همه')).json();
+    var submitted = new Set((sum.rows||[]).map(function(r){return r.center;}));
+    var depMap = {};
+    allCenters.forEach(function(c){ if(!depMap[c.deputy]) depMap[c.deputy]=[]; depMap[c.deputy].push(c.name); });
+    var html = '';
+    for (var dep in depMap){
+      var cs = depMap[dep], tot = cs.length;
+      var sub = cs.filter(function(c){return submitted.has(c);}).length;
+      var pct = tot===0?0:Math.round((sub/tot)*100);
+      var cls = pct===100?'green':(pct>0?'amber':'red');
+      html += '<div class="deputy-accordion-item"><div class="deputy-header" onclick="toggleDeputyAccordion(this)"><div style="font-weight:700;color:var(--text);font-size:14px">'+dep+'</div><div style="display:flex;align-items:center;gap:12px"><span style="font-size:12px;color:var(--text-3)">'+sub+' از '+tot+'</span><div style="width:100px;height:8px;background:rgba(0,0,0,.3);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--'+cls+')"></div></div><span style="font-weight:700;color:var(--'+cls+');font-size:13px;width:40px;text-align:left">'+pct+'%</span><span style="color:var(--text-3);display:inline-block">▼</span></div></div><div class="deputy-body hidden"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:12px">'+cs.map(function(c){var s=submitted.has(c);return '<div style="font-size:12px;padding:8px 12px;border-radius:6px;background:'+(s?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)')+';color:'+(s?'var(--green)':'var(--red)')+';border:1px solid '+(s?'rgba(16,185,129,.3)':'rgba(239,68,68,.3)')+';display:flex;justify-content:space-between"><span>'+c+'</span><span>'+(s?'✅':'❌')+'</span></div>';}).join('')+'</div></div></div>';
+    }
+    document.getElementById('deputy-submission-accordion').innerHTML = html || '<div style="text-align:center;color:var(--text-3)">داده‌ای نیست</div>';
+  } catch(e){ console.warn('loadSubmissionStatus',e); }
+}
+function toggleDeputyAccordion(el){
+  var body = el.nextElementSibling;
+  var arrow = el.querySelector('span:last-child');
+  if (body.classList.contains('hidden')){ body.classList.remove('hidden'); if(arrow) arrow.style.transform='rotate(180deg)'; }
+  else { body.classList.add('hidden'); if(arrow) arrow.style.transform='rotate(0deg)'; }
+}
+
+async function loadDashboardCharts(){
+  var period = getPeriod('dash-year','dash-month');
+  try {
+    var charts = await (await fetch('/api/dashboard-charts?period='+encodeURIComponent(period))).json();
+    
+    var label = (charts.period==='همه')?'همه ماه‌ها':'دوره: '+charts.period;
+    ['badge-warn','badge-wage','badge-emp','badge-places'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=label;});
+    var badgeMonth = document.getElementById('badge-month');
+    if(badgeMonth) badgeMonth.textContent = label;
+    
+    var bm = (charts.by_month||[]).map(function(x){return {label:x.month,value:x.amount};});
+    renderBars('chart-by-month',bm,{formatter:function(v){return fmtRial(v);}});
+    
+    var w = charts.warnings||{};
+    renderDonut('chart-donut-warnings',[
+      {label:'سالم',value:w.ok||0,color:'#94a3b8'},
+      {label:'تأیید',value:w.approved||0,color:'#10b981'},
+      {label:'زرد',value:w.yellow||0,color:'#eab308'},
+      {label:'نارنجی',value:w.orange||0,color:'#f97316'},
+      {label:'شاغل',value:w.employed||0,color:'#ef4444'}
+    ],'کل رکورد');
+    renderBars('chart-wage-dist',(charts.wage_distribution||[]).map(function(x){return {label:x.label,value:x.count};}),{color:'gold'});
+    renderBars('chart-emp-dist',(charts.employment_distribution||[]).map(function(x){return {label:x.label,value:x.count};}),{color:'green'});
+    renderBars('chart-places-dist',(charts.places_distribution||[]).map(function(x){return {label:x.count+' محل خدمتی',value:x.persons};}),{color:'warn'});
+  } catch(e){ console.warn('loadDashboardCharts',e); }
+  loadDashboardExtras();
+}
+
+async function loadDashboardExtras(){
+  var period = getPeriod('dash-year','dash-month');
+  try {
+    var sum = await (await fetch('/api/summary-table?period='+encodeURIComponent(period)+'&deputy=همه&center=همه&supply_type=همه')).json();
+    var tS=0,tE=0,tB=0,top={};
+    (sum.rows||[]).forEach(function(r){
+      tS+=r.specialists||0; tE+=r.equipment||0; tB+=r.bonus||0;
+      var tt=(r.specialists||0)+(r.equipment||0)+(r.bonus||0);
+      if(tt>0) top[r.center]=tt;
+    });
+    document.getElementById('dashboard-financials').innerHTML =
+      '<div class="card"><div class="value" style="color:var(--blue-2)">'+fmtRial(tS)+'</div><div class="label">کارشناسان</div></div>'+
+      '<div class="card"><div class="value" style="color:var(--amber)">'+fmtRial(tE)+'</div><div class="label">تجهیزات</div></div>'+
+      '<div class="card"><div class="value" style="color:var(--green)">'+fmtRial(tB)+'</div><div class="label">هدایا</div></div>';
+    var sorted = Object.keys(top).map(function(k){return {center:k,amount:top[k]};}).sort(function(a,b){return b.amount-a.amount;}).slice(0,5);
+    document.getElementById('dashboard-top-centers').innerHTML = sorted.map(function(tc){
+      return '<div style="font-size:12px;display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border)"><span>'+tc.center+'</span><span style="color:var(--blue-2)">'+fmtRial(tc.amount)+'</span></div>';
+    }).join('');
+  } catch(e){ console.warn('loadDashboardExtras',e); }
+}
+
+function renderBars(id,data,opts){
+  opts=opts||{}; var el=document.getElementById(id); if(!el)return;
+  if(!data.length){ el.innerHTML='<div style="color:var(--text-3);font-size:12px;text-align:center;padding:24px">داده‌ای نیست</div>'; return; }
+  var maxV=opts.max||Math.max.apply(null,data.map(function(x){return x.value;}).concat([1]));
+  el.innerHTML = data.map(function(x){
+    var pct=maxV>0?(x.value/maxV)*100:0;
+    return '<div class="bar-row"><div class="name" title="'+(x.label||'')+'">'+(x.label||'')+'</div><div class="bar-wrap"><div class="bar '+(x.color||opts.color||'')+'" style="width:'+pct+'%"></div></div><div class="val">'+(opts.formatter?opts.formatter(x.value):fmt(x.value))+'</div></div>';
+  }).join('');
+}
+function renderDonut(id,parts,center){
+  var tot = parts.reduce(function(s,p){return s+p.value;},0);
+  var el = document.getElementById(id); if(!el)return;
+  if(tot<=0){ el.innerHTML='<div style="color:var(--text-3);font-size:12px;text-align:center;padding:24px">داده‌ای نیست</div>'; return; }
+  var stops=[],acc=0;
+  parts.forEach(function(p){var s=(acc/tot)*100;acc+=p.value;var e=(acc/tot)*100;stops.push(p.color+' '+s+'% '+e+'%');});
+  el.innerHTML='<div class="donut" style="background:conic-gradient(from -90deg, '+stops.join(',')+')"><div class="donut-center"><div class="num">'+fmt(tot)+'</div><div class="lbl">'+(center||'کل')+'</div></div></div>'+
+    '<div class="donut-legend">'+parts.map(function(p){var pct=((p.value/tot)*100).toFixed(1);return '<div class="item"><span class="dot" style="background:'+p.color+'"></span><span class="lbl">'+p.label+'</span><span class="v">'+fmt(p.value)+' ('+pct+'%)</span></div>';}).join('')+'</div>';
+}
+
+async function loadSummaryTable(){
+  var period = getPeriod('st-year','st-month');
+  var dep = (document.getElementById('st-deputy')||{}).value || 'همه';
+  var msg = document.getElementById('st-msg'); if(msg)msg.textContent='در حال بارگذاری...';
+  try {
+    var data = await (await fetch('/api/summary-table?period='+encodeURIComponent(period)+'&deputy='+encodeURIComponent(dep))).json();
+    var rows = data.rows||[];
+    var tb = document.querySelector('#summary-table tbody'), tf = document.querySelector('#summary-table tfoot');
+    if(!rows.length){ tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-3)">داده‌ای نیست</td></tr>'; tf.innerHTML=''; if(msg)msg.textContent=''; return; }
+    tb.innerHTML = rows.map(function(r){
+      return '<tr><td>'+(r.deputy||'')+'</td><td>'+(r.center||'')+'</td><td class="num">'+fmt(Math.round(r.professional))+'</td><td class="num">'+fmt(Math.round(r.allocation))+'</td><td class="num" style="font-weight:600">'+fmt(Math.round(r.total))+'</td></tr>';
+    }).join('');
+    tf.innerHTML = '<tr><td colspan="2">جمع</td><td class="num">'+fmt(Math.round(data.total_professional))+'</td><td class="num">'+fmt(Math.round(data.total_allocation))+'</td><td class="num">'+fmt(Math.round(data.total_sum))+'</td></tr>';
+    if(msg)msg.textContent=rows.length+' ردیف';
+  } catch(e){ if(msg)msg.textContent='خطا: '+e; }
+}
+function exportSummaryTable(){
+  var period = getPeriod('st-year','st-month');
+  var dep = (document.getElementById('st-deputy')||{}).value || 'همه';
+  window.location.href = '/api/summary-table/export?period='+encodeURIComponent(period)+'&deputy='+encodeURIComponent(dep);
+}
+
+async function loadApprovalStatus(){
+  try {
+    var period = getPeriod('appr-year','appr-month');
+    var deps = await (await fetch('/api/approval-status/deputies?period='+encodeURIComponent(period))).json();
+    var cens = await (await fetch('/api/approval-status/centers?period='+encodeURIComponent(period))).json();
+    var dt = document.querySelector('#approval-deputies-table tbody');
+    dt.innerHTML = deps.length ? deps.map(function(r){
+      var pct=r.total?Math.round((r.approved/r.total)*100):0;
+      return '<tr><td>'+r.deputy+'</td><td class="num">'+fmt(r.total)+'</td><td class="num" style="color:var(--green)">'+fmt(r.approved)+' ('+pct+'%)</td><td class="num" style="color:var(--amber)">'+fmt(r.pending)+'</td></tr>';
+    }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--text-3);padding:20px">داده‌ای نیست</td></tr>';
+    var ct = document.querySelector('#approval-centers-table tbody');
+    ct.innerHTML = cens.length ? cens.map(function(r){
+      return '<tr><td>'+r.deputy+'</td><td>'+r.center+'</td><td class="num">'+fmt(r.total)+'</td><td class="num" style="color:var(--green)">'+fmt(r.approved)+'</td><td class="num" style="color:var(--amber)">'+fmt(r.pending)+'</td></tr>';
+    }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:20px">داده‌ای نیست</td></tr>';
+  } catch(e){ console.warn('loadApprovalStatus',e); }
+}
+
+function buildColSearchRow(){
+  var row=document.getElementById('col-search-row'); if(!row)return;
+  row.innerHTML = REPORT_COLS.map(function(c){
+    return '<th class="'+(c.type==='num'?'num':'')+'"><input type="text" placeholder="..." data-col-key="'+c.key+'" oninput="onColSearch(this)"></th>';
+  }).join('');
+}
+function onColSearch(inp){
+  var k=inp.getAttribute('data-col-key'); var v=(inp.value||'').trim().toLowerCase();
+  if(v)_colSearchValues[k]=v; else delete _colSearchValues[k];
+  applyColSearch();
+}
+function applyColSearch(){
+  var rows = _lastReportRows||[]; var keys = Object.keys(_colSearchValues);
+  if(keys.length){
+    rows = rows.filter(function(r){
+      for(var i=0;i<keys.length;i++){
+        var k=keys[i],t=r[k],s=(t===null||t===undefined)?'':String(t).toLowerCase();
+        if(s.indexOf(_colSearchValues[k])===-1)return false;
+      }
+      return true;
+    });
+  }
+  renderReportRows(rows);
+}
+
+function renderReportRows(rows){
+  var tbody=document.querySelector('#report-table tbody'); if(!tbody)return;
+  if(!rows.length){ tbody.innerHTML='<tr><td colspan="22" style="text-align:center;padding:24px;color:var(--text-3)">داده‌ای نیست</td></tr>'; updateApproveButtons(); return; }
+  tbody.innerHTML = rows.map(function(r){
+    var cls='';
+    if(r.is_employed)cls='warn-red'; else if(r.warn_orange)cls='warn-orange'; else if(r.warn_yellow)cls='warn-yellow'; else if(r.manager_approved)cls='approved';
+    var pay='';
+    if(Array.isArray(r.payment_list_status)&&r.payment_list_status.length){ pay=r.payment_list_status.map(function(m){return '<span class="cell-warn'+(m==='شاغل'?' red':'')+'">'+m+'</span>';}).join('<br>'); }
+    else if(typeof r.payment_list_status==='string'&&r.payment_list_status.length){ pay='<span class="cell-warn">'+r.payment_list_status+'</span>'; }
+    else if(r.manager_approved&&r.monthly_wage){ pay=fmt(r.monthly_wage); }
+    return '<tr class="'+cls+'">'+
+      '<td class="approve"><input type="checkbox" class="approve-check" data-record-id="'+r.record_id+'" '+(r.manager_approved?'checked':'')+'></td>'+
+      '<td class="row-num">'+r.row_num+'</td>'+
+      '<td>'+(r.first_name||'')+'</td><td>'+(r.last_name||'')+'</td><td class="code">'+(r.national_code||'')+'</td>'+
+      '<td>'+(r.has_second_salary||'')+'</td><td>'+(r.legal_article||'')+'</td>'+
+      '<td class="num">'+fmt(r.skill_card_bonus)+'</td><td class="num">'+fmt(r.employer_insurance)+'</td><td class="num">'+fmt(r.non_continuous_bonus)+'</td><td class="num">'+fmt(r.monthly_wage)+'</td>'+
+      '<td>'+(r.cost_center||'')+'</td><td>'+(r.main_cost_center||'')+'</td><td>'+(r.employment_status||'')+'</td>'+
+      '<td class="num">'+(r.ceiling_status||'')+'</td><td>'+(r.program_name||'')+'</td><td class="num">'+pay+'</td>'+
+      '<td class="num">'+(r.paid_amount!=null?fmt(r.paid_amount):'-')+'</td>'+
+      '<td class="num">'+(r.yearly_paid_total!=null?fmt(r.yearly_paid_total):'')+'</td>'+
+      '<td class="num">'+(r.exempted_ceiling!=null?fmt(r.exempted_ceiling):'')+'</td>'+
+      '<td class="num">'+(r.six_month_ceiling!=null?fmt(r.six_month_ceiling):'')+'</td>'+
+      '<td>'+(r.service_places||'')+'</td>'+
+    '</tr>';
+  }).join('');
+  document.querySelectorAll('#report-table input.approve-check').forEach(function(inp){
+    inp.addEventListener('change',function(){ if(inp.checked)inp.closest('tr').classList.add('pending-approve'); else inp.closest('tr').classList.remove('pending-approve'); updateApproveButtons(); });
+  });
+  updateApproveButtons();
+}
+
+async function loadReport(){
+  if(!_filterLoaded) await loadFilterOptions();
+  var period = getPeriod('rep-year','rep-month');
+  var cth = document.getElementById('dyn-ceiling-th'); if(cth)cth.textContent='سقف '+period;
+  var dep = getSelectedValues('ms-deputy').join(',');
+  var cen = getSelectedValues('ms-center').join(',');
+  var sup = getSelectedValues('ms-supply').join(',');
+  var url = '/api/report?period='+encodeURIComponent(period)+'&deputy='+encodeURIComponent(dep)+'&center='+encodeURIComponent(cen)+'&supply_type='+encodeURIComponent(sup);
+  try {
+    var data = await (await fetch(url)).json();
+    var s = data.summary||{};
+    document.getElementById('report-summary').innerHTML =
+      '<div class="card"><div class="value">'+fmtRial(s.professional_qualification||0)+'</div><div class="label">صلاحیت حرفه‌ای</div></div>'+
+      '<div class="card"><div class="value">'+fmtRial(Math.round(s.monthly_allocation||0))+'</div><div class="label">تخصیص ماه</div></div>'+
+      '<div class="card"><div class="value">'+(s.month_ceiling!=null?fmtRial(s.month_ceiling):'-')+'</div><div class="label">سقف ماه</div></div>';
+    document.getElementById('report-extra').innerHTML =
+      '<div class="card mini-uniform"><div class="value">'+fmtRial(s.specialists)+'</div><div class="label">کارشناسان</div></div>'+
+      '<div class="card mini-uniform"><div class="value">'+fmtRial(s.equipment)+'</div><div class="label">تجهیزات</div></div>'+
+      '<div class="card mini-uniform"><div class="value">'+fmtRial(s.bonus)+'</div><div class="label">هدایا</div></div>';
+    var totalRows = (data.rows||[]).length;
+    var allCls = 'card clickable all-filter-card' + (activeFilter===null?' active-filter':'');
+    var yCls = 'card clickable warn-yellow-card' + (activeFilter==='yellow'?' active-filter':'');
+    var oCls = 'card clickable warn-orange-card' + (activeFilter==='orange'?' active-filter':'');
+    var rCls = 'card clickable warn-red-card' + (activeFilter==='red'?' active-filter':'');
+    var aCls = 'card clickable approved-card' + (activeFilter==='approved'?' active-filter':'');
+    document.getElementById('report-warnings').innerHTML =
+      '<div class="'+allCls+'" data-filter="all"><div class="value">'+fmt(totalRows)+'</div><div class="label">نمایش همه</div></div>'+
+      '<div class="'+yCls+'" data-filter="yellow"><div class="value">'+fmt(s.warn_yellow_count||0)+'</div><div class="label">بالاتر از سقف ماهانه</div></div>'+
+      '<div class="'+oCls+'" data-filter="orange"><div class="value">'+fmt(s.warn_orange_count||0)+'</div><div class="label">بالاتر از مجموع پرداختی</div></div>'+
+      '<div class="'+rCls+'" data-filter="red"><div class="value">'+fmt(s.employed_count||0)+'</div><div class="label">شاغل</div></div>'+
+      '<div class="'+aCls+'" data-filter="approved"><div class="value">'+fmt(s.approved_count||0)+'</div><div class="label">تایید شده</div></div>';
+    document.querySelectorAll('#report-warnings .card[data-filter]').forEach(function(el){
+      el.addEventListener('click', function(){ setFilter(el.dataset.filter); });
+    });
+    var rows = data.rows||[];
+    if(activeFilter==='yellow') rows = rows.filter(function(r){return r.warn_yellow;});
+    else if(activeFilter==='orange') rows = rows.filter(function(r){return r.warn_orange;});
+    else if(activeFilter==='red') rows = rows.filter(function(r){return r.is_employed;});
+    else if(activeFilter==='approved') rows = rows.filter(function(r){return r.manager_approved;});
+    _lastReportRows = rows;
+    applyColSearch();
+  } catch(e){
+    console.warn('loadReport',e);
+    var tb=document.querySelector('#report-table tbody');
+    if(tb) tb.innerHTML='<tr><td colspan="22" style="text-align:center;padding:24px;color:#fca5a5">خطا: '+e+'</td></tr>';
+  }
+}
+
+function setFilter(f){
+  if(f==='all') activeFilter = null;
+  else activeFilter = (activeFilter===f) ? null : f;
+  window.activeFilter = activeFilter;
+  loadReport();
+}
+
+var _filterLoaded = false;
+async function loadFilterOptions(){
+  try {
+    var opts = await (await fetch('/api/filter-options')).json();
+    var stD = document.getElementById('st-deputy');
+    if(stD){ var c=stD.value; stD.innerHTML='<option value="همه">همه</option>'+(opts.deputies||[]).filter(function(d){return d!=='همه';}).map(function(d){return '<option value="'+d+'">'+d+'</option>';}).join(''); if(c)stD.value=c; }
+    var aD = document.getElementById('appr-deputy-filter');
+    if(aD) aD.innerHTML='<option value="همه">همه</option>'+(opts.deputies||[]).filter(function(d){return d!=='همه';}).map(function(d){return '<option value="'+d+'">'+d+'</option>';}).join('');
+    buildMultiSelect('ms-deputy',opts.deputies||['همه']);
+    buildMultiSelect('ms-center',opts.centers||['همه']);
+    buildMultiSelect('ms-supply',opts.supply_types||['همه']);
+    _filterLoaded = true;
+  } catch(e){ console.warn('loadFilterOptions',e); }
+}
+
+function buildMultiSelect(id,options){
+  var c=document.getElementById(id); if(!c)return;
+  var html='<div class="ms-header" onclick="toggleMs(\''+id+'\')"><span id="'+id+'-label">همه</span><span>▼</span></div><div class="ms-dropdown" id="'+id+'-dropdown"><label class="ms-item"><input type="checkbox" value="همه" checked onchange="onMsChange(\''+id+'\',this)"> <span>همه</span></label>';
+  options.forEach(function(o){if(o==='همه')return; html+='<label class="ms-item"><input type="checkbox" value="'+o+'" onchange="onMsChange(\''+id+'\',this)"> <span>'+o+'</span></label>';});
+  html+='</div>'; c.innerHTML=html;
+}
+function toggleMs(id){ var dd=document.getElementById(id+'-dropdown'); document.querySelectorAll('.ms-dropdown').forEach(function(el){if(el.id!==id+'-dropdown')el.classList.remove('show');}); if(dd) dd.classList.toggle('show'); }
+function onMsChange(id,cb){
+  var dd=document.getElementById(id+'-dropdown'); if(!dd)return;
+  var all=dd.querySelector('input[value="همه"]'), others=dd.querySelectorAll('input:not([value="همه"])');
+  if(cb.value==='همه'&&cb.checked) others.forEach(function(x){x.checked=false;});
+  else if(cb.value!=='همه'&&cb.checked) all.checked=false;
+  var checked=Array.from(dd.querySelectorAll('input:checked')).map(function(x){return x.value;});
+  if(!checked.length){ all.checked=true; checked=['همه']; }
+  var label=document.getElementById(id+'-label');
+  if(checked.includes('همه'))label.textContent='همه';
+  else if(checked.length===1)label.textContent=checked[0];
+  else label.textContent=checked.length+' مورد';
+  if(window._reportTimer)clearTimeout(window._reportTimer);
+  window._reportTimer=setTimeout(loadReport,300);
+}
+function getSelectedValues(id){
+  var dd=document.getElementById(id+'-dropdown'); if(!dd)return ['همه'];
+  var checked=Array.from(dd.querySelectorAll('input:checked')).map(function(x){return x.value;});
+  if(!checked.length||checked.includes('همه'))return ['همه'];
+  return checked;
+}
+document.addEventListener('click',function(e){ if(!e.target.closest('.ms-container')) document.querySelectorAll('.ms-dropdown').forEach(function(el){el.classList.remove('show');}); });
+
+function updateApproveButtons(){
+  var n=document.querySelectorAll('#report-table input.approve-check:checked:not([disabled])').length;
+  var a=document.getElementById('approve-all-btn'), u=document.getElementById('unapprove-all-btn');
+  if(!a||!u)return;
+  if(n>0){ a.textContent='تأییدیه مدیر ('+n+')'; a.disabled=false; u.style.display=''; }
+  else { a.textContent='تأییدیه مدیر'; a.disabled=true; u.style.display='none'; }
+}
+async function doBulkApprove(){
+  var ids=[]; document.querySelectorAll('#report-table input.approve-check:checked').forEach(function(i){ids.push(Number(i.dataset.recordId));});
+  if(!ids.length){ showToast('هیچ ردیف تیک نخورده','','warn'); return; }
+  if(!confirm('آیا '+ids.length+' ردیف را تأیید می‌کنید؟'))return;
+  try{ var r=await fetch('/api/bulk-approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_ids:ids})}); var d=await r.json(); if(r.ok){ showToast('ثبت شد',d.approved_count+' ردیف','ok'); await loadReport(); } else showToast('خطا',d.error||'', 'err'); }
+  catch(e){ showToast('خطا',String(e),'err'); }
+}
+async function doBulkUnapprove(){
+  var ids=[]; document.querySelectorAll('#report-table input.approve-check:checked').forEach(function(i){ids.push(Number(i.dataset.recordId));});
+  if(!ids.length){ showToast('هیچ ردیف تیک نخورده','','warn'); return; }
+  if(!confirm('لغو تأیید '+ids.length+' ردیف؟'))return;
+  try{ var r=await fetch('/api/bulk-unapprove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_ids:ids})}); var d=await r.json(); if(r.ok){ showToast('لغو شد',d.unapproved_count+' ردیف','warn'); await loadReport(); } else showToast('خطا',d.error||'', 'err'); }
+  catch(e){ showToast('خطا',String(e),'err'); }
+}
+
+async function searchPerson(){
+  var code=document.getElementById('ncode-input').value.trim();
+  var box=document.getElementById('person-result');
+  if(!code){ box.classList.remove('hidden'); box.innerHTML='<div class="msg err">کد ملی را وارد کنید</div>'; return; }
+  try{
+    var res=await fetch('/api/person?national_code='+encodeURIComponent(code));
+    var data=await res.json(); box.classList.remove('hidden');
+    if(!res.ok){ box.innerHTML='<div class="msg err">'+data.error+'</div>'; return; }
+    var html='<h3><span>'+(data.person.first_name||'')+' '+(data.person.last_name||'')+' — '+data.person.national_code+'</span><button class="close-btn" onclick="clearPersonResult()">×</button></h3>';
+    html+='<h4>رکوردها</h4><div class="table-wrap"><table><thead><tr><th>دوره</th><th>معاونت</th><th>مرکز</th><th>وضعیت</th><th class="num">سقف</th><th class="num">دستمزد</th></tr></thead><tbody>';
+    (data.records||[]).forEach(function(r){ html+='<tr><td>'+r.period_month+'</td><td>'+(r.deputy||'')+'</td><td>'+(r.cost_center||'')+'</td><td>'+(r.employment_status||'')+'</td><td class="num">'+(fmt(r.ceiling_status)||'-')+'</td><td class="num">'+fmt(r.monthly_wage)+'</td></tr>'; });
+    html+='</tbody></table></div>';
+    box.innerHTML=html;
+  }catch(e){ box.classList.remove('hidden'); box.innerHTML='<div class="msg err">خطا: '+e+'</div>'; }
+}
+function clearPersonResult(){ var b=document.getElementById('person-result'); b.classList.add('hidden'); b.innerHTML=''; document.getElementById('ncode-input').value=''; }
+
+var _exportColsCache=null;
+async function openExportDialog(){
+  var dlg=document.getElementById('export-dialog'); if(!dlg)return;
+  if(!_exportColsCache){ try{ var d=await (await fetch('/api/export/columns')).json(); _exportColsCache=d.report||[]; }catch(e){ _exportColsCache=[]; } }
+  document.getElementById('export-cols-container').innerHTML=_exportColsCache.map(function(c){
+    return '<label style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:var(--r-sm);background:var(--bg-2);border:1px solid var(--border);cursor:pointer"><input type="checkbox" class="export-col-cb" value="'+c.key+'" data-default="'+(c.default?'1':'0')+'" '+(c.default?'checked':'')+'><span>'+c.label+'</span></label>';
+  }).join('');
+  dlg.showModal();
+}
+function exportSelectAll(v){ document.querySelectorAll('.export-col-cb').forEach(function(el){el.checked=v;}); }
+function exportSelectDefault(){ document.querySelectorAll('.export-col-cb').forEach(function(el){el.checked=el.getAttribute('data-default')==='1';}); }
+function closeExportDialog(){ var d=document.getElementById('export-dialog'); if(d)d.close(); }
+function doCustomExport(){
+  var cols=[]; document.querySelectorAll('.export-col-cb:checked').forEach(function(el){cols.push(el.value);});
+  if(!cols.length){ alert('حداقل یک ستون'); return; }
+  var p=getPeriod('rep-year','rep-month');
+  var d=getSelectedValues('ms-deputy').join(','), c=getSelectedValues('ms-center').join(','), s=getSelectedValues('ms-supply').join(',');
+  var url='/api/report-export?period='+encodeURIComponent(p)+'&deputy='+encodeURIComponent(d)+'&center='+encodeURIComponent(c)+'&supply_type='+encodeURIComponent(s)+'&columns='+encodeURIComponent(cols.join(','));
+  if(window.activeFilter)url+='&filter_type='+encodeURIComponent(window.activeFilter);
+  window.location.href=url; closeExportDialog();
+}
+function exportReportExcel(){
+  var p=getPeriod('rep-year','rep-month');
+  var d=getSelectedValues('ms-deputy').join(','), c=getSelectedValues('ms-center').join(','), s=getSelectedValues('ms-supply').join(',');
+  var url='/api/report-export?period='+encodeURIComponent(p)+'&deputy='+encodeURIComponent(d)+'&center='+encodeURIComponent(c)+'&supply_type='+encodeURIComponent(s);
+  if(window.activeFilter)url+='&filter_type='+encodeURIComponent(window.activeFilter);
+  window.location.href=url;
+}
+
+function toggleInputDropdown(){ var dd=document.getElementById('input-dropdown'); if(!dd)return; dd.style.display=(dd.style.display==='block')?'none':'block'; }
+function openInputView(sub){
+  var dd=document.getElementById('input-tab-dropdown'); if(dd)dd.style.display='none';
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+  var t=document.getElementById('input-main-tab'); if(t)t.classList.add('active');
+  document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+  var sec=document.getElementById('tab-input'); if(sec)sec.classList.remove('hidden');
+  currentTab='input';
+  document.querySelectorAll('.sub-panel').forEach(function(p){p.classList.add('hidden');});
+  var tg=document.getElementById('sub-'+sub); if(tg)tg.classList.remove('hidden');
+  if(sub==='pricing')loadPricingRules();
+  if(sub==='specialists')loadSpecialists();
+  if(sub==='manual')loadManualCeilings();
+  if(sub==='payments')loadPaymentGrid();
+}
+document.querySelectorAll('.sub-tab').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.sub-tab').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    document.querySelectorAll('.sub-panel').forEach(function(p){p.classList.add('hidden');});
+    var t=document.getElementById('sub-'+btn.dataset.sub); if(t)t.classList.remove('hidden');
+    var s=btn.dataset.sub;
+    if(s==='pricing')loadPricingRules();
+    if(s==='specialists')loadSpecialists();
+    if(s==='manual')loadManualCeilings();
+    if(s==='payments')loadPaymentGrid();
+  });
+});
+document.addEventListener('click',function(e){
+  var inItem=e.target.closest('.input-dd-item');
+  if(inItem){ e.stopPropagation(); if(inItem.dataset.inputSub) openInputView(inItem.dataset.inputSub); return; }
+  var hrItem=e.target.closest('.hr-dd-item');
+  if(hrItem&&hrItem.dataset.hrView){ e.stopPropagation(); openHRView(hrItem.dataset.hrView); return; }
+});
+
+function openHRView(view){
+  var dd=document.getElementById('hr-dropdown'); if(dd)dd.style.display='none';
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+  var t=document.getElementById('hr-tab'); if(t)t.classList.add('active');
+  document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+  var sec=document.getElementById('tab-personnel'); if(sec)sec.classList.remove('hidden');
+  currentTab='personnel';
+  var ifr=document.getElementById('personnel-frame'); if(!ifr)return;
+  var th=document.documentElement.getAttribute('data-theme')||'dark';
+  if(ifr.dataset.loaded==='0'||!ifr.src){ ifr.src='/personnel?embedded=1&view='+view+'&theme='+th; ifr.dataset.loaded='1'; }
+  else { try{ ifr.contentWindow.postMessage({action:'openHRView',view:view},'*'); ifr.contentWindow.postMessage({action:'setTheme',theme:th},'*'); }catch(e){ ifr.src='/personnel?embedded=1&view='+view+'&theme='+th; } }
+}
+
+async function loadPricingRules(){
+  try{
+    var f=(document.getElementById('pr-deputy-filter')||{}).value;
+    var all=await (await fetch('/api/pricing-rules')).json();
+    var rows=(f&&f!=='همه')?all.filter(function(r){return r.deputy===f;}):all;
+    document.querySelector('#pricing-table tbody').innerHTML=rows.map(function(r){
+      return '<tr><td>'+r.deputy+'</td><td>'+r.legal_article+'</td><td>'+r.category+'</td><td class="num">'+(r.amount!=null?fmtRial(r.amount):'<span class="empty-amount">خالی</span>')+'</td><td><button class="action" onclick="editPricingRule('+r.id+','+(r.amount==null?'null':r.amount)+')">ویرایش</button></td></tr>';
+    }).join('');
+  }catch(e){ console.warn(e); }
+}
+async function editPricingRule(id,cur){
+  var v=prompt('مبلغ جدید:',cur==null?'':cur); if(v===null)return;
+  var n=v===''?null:unformatNumber(v);
+  var r=await fetch('/api/pricing-rules/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:n,username:'کاربر'})});
+  if(r.ok)loadPricingRules();
+}
+async function recalcAll(){
+  var m=document.getElementById('pr-recalc-msg'); if(m)m.textContent='در حال محاسبه...';
+  var r=await (await fetch('/api/recalculate',{method:'POST'})).json();
+  if(m)m.textContent=r.updated+' ردیف بازمحاسبه شد.';
+}
+async function loadSpecialists(){
+  try{
+    var f=(document.getElementById('sp-deputy-filter')||{}).value;
+    var p=getPeriod('bulk-year','bulk-month');
+    var all=await (await fetch('/api/specialists?period='+encodeURIComponent(p))).json();
+    var rows=(f&&f!=='همه')?all.filter(function(r){return r.deputy===f;}):all;
+    document.querySelector('#specialists-table tbody').innerHTML=rows.map(function(r){
+      return '<tr><td>'+(r.deputy||'')+'</td><td>'+r.center_name+'</td><td>'+(r.supply_type||'-')+'</td><td class="num">'+fmt(r.specialists)+'</td><td class="num">'+fmt(r.equipment)+'</td><td class="num">'+fmt(r.bonus)+'</td></tr>';
+    }).join('');
+  }catch(e){ console.warn(e); }
+}
+async function loadManualCeilings(){
+  try{
+    var p=getPeriod('mc-year','mc-month');
+    var ms=await (await fetch('/api/manual-ceilings?period='+encodeURIComponent(p))).json();
+    document.querySelector('#manual-ceilings-table tbody').innerHTML=(ms||[]).map(function(m){
+      return '<tr><td>'+(m.deputy||'')+'</td><td>'+m.center_name+'</td><td>'+(m.supply_type||'-')+'</td><td class="num">-</td><td class="num">'+fmtRial(m.amount)+'</td><td></td></tr>';
+    }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:20px">داده‌ای نیست</td></tr>';
+  }catch(e){ console.warn(e); }
+}
+async function saveAllManualCeilings(){ showToast('ذخیره','','ok'); }
+async function loadPaymentGrid(){
+  try{
+    var y=(document.getElementById('pay-year')||{}).value||CURRENT_YEAR;
+    var all=await (await fetch('/api/payment-grid?year='+encodeURIComponent(y))).json();
+    document.getElementById('pg-count').textContent=(all||[]).length+' نفر';
+    var th='<th>کد ملی</th><th>نام</th><th>خانوادگی</th>';
+    MONTHS.forEach(function(m){th+='<th class="num">'+m+'</th>';});
+    document.getElementById('pg-thead').innerHTML=th;
+    document.querySelector('#payment-grid-table tbody').innerHTML=(all||[]).slice(0,100).map(function(r){
+      var row='<tr><td class="code">'+r.national_code+'</td><td>'+(r.first_name||'')+'</td><td>'+(r.last_name||'')+'</td>';
+      MONTHS.forEach(function(m){row+='<td class="num">'+(r.amounts[m]?fmt(r.amounts[m]):'')+'</td>';});
+      return row+'</tr>';
+    }).join('');
+  }catch(e){ console.warn(e); }
+}
+async function doBulkImport(cat){
+  var fi=document.getElementById('bulk-'+cat+'-file'), m=document.getElementById('bulk-'+cat+'-msg');
+  if(!fi.files.length){ m.innerHTML='<span style="color:#fca5a5">فایل را انتخاب کنید</span>'; return; }
+  var p=getPeriod('bulk-year','bulk-month');
+  if(!p||p==='همه'){ m.innerHTML='<span style="color:#fca5a5">سال/ماه معتبر</span>'; return; }
+  var fd=new FormData(); fd.append('file',fi.files[0]); fd.append('period',p);
+  m.innerHTML='<span style="color:#a1a1aa">در حال ایمپورت...</span>';
+  try{
+    var r=await fetch('/api/bulk-import/'+cat,{method:'POST',body:fd});
+    var d=await r.json();
+    if(!r.ok){ m.innerHTML='<span style="color:#fca5a5">'+(d.error||'خطا')+'</span>'; return; }
+    var rr=d.result;
+    m.innerHTML='<span style="color:#6ee7b7">'+rr.centers_count+' مرکز - درج: '+rr.inserted+'، به‌روز: '+rr.updated+'</span>';
+    fi.value=''; loadSpecialists();
+  }catch(e){ m.innerHTML='<span style="color:#fca5a5">خطا: '+e+'</span>'; }
+}
+async function clearBulkMonth(cat){
+  var p=getPeriod('bulk-year','bulk-month');
+  if(!confirm('پاک کردن '+cat+' برای '+p+'؟'))return;
+  try{ var r=await fetch('/api/clear-month',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({period_month:p,clear_bulk:true,category:cat})}); if(r.ok){alert('پاک شد');loadSpecialists();} }catch(e){alert('خطا');}
+}
+async function clearMonthData(t){
+  var p,pl;
+  if(t==='records'){p=getPeriod('period-year','period-month');pl={period_month:p,clear_records:true};}
+  else if(t==='employment'){p=getPeriod('emp-year','emp-month');pl={period_month:p,clear_employment:true};}
+  else if(t==='maincenter'){p=getPeriod('maincenter-year','maincenter-month');pl={period_month:p,clear_maincenter:true};}
+  else return;
+  if(!confirm('پاک کردن '+t+' برای '+p+'؟'))return;
+  try{ var r=await fetch('/api/clear-month',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(pl)}); if(r.ok)alert('پاک شد'); }catch(e){alert('خطا');}
+}
+async function doImport(){
+  var p=getPeriod('period-year','period-month'), fi=document.getElementById('file-input'), m=document.getElementById('import-msg');
+  if(!fi.files.length){m.innerHTML='<div class="msg err">فایل انتخاب کنید</div>';return;}
+  var fd=new FormData(); fd.append('period',p); fd.append('file',fi.files[0]);
+  m.innerHTML='<div class="msg">در حال ایمپورت...</div>';
+  try{ var r=await fetch('/api/import',{method:'POST',body:fd}); var d=await r.json(); if(!r.ok){m.innerHTML='<div class="msg err">'+d.error+'</div>';return;} m.innerHTML='<div class="msg ok">'+d.import_result.ok+' رکورد ایمپورت شد</div>'; onDashFilterChange(); }catch(e){m.innerHTML='<div class="msg err">خطا: '+e+'</div>';}
+}
+async function doImportEmployment(){
+  var p=getPeriod('emp-year','emp-month'), fi=document.getElementById('emp-file'), m=document.getElementById('emp-msg');
+  if(!fi.files.length){m.innerHTML='<div class="msg err">فایل انتخاب کنید</div>';return;}
+  var fd=new FormData(); fd.append('period',p); fd.append('file',fi.files[0]);
+  m.innerHTML='<div class="msg">در حال ایمپورت...</div>';
+  try{ var r=await fetch('/api/import-employment',{method:'POST',body:fd}); var d=await r.json(); if(!r.ok){m.innerHTML='<div class="msg err">'+d.error+'</div>';return;} m.innerHTML='<div class="msg ok">'+d.import_result.ok+' ردیف ذخیره و اعمال شد</div>'; onDashFilterChange(); }catch(e){m.innerHTML='<div class="msg err">خطا: '+e+'</div>';}
+}
+async function doImportPayments(){
+  var fi=document.getElementById('pay-file'), m=document.getElementById('pay-import-msg');
+  var ow=(document.getElementById('pay-overwrite')||{}).value||'false';
+  var y=(document.getElementById('pay-year')||{}).value||CURRENT_YEAR;
+  if(!fi.files.length){m.innerHTML='<div class="msg err">فایل انتخاب کنید</div>';return;}
+  var fd=new FormData(); fd.append('file',fi.files[0]); fd.append('overwrite',ow); fd.append('year',y);
+  m.innerHTML='<div class="msg">در حال ایمپورت...</div>';
+  try{ var r=await fetch('/api/import-monthly-payments',{method:'POST',body:fd}); var d=await r.json(); if(!r.ok){m.innerHTML='<div class="msg err">'+(d.error||'خطا')+'</div>';return;} m.innerHTML='<div class="msg ok">'+d.import_result.ok+' پرداخت ذخیره شد</div>'; loadPaymentGrid(); onDashFilterChange(); }catch(e){m.innerHTML='<div class="msg err">خطا: '+e+'</div>';}
+}
+async function doImportMainCenter(){
+  var fi=document.getElementById('maincenter-file'), m=document.getElementById('maincenter-msg');
+  if(!fi.files.length){m.innerHTML='<div class="msg err">فایل انتخاب کنید</div>';return;}
+  var p=getPeriod('maincenter-year','maincenter-month');
+  if(!p||p==='همه'){m.innerHTML='<div class="msg err">سال/ماه معتبر</div>';return;}
+  var fd=new FormData(); fd.append('file',fi.files[0]); fd.append('period',p);
+  m.innerHTML='<div class="msg">در حال بارگذاری...</div>';
+  try{ var r=await fetch('/api/import-main-center',{method:'POST',body:fd}); var d=await r.json(); if(!r.ok){m.innerHTML='<div class="msg err">'+(d.error||'خطا')+'</div>';return;} m.innerHTML='<div class="msg ok">'+d.import_result.ok+' ردیف خوانده شد</div>'; fi.value=''; }catch(e){m.innerHTML='<div class="msg err">خطا: '+e+'</div>';}
+}
+
+// INIT
+fillYearSelect('dash-year',CURRENT_YEAR); fillMonthSelect('dash-month',CURRENT_MONTH,true);
+fillYearSelect('rep-year',CURRENT_YEAR); fillMonthSelect('rep-month',CURRENT_MONTH,false);
+fillYearSelect('emp-year',CURRENT_YEAR); fillMonthSelect('emp-month',CURRENT_MONTH,false);
+fillYearSelect('period-year',CURRENT_YEAR); fillMonthSelect('period-month',CURRENT_MONTH,false);
+fillYearSelect('mc-year',CURRENT_YEAR); fillMonthSelect('mc-month',CURRENT_MONTH,false);
+fillYearSelect('st-year',CURRENT_YEAR); fillMonthSelect('st-month',CURRENT_MONTH,true);
+fillYearSelect('pay-year',CURRENT_YEAR);
+fillYearSelect('appr-year',CURRENT_YEAR); fillMonthSelect('appr-month',CURRENT_MONTH,true);
+fillYearSelect('bulk-year',CURRENT_YEAR); fillMonthSelect('bulk-month',CURRENT_MONTH,false);
+fillYearSelect('maincenter-year',CURRENT_YEAR); fillMonthSelect('maincenter-month',CURRENT_MONTH,false);
+
+buildColSearchRow();
+loadFilterOptions().then(function(){ loadReport(); }).catch(function(e){ console.warn(e); loadReport(); });
+loadDashboardCharts();
+</script>
+</body>
+</html>'''
+
+def main():
+    with open(OUT_PATH, "w", encoding="utf-8", newline="") as f:
+        f.write(HTML)
+    print(f"OK -> {OUT_PATH} ({len(HTML):,} chars)")
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.db
+*.exe
+*.zip
+data/app.db
+data/app_backup.db

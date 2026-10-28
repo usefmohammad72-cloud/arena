@@ -1,0 +1,94 @@
+==============================================================================
+1) وضعیت app.py — آیا fix_export2 اعمال شده؟
+==============================================================================
+  تابع _period_for_records: False
+  فراخوانی period = _period_for_records: False
+  تعداد فراخوانی: 0
+
+⚠️  fix_export2.py هنوز اجرا نشده — ولی ادامه می‌دهیم تا وضعیت فعلی را ببینیم
+
+==============================================================================
+2) تست همهٔ endpointها
+==============================================================================
+
+--- /api/report-export (گزارش خروجی) ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+  period='1405-07'                                           401 (auth)
+  period='1405-شهریور'                                       401 (auth)
+
+--- /api/report-export با فیلتر deputy ---
+  deputy=معاونت صدا  period=1405-مهر                         401 (auth)
+
+--- /api/dashboard-export/by-month ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+  period='1405-شهریور'                                       401 (auth)
+
+--- /api/dashboard-export/wage-dist ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+
+--- /api/dashboard-export/emp-dist ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+
+--- /api/dashboard-export/places-dist ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+
+--- /api/dashboard-export/warnings ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+
+--- /api/dashboard-export/financials ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+
+--- /api/dashboard-export/submission ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+
+--- /api/dashboard-export/approvals ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+  period='1405/07'                                           401 (auth)
+
+--- /api/summary-table/export ---
+  period=''                                                  401 (auth)
+  period='1405-مهر'                                          401 (auth)
+  period='1405/مهر'                                          401 (auth)
+
+--- /api/payment-grid/export ---
+  بدون فیلتر                                                 401 (auth)
+
+==============================================================================
+3) دادهٔ مرجع — برای تطبیق
+==============================================================================
+  records 1405-شهریور           total= 4611  calc= 4611
+  records 1405-مهر              total= 3633  calc= 3633
+  monthly_payments 1405-اردیبهشت         n=4764
+  monthly_payments 1405-تیر              n=4538
+  monthly_payments 1405-خرداد            n=4397
+  monthly_payments 1405-شهریور           n=4354
+  monthly_payments 1405-فروردین          n=4689
+  monthly_payments 1405-مرداد            n=4436
+
+✅ تمام — هیچ چیزی تغییر نکرد. این خروجی را کامل برایم بفرست.

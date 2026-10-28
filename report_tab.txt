@@ -1,0 +1,272 @@
+==============================================================================
+1) پیدا کردن تب گزارش خروجی و فیلترهایش
+==============================================================================
+
+--- id="deputy ---
+  403:       <div id="deputy-submission-accordion"></div>
+
+--- id='deputy ---
+
+--- id="report-deputy ---
+
+--- id="filter-deputy ---
+
+--- id="r-deputy ---
+
+--- id="center ---
+
+--- id="report-center ---
+
+--- id="filter-center ---
+
+--- id="r-center ---
+
+--- id="period ---
+  618:         <div class="row"><label>سال:</label><select id="period-year"></select><label>ماه:</label><select id="period-month"></select></div>
+
+--- id="report-period ---
+
+--- loadReport ---
+  457:       <div class="filter-item"><label>سال</label><select id="rep-year" onchange="loadReport()"></select></div>
+  458:       <div class="filter-item"><label>ماه</label><select id="rep-month" onchange="loadReport()"></select></div>
+  736:     else if(currentTab==='report') await loadReport();
+  814:     if (tabName==='report') loadReport();
+  1074: async function loadReport(){
+  1116:     console.warn('loadReport',e);
+  1126:   loadReport();
+  1163:   window._reportTimer=setTimeout(loadReport,300);
+  1184:   try{ var r=await fetch('/api/bulk-approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_ids:ids})}); var d=await r.json(); if(r.ok){ sho
+  1191:   try{ var r=await fetch('/api/bulk-unapprove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_ids:ids})}); var d=await r.json(); if(r.ok){ s
+  1422: loadFilterOptions().then(function(){ loadReport(); }).catch(function(e){ console.warn(e); loadReport(); });
+
+--- onDeputyChange ---
+
+--- /api/filter-options ---
+  1132:     var opts = await (await fetch('/api/filter-options')).json();
+
+--- /api/all-centers ---
+  888:     var allCenters = await (await fetch('/api/all-centers')).json();
+
+==============================================================================
+2) HTML تب گزارش خروجی — از 'گزارش خروجی' تا شروع تب بعدی
+==============================================================================
+شروع از خط 279
+  279:   <button class="tab" data-tab="report">گزارش خروجی</button>
+  280:   <div style="position:relative;display:inline-block">
+  281:     <button class="tab" data-tab="input" id="input-main-tab">اطلاعات ورودی <span style="font-size:9px;opacity:.6;margin-inline-start:4px">▼</span></button>
+  282:     <div id="input-tab-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:26
+  283:       <button type="button" class="input-dd-item" data-input-sub="pricing" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);fon
+  284:       <button type="button" class="input-dd-item" data-input-sub="specialists" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2)
+  285:       <button type="button" class="input-dd-item" data-input-sub="manual" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font
+  286:       <button type="button" class="input-dd-item" data-input-sub="payments" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);fo
+  287:       <button type="button" class="input-dd-item" data-input-sub="employment" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);
+  288:       <button type="button" class="input-dd-item" data-input-sub="maincenter" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);
+  289:       <button type="button" class="input-dd-item" data-input-sub="import" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font
+  290:     </div>
+  291:   </div>
+  292:   <div style="position:relative;display:inline-block">
+  293:     <button class="tab" data-tab="personnel" id="hr-tab">منابع انسانی <span style="font-size:9px;opacity:.6;margin-inline-start:4px">▼</span></button>
+  294:     <div id="hr-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:190px;box
+  295:       <button type="button" class="hr-dd-item" data-hr-view="bank" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family
+  296:       <button type="button" class="hr-dd-item" data-hr-view="templates" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-f
+  297:       <button type="button" class="hr-dd-item" data-hr-view="shifts" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-fami
+  298:     </div>
+  299:   </div>
+  300: </nav>
+  301: <main>
+  302: 
+  303: <section id="tab-smart-center" class="hidden">
+  304:   <div class="smart-dashboard">
+  305:     <div class="smart-header-panel">
+  306:       <div>
+  307:         <h2>اتاق تحلیل و فرمان هوشمند (تحلیل مدیریتی)</h2>
+  308:         <div class="subtitle">نمای جامع و لحظه‌ای از وضعیت پرداختی‌ها، هشدارها و تحلیل‌های پیشرفته سیستم</div>
+  309:       </div>
+  310:       <div><button class="hbtn ghost" onclick="loadSmartCenterData()">🔄 تازه‌سازی داده‌ها</button></div>
+  311:     </div>
+  312:     <div class="smart-kpi-grid">
+  313:       <div class="smart-kpi-card"><div class="smart-kpi-title">مجموع پرداختی</div><div class="smart-kpi-value" id="sa-total-paid">۰ ریال</div><div class="smart-kpi-footer">در تمام دوره‌ها</div></div>
+  314:       <div class="smart-kpi-card"><div class="smart-kpi-title">تعداد کل رکوردها</div><div class="smart-kpi-value" id="sa-total-records">۰</div><div class="smart-kpi-footer">در دیتابیس</div></div>
+  315:       <div class="smart-kpi-card"><div class="smart-kpi-title">نیازمند بررسی</div><div class="smart-kpi-value" id="sa-warnings">۰</div><div class="smart-kpi-footer">هشدار زرد و نارنجی</div></div>
+  316:       <div class="smart-kpi-card"><div class="smart-kpi-title">دارای تداخل</div><div class="smart-kpi-value" id="sa-employed">۰</div><div class="smart-kpi-footer">نیازمند اقدام</div></div>
+  317:     </div>
+  318:     <div class="smart-main-grid">
+  319:       <div class="smart-chart-box"><h3>روند پرداختی ماهانه <span class="badge">۱۲ ماه</span></h3><div id="sa-chart-monthly" style="min-height: 250px;"></div></div>
+  320:       <div class="smart-chart-box"><h3>بینش‌های هوشمند <span class="badge">زنده</span></h3><div class="smart-insights" id="sa-insights"><div class="smart-insight-item"><div class="smart-insight-title"
+  321:     </div>
+  322:     <div class="smart-main-grid">
+  323:       <div class="smart-chart-box"><h3>عملکرد معاونت‌ها <span class="badge">تفکیکی</span></h3>
+  324:         <div class="table-wrap" style="max-height:300px"><table id="sa-dep-table"><thead><tr><th>معاونت</th><th class="num">کل</th><th class="num">تأیید</th><th class="num">درصد</th></tr></thead><tbod
+  325:       </div>
+  326:       <div class="smart-chart-box"><h3>توزیع ریسک</h3><div class="donut-wrap" id="sa-risk-donut"></div></div>
+  327:     </div>
+  328:   </div>
+  329: </section>
+  330: 
+  331: <section id="tab-dashboard">
+  332:   <div class="chart-toolbar" style="margin-bottom:20px;">
+  333:     <label>دوره تحلیل داشبورد:</label>
+  334:     <select id="dash-year" onchange="onDashFilterChange()"></select>
+  335:     <select id="dash-month" onchange="onDashFilterChange()"></select>
+  336:     <button class="ghost" onclick="onDashFilterChange()">بروزرسانی</button>
+  337:     <span style="flex:1"></span>
+  338:   </div>
+  339: 
+  340:   <div id="dash-sub-overview" class="dash-sub-panel">
+  341:     <div class="chart-grid">
+  342:       <div class="chart-box">
+  343:         <h4>روند پرداختی ماهانه
+  344:           <span style="display:flex;gap:8px;align-items:center">
+  345:             <span class="badge-period" id="badge-month"></span>
+  346:             <button class="export-btn" onclick="exportDash('by-month')" title="خروجی اکسل">خروجی اکسل</button>
+  347:           </span>
+  348:         </h4>
+  349:         <div id="chart-by-month"></div>
+  350:       </div>
+  351:       <div class="chart-box">
+  352:         <h4>ترکیب وضعیت رکوردها
+  353:           <span style="display:flex;gap:8px;align-items:center">
+  354:             <span class="badge-period" id="badge-warn"></span>
+  355:             <button class="export-btn" onclick="exportDash('warnings')" title="خروجی اکسل">خروجی اکسل</button>
+  356:           </span>
+  357:         </h4>
+  358:         <div class="donut-wrap" id="chart-donut-warnings"></div>
+  359:       </div>
+  360:       <div class="chart-box">
+  361:         <h4>توزیع دستمزد ماهانه
+  362:           <span style="display:flex;gap:8px;align-items:center">
+  363:             <span class="badge-period" id="badge-wage"></span>
+  364:             <button class="export-btn" onclick="exportDash('wage-dist')" title="خروجی اکسل">خروجی اکسل</button>
+  365:           </span>
+  366:         </h4>
+  367:         <div id="chart-wage-dist"></div>
+  368:       </div>
+  369:       <div class="chart-box">
+  370:         <h4>ترکیب وضعیت اشتغال
+  371:           <span style="display:flex;gap:8px;align-items:center">
+  372:             <span class="badge-period" id="badge-emp"></span>
+  373:             <button class="export-btn" onclick="exportDash('emp-dist')" title="خروجی اکسل">خروجی اکسل</button>
+  374:           </span>
+  375:         </h4>
+  376:         <div id="chart-emp-dist"></div>
+  377:       </div>
+  378:       <div class="chart-box">
+  379:         <h4>پراکندگی تعداد محل خدمتی
+  380:           <span style="display:flex;gap:8px;align-items:center">
+  381:             <span class="badge-period" id="badge-places"></span>
+  382:             <button class="export-btn" onclick="exportDash('places-dist')" title="خروجی اکسل">خروجی اکسل</button>
+  383:           </span>
+  384:         </h4>
+  385:         <div id="chart-places-dist"></div>
+  386:       </div>
+  387:     </div>
+  388:     <div class="report-box" style="margin-top:20px">
+  389:       <h3>جزئیات مالی (کارشناسان، تجهیزات، هدایا)
+  390:         <button class="export-btn" onclick="exportDash('financials')">خروجی اکسل</button>
+  391:       </h3>
+  392:       <div id="dashboard-financials" class="summary-3col"></div>
+  393:       <div id="dashboard-top-centers" style="margin-top:12px"></div>
+  394:     </div>
+  395:   </div>
+  396: 
+  397:   <div id="dash-sub-submission" class="dash-sub-panel hidden">
+  398:     <div class="report-box">
+  399:       <h3>وضعیت ارسال اطلاعات مراکز به تفکیک معاونت
+
+==============================================================================
+3) تابع loadReport و onDeputyChange
+==============================================================================
+
+--- loadReport (خط 1074) ---
+  async function loadReport(){
+    if(!_filterLoaded) await loadFilterOptions();
+    var period = getPeriod('rep-year','rep-month');
+    var cth = document.getElementById('dyn-ceiling-th'); if(cth)cth.textContent='سقف '+period;
+    var dep = getSelectedValues('ms-deputy').join(',');
+    var cen = getSelectedValues('ms-center').join(',');
+    var sup = getSelectedValues('ms-supply').join(',');
+    var url = '/api/report?period='+encodeURIComponent(period)+'&deputy='+encodeURIComponent(dep)+'&center='+encodeURIComponent(cen)+'&supply_type='+encodeURIComponent(sup);
+    try {
+      var data = await (await fetch(url)).json();
+      var s = data.summary||{};
+      document.getElementById('report-summary').innerHTML =
+        '<div class="card"><div class="value">'+fmtRial(s.professional_qualification||0)+'</div><div class="label">صلاحیت حرفه‌ای</div></div>'+
+        '<div class="card"><div class="value">'+fmtRial(Math.round(s.monthly_allocation||0))+'</div><div class="label">تخصیص ماه</div></div>'+
+        '<div class="card"><div class="value">'+(s.month_ceiling!=null?fmtRial(s.month_ceiling):'-')+'</div><div class="label">سقف ماه</div></div>';
+      document.getElementById('report-extra').innerHTML =
+        '<div class="card mini-uniform"><div class="value">'+fmtRial(s.specialists)+'</div><div class="label">کارشناسان</div></div>'+
+        '<div class="card mini-uniform"><div class="value">'+fmtRial(s.equipment)+'</div><div class="label">تجهیزات</div></div>'+
+        '<div class="card mini-uniform"><div class="value">'+fmtRial(s.bonus)+'</div><div class="label">هدایا</div></div>';
+      var totalRows = (data.rows||[]).length;
+      var allCls = 'card clickable all-filter-card' + (activeFilter===null?' active-filter':'');
+      var yCls = 'card clickable warn-yellow-card' + (activeFilter==='yellow'?' active-filter':'');
+      var oCls = 'card clickable warn-orange-card' + (activeFilter==='orange'?' active-filter':'');
+      var rCls = 'card clickable warn-red-card' + (activeFilter==='red'?' active-filter':'');
+      var aCls = 'card clickable approved-card' + (activeFilter==='approved'?' active-filter':'');
+      document.getElementById('report-warnings').innerHTML =
+        '<div class="'+allCls+'" data-filter="all"><div class="value">'+fmt(totalRows)+'</div><div class="label">نمایش همه</div></div>'+
+        '<div class="'+yCls+'" data-filter="yellow"><div class="value">'+fmt(s.warn_yellow_count||0)+'</div><div class="label">بالاتر از سقف ماهانه</div></div>'+
+        '<div class="'+oCls+'" data-filter="orange"><div class="value">'+fmt(s.warn_orange_count||0)+'</div><div class="label">بالاتر از مجموع پرداختی</div></div>'+
+        '<div class="'+rCls+'" data-filter="red"><div class="value">'+fmt(s.employed_count||0)+'</div><div class="label">شاغل</div></div>'+
+        '<div class="'+aCls+'" data-filter="approved"><div class="value">'+fmt(s.approved_count||0)+'</div><div class="label">تایید شده</div></div>';
+      document.querySelectorAll('#report-warnings .card[data-filter]').forEach(function(el){
+        el.addEventListener('click', function(){ setFilter(el.dataset.filter); });
+      });
+      var rows = data.rows||[];
+      if(activeFilter==='yellow') rows = rows.filter(function(r){return r.warn_yellow;});
+      else if(activeFilter==='orange') rows = rows.filter(function(r){return r.warn_orange;});
+      else if(activeFilter==='red') rows = rows.filter(function(r){return r.is_employed;});
+      else if(activeFilter==='approved') rows = rows.filter(function(r){return r.manager_approved;});
+      _lastReportRows = rows;
+      applyColSearch();
+    } catch(e){
+      console.warn('loadReport',e);
+      var tb=document.querySelector('#report-table tbody');
+      if(tb) tb.innerHTML='<tr><td colspan="22" style="text-align:center;padding:24px;color:#fca5a5">خطا: '+e+'</td></tr>';
+    }
+  }
+
+--- onDeputyChange: NOT FOUND ---
+
+--- fillDeputySelect: NOT FOUND ---
+
+--- loadFilterOptions (خط 1130) ---
+  async function loadFilterOptions(){
+    try {
+      var opts = await (await fetch('/api/filter-options')).json();
+      var stD = document.getElementById('st-deputy');
+      if(stD){ var c=stD.value; stD.innerHTML='<option value="همه">همه</option>'+(opts.deputies||[]).filter(function(d){return d!=='همه';}).map(function(d){return '<option value="'+d+'">'+d+'</option>';
+      var aD = document.getElementById('appr-deputy-filter');
+      if(aD) aD.innerHTML='<option value="همه">همه</option>'+(opts.deputies||[]).filter(function(d){return d!=='همه';}).map(function(d){return '<option value="'+d+'">'+d+'</option>';}).join('');
+      buildMultiSelect('ms-deputy',opts.deputies||['همه']);
+      buildMultiSelect('ms-center',opts.centers||['همه']);
+      buildMultiSelect('ms-supply',opts.supply_types||['همه']);
+      _filterLoaded = true;
+    } catch(e){ console.warn('loadFilterOptions',e); }
+  }
+
+--- _centerOptionsCache: NOT FOUND ---
+
+--- loadCenterOptions: NOT FOUND ---
+
+==============================================================================
+4) همه جاهایی که /api/filter-options و /api/all-centers صدا زده می‌شوند
+==============================================================================
+
+  --- خط 888 ---
+      886:   var period = getPeriod('dash-year','dash-month');
+      887:   try {
+  >>> 888:     var allCenters = await (await fetch('/api/all-centers')).json();
+      889:     var sum = await (await fetch('/api/summary-table?period='+encodeURIComponent(period)+'&deputy=همه&center=همه&supply_type=همه')).json();
+      890:     var submitted = new Set((sum.rows||[]).map(function(r){return r.center;}));
+      891:     var depMap = {};
+
+  --- خط 1132 ---
+      1130: async function loadFilterOptions(){
+      1131:   try {
+  >>> 1132:     var opts = await (await fetch('/api/filter-options')).json();
+      1133:     var stD = document.getElementById('st-deputy');
+      1134:     if(stD){ var c=stD.value; stD.innerHTML='<option value="همه">همه</option>'+(opts.deputies||[]).filter(function(d){return d!=='همه';}).map(function(d){return '<option value="'+d+'">'+d+'</option>';
+      1135:     var aD = document.getElementById('appr-deputy-filter');
+
+✅ تمام — هیچ چیزی تغییر نکرد.

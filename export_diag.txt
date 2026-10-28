@@ -1,0 +1,504 @@
+======================================================================
+1) همه routeهای مربوط به export / excel / download
+======================================================================
+  D:\moghatee\samane\app\diag_export.py:25:             if any(k in line.lower() for k in ('export', 'send_file', 'to_excel',
+  D:\moghatee\samane\app\diag_export.py:27:                 if '@app.route' in line or 'def ' in line or 'send_file' in line:
+  D:\moghatee\samane\app\web\app.py:7: from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for
+  D:\moghatee\samane\app\web\app.py:531: @app.route("/api/export/columns")
+  D:\moghatee\samane\app\web\app.py:533: def api_export_columns():
+  D:\moghatee\samane\app\web\app.py:536: @app.route("/api/report-export")
+  D:\moghatee\samane\app\web\app.py:537: def api_report_export():
+  D:\moghatee\samane\app\web\app.py:610:     return send_file(buf, as_attachment=True, download_name="گزارش-خروجی.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  D:\moghatee\samane\app\web\app.py:778: @app.route("/api/payment-grid/export")
+  D:\moghatee\samane\app\web\app.py:779: def api_payment_grid_export():
+  D:\moghatee\samane\app\web\app.py:822:     return send_file(buf, as_attachment=True, download_name="پرداختی‌های ماهانه.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  D:\moghatee\samane\app\web\app.py:930: @app.route("/api/summary-table/export")
+  D:\moghatee\samane\app\web\app.py:931: def api_summary_table_export():
+  D:\moghatee\samane\app\web\app.py:955:     return send_file(buf, as_attachment=True, download_name="خلاصه-تفکیکی.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  D:\moghatee\samane\app\web\app.py:1145: @app.route("/api/personnel/export")
+  D:\moghatee\samane\app\web\app.py:1147: def api_personnel_export():
+  D:\moghatee\samane\app\web\app.py:1149:     return send_file(buf, as_attachment=True, download_name="bank-personnel.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  D:\moghatee\samane\app\web\app.py:1216:     return send_file(buf, as_attachment=True, download_name="template-sample.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  D:\moghatee\samane\app\web\app.py:1240: @app.route("/api/dashboard-export/<kind>")
+  D:\moghatee\samane\app\web\app.py:1242: def api_dashboard_export(kind):
+  D:\moghatee\samane\app\web\app.py:1338:     return send_file(buf, as_attachment=True, download_name=names.get(kind, "گزارش.xlsx"), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  D:\moghatee\samane\app\web\personnel.py:506: def export_personnel():
+
+======================================================================
+2) بدنهٔ توابع export
+======================================================================
+
+--- D:\moghatee\samane\app\web\app.py :: def api_export_columns ---
+def api_export_columns():
+    return jsonify({"report": [{"key": k, "label": l, "default": d} for (k, l, d) in EXPORT_COLUMNS_REPORT]})
+
+@app.route("/api/report-export")
+
+
+--- D:\moghatee\samane\app\web\app.py :: def api_report_export ---
+def api_report_export():
+    deputy, center, supply_type = request.args.get("deputy", "همه"), request.args.get("center", "همه"), request.args.get("supply_type", "همه")
+    period = request.args.get("period") or None
+    filter_type = request.args.get("filter_type", "").strip()
+    cols_str = request.args.get("columns", "").strip()
+    selected_keys = [c.strip() for c in cols_str.split(",") if c.strip()] if cols_str else [k for (k, _, _) in EXPORT_COLUMNS_REPORT]
+    label_map = {k: l for (k, l, _) in EXPORT_COLUMNS_REPORT}
+    
+    data = build_report(DB_PATH, deputy, center, supply_type, period)
+    
+    conn = get_connection(DB_PATH)
+    em_rows = conn.execute("SELECT national_code, period_month, employment_status FROM employment_monthly").fetchall()
+    em_map = {}
+    for r in em_rows:
+        em_map[(smart_nc(r['national_code']), str(r['period_month']).strip())] = r['employment_status']
+    
+    for row in data.get('rows', []):
+        nc = smart_nc(row.get('national_code', ''))
+        pm = str(row.get('period_month', '')).strip()
+        if (nc, pm) in em_map and em_map[(nc, pm)]:
+            row['employment_status'] = em_map[(nc, pm)]
+    conn.close()
+    
+    rows = list(data.get("rows", []))
+    if deputy and deputy not in ("همه", ""): rows = [r for r in rows if (r.get("deputy") or "") == deputy]
+    if center and center not in ("همه", ""): rows = [r for r in rows if (r.get("cost_center") or "") == center]
+    if supply_type and supply_type not in ("همه", ""): rows = [r for r in rows if supply_type in (r.get("contract_subject") or "")]
+    if filter_type == "yellow": rows = [r for r in rows if r.get("warn_yellow")]
+    elif filter_type == "orange": rows = [r for r in rows if r.get("warn_orange")]
+    elif filter_type == "red": rows = [r for r in rows if r.get("is_employed")]
+    elif filter_type == "approved": rows = [r for r in rows if r.get("manager_approved")]
+    search_str = request.args.get("search", "").strip()
+    if search_str:
+        try: search_map = json.loads(search_str)
+        except: search_map = {}
+        if search_map:
+            def _match_search(r, smap):
+                for key, val in smap.items():
+                    if not val: continue
+                    if str(val).lower() not in str(r.get(key, "")).lower(): return False
+                return True
+            rows = [r for r in rows if _match_search(r, search_map)]
+            
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "گزارش خروجی"
+    ws.sheet_view.rightToLeft = True
+    header_font = Font(bold=True, color="FFFFFF", name="Tahoma")
+    header_fill = PatternFill("solid", start_color="1F4A7E")
+    header_align = Alignment(horizontal="center", vertical="center")
+    for i, k in enumerate(selected_keys, start=1):
+        c = ws.cell(row=1, column=i, value=label_map.get(k, k))
+        c.font, c.fill, c.alignment = header_font, header_fill, header_align
+    def _n(v):
+        try: return float(v or 0)
+        except: return 0
+    def _cell(r, k):
+        v = r.get(k)
+        if k == "manager_approved": return "✓" if v else ""
+        if k == "payment_list_status":
+            if isinstance(v, list): return " | ".join(v) if v else ""
+            return str(v) if v else ""
+        if k in ("skill_card_bonus", "employer_insurance", "non_continuous_bonus", "monthly_wage", "paid_amount", "yearly_paid_total"): return _n(v)
+        if k in ("exempted_ceiling", "six_month_ceiling"):
+            if v is None or v == "": return ""
+            try: return float(v)
+            except: return v
+        return "" if v is None else v
+    for r in rows: ws.append([_cell(r, k) for k in selected_keys])
+    for i in range(1, len(selected_keys) + 1): ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = 18
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name="گزارش-خروجی.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.route("/api/payments", methods=["GET"])
+
+
+--- D:\moghatee\samane\app\web\app.py :: def api_personnel_export ---
+def api_personnel_export():
+    buf = personnel.export_personnel()
+    return send_file(buf, as_attachment=True, download_name="bank-personnel.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.route("/api/templates/matrix")
+@auth.login_required
+
+
+--- D:\moghatee\samane\app\web\app.py :: def api_dashboard_export ---
+def api_dashboard_export(kind):
+    period = request.args.get("period") or None
+    if period in ("همه", "", "all"): period = None
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.sheet_view.rightToLeft = True
+    header_font = Font(bold=True, color="FFFFFF", name="Tahoma")
+    header_fill = PatternFill("solid", start_color="1F4A7E")
+    header_align = Alignment(horizontal="center", vertical="center")
+    def _hdr(cols):
+        for i, h in enumerate(cols, start=1):
+            c = ws.cell(row=1, column=i, value=h)
+            c.font, c.fill, c.alignment = header_font, header_fill, header_align
+    conn = get_connection(DB_PATH)
+    try:
+        if kind == "by-month":
+            ws.title = "روند پرداختی ماهانه"
+            if period: rows = conn.execute("SELECT period_month, COALESCE(SUM(amount),0) s, COUNT(*) c FROM monthly_payments WHERE period_month = ? GROUP BY period_month", (period,)).fetchall()
+            else: rows = conn.execute("SELECT period_month, COALESCE(SUM(amount),0) s, COUNT(*) c FROM monthly_payments GROUP BY period_month").fetchall()
+            _hdr(["دوره", "تعداد پرداخت", "مجموع مبلغ (ریال)"])
+            for r in rows: ws.append([r["period_month"], r["c"], float(r["s"] or 0)])
+            ws.column_dimensions['A'].width = 18; ws.column_dimensions['B'].width = 15; ws.column_dimensions['C'].width = 22
+        elif kind == "wage-dist":
+            ws.title = "توزیع دستمزد ماهانه"
+            buckets = [("۰ تا ۵۰ میلیون", 0, 50_000_000), ("۵۰ تا ۱۰۰ میلیون", 50_000_000, 100_000_000), ("۱۰۰ تا ۲۰۰ میلیون", 100_000_000, 200_000_000), ("۲۰۰ تا ۳۰۰ میلیون", 200_000_000, 300_000_000), ("۳۰۰ تا ۵۰۰ میلیون", 300_000_000, 500_000_000), ("بیش از ۵۰۰ میلیون", 500_000_000, 10**18)]
+            _hdr(["بازه دستمزد", "تعداد نفرات"])
+            for label, lo, hi in buckets:
+                if period: cnt = conn.execute("SELECT COUNT(*) c FROM records WHERE monthly_wage >= ? AND monthly_wage < ? AND period_month = ?", (lo, hi, period)).fetchone()["c"]
+                else: cnt = conn.execute("SELECT COUNT(*) c FROM records WHERE monthly_wage >= ? AND monthly_wage < ?", (lo, hi)).fetchone()["c"]
+                ws.append([label, cnt])
+            ws.column_dimensions['A'].width = 25; ws.column_dimensions['B'].width = 15
+        elif kind == "emp-dist":
+            ws.title = "وضعیت اشتغال"
+            if period: rows = conn.execute("SELECT COALESCE(NULLIF(employment_status,''),'نامعلوم') s, COUNT(*) c FROM records WHERE period_month = ? GROUP BY s ORDER BY c DESC", (period,)).fetchall()
+            else: rows = conn.execute("SELECT COALESCE(NULLIF(employment_status,''),'نامعلوم') s, COUNT(*) c FROM records GROUP BY s ORDER BY c DESC").fetchall()
+            _hdr(["وضعیت اشتغال", "تعداد"])
+            for r in rows: ws.append([r["s"], r["c"]])
+            ws.column_dimensions['A'].width = 25; ws.column_dimensions['B'].width = 15
+        elif kind == "places-dist":
+            ws.title = "پراکندگی محل خدمتی"
+            if period: rows = conn.execute("SELECT cnt, COUNT(*) c FROM (SELECT p.national_code, r.period_month, COUNT(DISTINCT r.cost_center) AS cnt FROM records r JOIN persons p ON p.id = r.person_id WHERE r.cost_center IS NOT NULL AND r.cost_center != '' AND r.period_month = ? GROUP BY p.national_code, r.period_month) GROUP BY cnt ORDER BY cnt", (period,)).fetchall()
+            else: rows = conn.execute("SELECT cnt, COUNT(*) c FROM (SELECT p.national_code, r.period_month, COUNT(DISTINCT r.cost_center) AS cnt FROM records r JOIN persons p ON p.id = r.person_id WHERE r.cost_center IS NOT NULL AND r.cost_center != '' GROUP BY p.national_code, r.period_month) GROUP BY cnt ORDER BY cnt").fetchall()
+            _hdr(["تعداد محل خدمتی", "تعداد نفرات"])
+            for r in rows: ws.append([r["cnt"], r["c"]])
+            ws.column_dimensions['A'].width = 18; ws.column_dimensions['B'].width = 15
+        elif kind == "warnings":
+            ws.title = "ترکیب وضعیت رکوردها"
+            where_month = " WHERE r.period_month = ? " if period else " WHERE 1=1 "
+            params = [period] if period else []
+            w = conn.execute(f"SELECT SUM(CASE WHEN cr.ceiling_status = 'حذف شود' AND COALESCE(cr.manager_approved,0) = 0 THEN 1 ELSE 0 END) AS employed, SUM(CASE WHEN cr.six_month_ceiling < 0 AND COALESCE(cr.manager_approved,0) = 0 THEN 1 ELSE 0 END) AS orange_cnt, SUM(CASE WHEN cr.six_month_ceiling >= 0 AND cr.ceiling_status NOT IN ('', 'حذف شود') AND COALESCE(cr.manager_approved,0) = 0 AND r.monthly_wage > CAST(cr.ceiling_status AS REAL) THEN 1 ELSE 0 END) AS yellow_cnt, SUM(CASE WHEN COALESCE(cr.manager_approved,0) = 1 THEN 1 ELSE 0 END) AS approved_cnt, SUM(CASE WHEN cr.ceiling_status NOT IN ('', 'حذف شود') AND COALESCE(cr.manager_approved,0) = 0 AND (cr.six_month_ceiling IS NULL OR cr.six_month_ceiling >= 0) AND r.monthly_wage <= CAST(cr.ceiling_status AS REAL) THEN 1 ELSE 0 END) AS ok_cnt FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id {where_month}", params).fetchone()
+            _hdr(["وضعیت", "تعداد"])
+            ws.append(["سالم", w["ok_cnt"] or 0]); ws.append(["تأییدشده", w["approved_cnt"] or 0]); ws.append(["بالاتر از سقف ماهانه (زرد)", w["yellow_cnt"] or 0]); ws.append(["بالاتر از مجموع پرداختی (نارنجی)", w["orange_cnt"] or 0]); ws.append(["شاغل (قرمز)", w["employed"] or 0])
+            ws.column_dimensions['A'].width = 38; ws.column_dimensions['B'].width = 15
+        elif kind == "financials":
+            ws.title = "جزئیات مالی"
+            from collections import defaultdict
+            if period: rows = conn.execute("SELECT center_name, supply_type, specialists, equipment, bonus FROM specialists_equipment_bonus WHERE period_month = ?", (period,)).fetchall()
+            else: rows = conn.execute("SELECT center_name, supply_type, SUM(specialists) specialists, SUM(equipment) equipment, SUM(bonus) bonus FROM specialists_equipment_bonus GROUP BY center_name, supply_type").fetchall()
+            agg = defaultdict(lambda: {"specialists": 0.0, "equipment": 0.0, "bonus": 0.0})
+            for r in rows:
+                agg[r["center_name"]]["specialists"] += float(r["specialists"] or 0)
+                agg[r["center_name"]]["equipment"] += float(r["equipment"] or 0)
+                agg[r["center_name"]]["bonus"] += float(r["bonus"] or 0)
+            _hdr(["مرکز/شبکه", "کارشناسان (ریال)", "تجهیزات (ریال)", "هدایا (ریال)", "مجموع (ریال)"])
+            for center, vals in sorted(agg.items()): ws.append([center, vals["specialists"], vals["equipment"], vals["bonus"], vals["specialists"] + vals["equipment"] + vals["bonus"]])
+            ws.column_dimensions['A'].width = 30
+            for col in "BCDE": ws.column_dimensions[col].width = 20
+        elif kind == "submission":
+            ws.title = "وضعیت ارسال"
+            all_centers = conn.execute("SELECT DISTINCT center_name, deputy FROM centers_structure WHERE center_name IS NOT NULL AND center_name != '' ORDER BY deputy, center_name").fetchall()
+            if period: submitted_rows = conn.execute("SELECT DISTINCT cost_center AS center FROM records WHERE period_month = ? AND cost_center IS NOT NULL AND cost_center != ''", (period,)).fetchall()
+            else: submitted_rows = conn.execute("SELECT DISTINCT cost_center AS center FROM records WHERE cost_center IS NOT NULL AND cost_center != ''").fetchall()
+            submitted = set(r["center"] for r in submitted_rows)
+            _hdr(["معاونت", "مرکز/شبکه", "وضعیت"])
+            for r in all_centers: ws.append([r["deputy"] or "", r["center_name"], "ارسال شده ✅" if r["center_name"] in submitted else "ارسال نشده ❌"])
+            ws.column_dimensions['A'].width = 20; ws.column_dimensions['B'].width = 30; ws.column_dimensions['C'].width = 18
+        elif kind == "approvals":
+            ws.title = "وضعیت تأیید"
+            if period: rows = conn.execute("SELECT r.deputy, r.cost_center, COUNT(*) total, SUM(CASE WHEN cr.manager_approved=1 THEN 1 ELSE 0 END) approved FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id WHERE r.period_month = ? GROUP BY r.deputy, r.cost_center ORDER BY r.deputy, r.cost_center", (period,)).fetchall()
+            else: rows = conn.execute("SELECT r.deputy, r.cost_center, COUNT(*) total, SUM(CASE WHEN cr.manager_approved=1 THEN 1 ELSE 0 END) approved FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id GROUP BY r.deputy, r.cost_center ORDER BY r.deputy, r.cost_center").fetchall()
+            _hdr(["معاونت", "مرکز/شبکه", "کل رکورد", "تأییدشده", "در انتظار", "درصد تأیید"])
+            for r in rows:
+                tot, appr = r["total"] or 0, r["approved"] or 0
+                ws.append([r["deputy"] or "", r["cost_center"] or "", tot, appr, tot - appr, f"{round((appr / tot) * 100) if tot else 0}%"])
+            ws.column_dimensions['A'].width = 20; ws.column_dimensions['B'].width = 30
+            for col in "CDEF": ws.column_dimensions[col].width = 15
+        else:
+            conn.close()
+            return jsonify({"error": "نوع گزارش نامعتبر است"}), 400
+    finally:
+        try: conn.close()
+        except: pass
+    names = {"by-month": "روند-پرداختی-ماهانه.xlsx", "wage-dist": "توزیع-دستمزد.xlsx", "emp-dist": "وضعیت-اشتغال.xlsx", "places-dist": "پراکندگی-محل-خدمتی.xlsx", "warnings": "ترکیب-وضعیت-رکوردها.xlsx", "financials": "جزئیات-مالی.xlsx", "submission": "وضعیت-ارسال-اطلاعات.xlsx", "approvals": "وضعیت-تأیید.xlsx"}
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name=names.get(kind, "گزارش.xlsx"), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+
+--- D:\moghatee\samane\app\web\personnel.py :: def export_personnel ---
+def export_personnel():
+    """خروجی اکسل کامل — همهٔ ستون‌ها + اطلاعات تجمیعی"""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    from io import BytesIO
+
+    con = _conn()
+
+    # ==== کوئری کامل با اطلاعات تجمیعی ====
+    rows = con.execute("""
+        SELECT p.*,
+            (SELECT t.from_deputy FROM personnel_transfers t
+             WHERE t.personnel_id = p.id ORDER BY t.transfer_date DESC, t.id DESC LIMIT 1) AS tr_from_deputy,
+            (SELECT t.from_center FROM personnel_transfers t
+             WHERE t.personnel_id = p.id ORDER BY t.transfer_date DESC, t.id DESC LIMIT 1) AS tr_from_center,
+            (SELECT t.to_deputy FROM personnel_transfers t
+             WHERE t.personnel_id = p.id ORDER BY t.transfer_date DESC, t.id DESC LIMIT 1) AS tr_to_deputy,
+            (SELECT t.to_center FROM personnel_transfers t
+             WHERE t.personnel_id = p.id ORDER BY t.transfer_date DESC, t.id DESC LIMIT 1) AS tr_to_center,
+            (SELECT t.transfer_date FROM personnel_transfers t
+             WHERE t.personnel_id = p.id ORDER BY t.transfer_date DESC, t.id DESC LIMIT 1) AS tr_date,
+            (SELECT t.transfer_method FROM personnel_transfers t
+             WHERE t.personnel_id = p.id ORDER BY t.transfer_date DESC, t.id DESC LIMIT 1) AS tr_method,
+            (SELECT COUNT(*) FROM personnel_transfers t WHERE t.personnel_id = p.id) AS tr_count,
+            (SELECT s.from_contract_type FROM personnel_status_changes s
+             WHERE s.personnel_id = p.id ORDER BY s.change_date DESC, s.id DESC LIMIT 1) AS st_from,
+            (SELECT s.to_contract_type FROM personnel_status_changes s
+             WHERE s.personnel_id = p.id ORDER BY s.change_date DESC, s.id DESC LIMIT 1) AS st_to,
+            (SELECT s.change_date FROM personnel_status_changes s
+             WHERE s.personnel_id = p.id ORDER BY s.change_date DESC, s.id DESC LIMIT 1) AS st_date,
+            (SELECT s.change_method FROM personnel_status_changes s
+             WHERE s.personnel_id = p.id ORDER BY s.change_date DESC, s.id DESC LIMIT 1) AS st_method,
+            (SELECT COUNT(*) FROM personnel_status_changes s WHERE s.personnel_id = p.id) AS st_count
+        FROM personnel p
+        ORDER BY p.last_name, p.first_name
+    """).fetchall()
+
+    # ===== Sheet 1 =====
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "بانک نفرات"
+    ws.sheet_view.rightToLeft = True
+
+    headers = [
+        "ردیف", "کد ملی", "نام", "نام خانوادگی",
+        "عنوان شغلی", "نوع قرارداد",
+        "معاونت", "شبکه/مرکز", "تامین/پخش",
+        "تاریخ تبدیل وضعیت",
+        "آخرین انتقال (مبدأ)", "آخرین انتقال (مقصد)", "تاریخ انتقال", "نحوه انتقال",
+        "آخرین تبدیل (از)", "آخرین تبدیل (به)", "تاریخ تبدیل", "نحوه تبدیل",
+    ]
+
+    hf = Font(bold=True, color="FFFFFF", name="Tahoma", size=11)
+    hfill = PatternFill("solid", start_color="1F4A7E")
+    ha = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    for i, h in enumerate(headers, 1):
+        c = ws.cell(row=1, column=i, value=h)
+        c.font = hf
+        c.fill = hfill
+        c.alignment = ha
+
+    ws.row_dimensions[1].height = 32
+
+    for ri, r in enumerate(rows, 2):
+        ws.cell(row=ri, column=1,  value=ri - 1)
+        ws.cell(row=ri, column=2,  value=r["national_code"] or "")
+        ws.cell(row=ri, column=3,  value=r["first_name"] or "")
+        ws.cell(row=ri, column=4,  value=r["last_name"] or "")
+        ws.cell(row=ri, column=5,  value=r["job_title"] or "")
+        ws.cell(row=ri, column=6,  value=r["contract_type"] or "")
+        ws.cell(row=ri, column=7,  value=r["deputy"] or "")
+        ws.cell(row=ri, column=8,  value=r["center"] or "")
+
+        supply = r["supply_type"] if r["deputy"] == SIMA_DEPUTY else ""
+        ws.cell(row=ri, column=9,  value=supply or "")
+
+        ws.cell(row=ri, column=10, value=r["status_changed_date"] or "")
+
+        if r["tr_count"] and r["tr_count"] > 0:
+            ws.cell(row=ri, column=11, value=r["tr_from_center"] or "")
+            ws.cell(row=ri, column=12, value=r["tr_to_center"] or "")
+            ws.cell(row=ri, column=13, value=r["tr_date"] or "")
+            ws.cell(row=ri, column=14, value=r["tr_method"] or "")
+
+        if r["st_count"] and r["st_count"] > 0:
+            ws.cell(row=ri, column=15, value=r["st_from"] or "")
+            ws.cell(row=ri, column=16, value=r["st_to"] or "")
+            ws.cell(row=ri, column=17, value=r["st_date"] or "")
+            ws.cell(row=ri, column=18, value=r["st_method"] or "")
+
+    widths = [6, 14, 12, 16, 18, 16, 18, 20, 12, 14, 20, 20, 14, 14, 14, 14, 14, 14]
+    for i, w in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    # ===== Sheet 2 =====
+    ws2 = wb.create_sheet("سابقه انتقالات")
+    ws2.sheet_view.rightToLeft = True
+
+    h2 = ["ردیف", "کد ملی", "نام", "نام خانوادگی", "از مرکز", "به مرکز",
+          "تاریخ", "نحوه", "توضیحات"]
+    for i, h in enumerate(h2, 1):
+        c = ws2.cell(row=1, column=i, value=h)
+        c.font = hf; c.fill = hfill; c.alignment = ha
+
+    transfers = con.execute("""
+        SELECT t.*, p.national_code, p.first_name, p.last_name
+        FROM personnel_transfers t
+        JOIN personnel p ON p.id = t.personnel_id
+        ORDER BY t.transfer_date DESC, t.id DESC
+    """).fetchall()
+
+    for ri, t in enumerate(transfers, 2):
+        ws2.cell(row=ri, column=1, value=ri - 1)
+        ws2.cell(row=ri, column=2, value=t["national_code"] or "")
+        ws2.cell(row=ri, column=3, value=t["first_name"] or "")
+        ws2.cell(row=ri, column=4, value=t["last_name"] or "")
+        ws2.cell(row=ri, column=5, value=(t["from_deputy"] or "") + " / " + (t["from_center"] or ""))
+        ws2.cell(row=ri, column=6, value=(t["to_deputy"] or "") + " / " + (t["to_center"] or ""))
+        ws2.cell(row=ri, column=7, value=t["transfer_date"] or "")
+        ws2.cell(row=ri, column=8, value=t["transfer_method"] or "")
+        ws2.cell(row=ri, column=9, value=t["note"] or "")
+
+    for i, w in enumerate([6, 14, 12, 16, 30, 30, 14, 14, 30], 1):
+        ws2.column_dimensions[get_column_letter(i)].width = w
+
+    # ===== Sheet 3 =====
+    ws3 = wb.create_sheet("سابقه تبدیل وضعیت")
+    ws3.sheet_view.rightToLeft = True
+
+    h3 = ["ردیف", "کد ملی", "نام", "نام خانوادگی", "از وضعیت", "به وضعیت",
+          "تاریخ", "نحوه", "توضیحات"]
+    for i, h in enumerate(h3, 1):
+        c = ws3.cell(row=1, column=i, value=h)
+        c.font = hf; c.fill = hfill; c.alignment = ha
+
+    changes = con.execute("""
+        SELECT s.*, p.national_code, p.first_name, p.last_name
+        FROM personnel_status_changes s
+        JOIN personnel p ON p.id = s.personnel_id
+        ORDER BY s.change_date DESC, s.id DESC
+    """).fetchall()
+
+    for ri, s in enumerate(changes, 2):
+        ws3.cell(row=ri, column=1, value=ri - 1)
+        ws3.cell(row=ri, column=2, value=s["national_code"] or "")
+        ws3.cell(row=ri, column=3, value=s["first_name"] or "")
+        ws3.cell(row=ri, column=4, value=s["last_name"] or "")
+        ws3.cell(row=ri, column=5, value=s["from_contract_type"] or "")
+        ws3.cell(row=ri, column=6, value=s["to_contract_type"] or "")
+        ws3.cell(row=ri, column=7, value=s["change_date"] or "")
+        ws3.cell(row=ri, column=8, value=s["change_method"] or "")
+        ws3.cell(row=ri, column=9, value=s["note"] or "")
+
+    for i, w in enumerate([6, 14, 12, 16, 18, 18, 14, 14, 30], 1):
+        ws3.column_dimensions[get_column_letter(i)].width = w
+
+    con.close()
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
+--- D:\moghatee\samane\app\web\app.py :: def api_summary_table_export ---
+def api_summary_table_export():
+    period = request.args.get("period") or None
+    if period in ("همه", "", "all"): period = None
+    deputy_filter, center_filter, supply_filter = request.args.get("deputy", "همه"), request.args.get("center", "همه"), request.args.get("supply_type", "همه")
+    conn = get_connection(DB_PATH)
+    rows = _build_summary_rows(conn, period, deputy_filter, center_filter, supply_filter)
+    conn.close()
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "خلاصه تفکیکی"
+    ws.sheet_view.rightToLeft = True
+    headers = ["معاونت", "شبکه / مرکز", "صلاحیت حرفه‌ای (ریال)", "تخصیص ماه (ریال)", "مجموع (ریال)"]
+    header_font = Font(bold=True, color="FFFFFF", name="Tahoma")
+    header_fill = PatternFill("solid", start_color="1F4A7E")
+    header_align = Alignment(horizontal="center", vertical="center")
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(row=1, column=i, value=h)
+        c.font, c.fill, c.alignment = header_font, header_fill, header_align
+    for r in rows: ws.append([r["deputy"], r["center"], round(r["professional"]), round(r["allocation"]), round(r["total"])])
+    ws.append(["جمع کل", "", round(sum(r["professional"] for r in rows)), round(sum(r["allocation"] for r in rows)), round(sum(r["total"] for r in rows))])
+    for i in range(1, len(headers) + 1): ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = 22
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name="خلاصه-تفکیکی.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.route("/api/clear-month", methods=["POST"])
+@perms.perm_required('can_clear_month')
+
+
+--- D:\moghatee\samane\app\web\app.py :: def api_payment_grid_export ---
+def api_payment_grid_export():
+    conn = get_connection(DB_PATH)
+    persons = conn.execute("SELECT national_code, first_name, last_name FROM persons ORDER BY last_name, first_name").fetchall()
+    payments = conn.execute("SELECT national_code, period_month, amount FROM monthly_payments").fetchall()
+    conn.close()
+    by_nc = {}
+    for p in payments: by_nc.setdefault(p["national_code"], {})[p["period_month"]] = p["amount"]
+    all_periods = set()
+    for pm_map in by_nc.values(): all_periods.update(pm_map.keys())
+    def sort_key(pm):
+        try:
+            y, m = pm.split("-", 1)
+            return (int(y), PERSIAN_MONTHS.index(m) if m in PERSIAN_MONTHS else 99)
+        except: return (0, 99)
+    periods = sorted(all_periods, key=sort_key)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "پرداختی‌های ماهانه"
+    ws.sheet_view.rightToLeft = True
+    header_font = Font(bold=True, color="FFFFFF", name="Tahoma")
+    header_fill = PatternFill("solid", start_color="1F4A7E")
+    header_align = Alignment(horizontal="center", vertical="center")
+    headers = ["کد ملی", "نام", "نام خانوادگی"] + periods + ["مجموع سال"]
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(row=1, column=i, value=h)
+        c.font, c.fill, c.alignment = header_font, header_fill, header_align
+    for r_i, p in enumerate(persons, start=2):
+        ws.cell(row=r_i, column=1, value=p["national_code"])
+        ws.cell(row=r_i, column=2, value=p["first_name"] or "")
+        ws.cell(row=r_i, column=3, value=p["last_name"] or "")
+        total = 0
+        amounts = by_nc.get(p["national_code"], {})
+        for m_i, m in enumerate(periods, start=4):
+            v = amounts.get(m)
+            if v:
+                ws.cell(row=r_i, column=m_i, value=float(v))
+                total += float(v)
+        ws.cell(row=r_i, column=4 + len(periods), value=total)
+    ws.column_dimensions['A'].width = 14; ws.column_dimensions['B'].width = 16; ws.column_dimensions['C'].width = 20
+    for i in range(4, 4 + len(periods) + 1): ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = 14
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name="پرداختی‌های ماهانه.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.route("/api/specialists", methods=["GET"])
+
+
+======================================================================
+3) دادهٔ موجود برای فیلترها
+======================================================================
+
+records بر اساس دوره:
+  1405-شهریور           4611
+  1405-مهر              3633
+
+records مهر بر اساس deputy (فیلتر احتمالی):
+  مراکز استان                     913
+  مرکز تحقیقات                    662
+  معاونت برونمرزی                 586
+  معاونت صدا                      547
+  معاونت سیما                     309
+  معاونت سیاسی                    278
+  دوبلاژ                          138
+  حوزه ریاست                      83
+  مرکز موسیقی                     77
+  مرکز نظارت                      22
+
+records مهر بر اساس cost_center:
+  مرکز تحقیقات صدا و سیما                   662
+  ستاد معاونت سیاسی                         278
+  مجموعه سعادت آباد-شبکه PressTv            207
+  ستاد معاونت سیما                          138
+  شبکه سحاب                                 97
+  مرکز مازندران                             83
+  موسیقی و سرود                             77
+  اداره کل هنرهای نمایشی و رادیو نمایش      75
+  مجموعه سعادت آباد-شبکه HispanTv           75
+  ستاد حوزه ریاست                           74

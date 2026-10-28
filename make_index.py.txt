@@ -1,0 +1,2271 @@
+# -*- coding: utf-8 -*-
+"""
+فایل index.html را بدون BOM و با UTF-8 خالص می‌سازد.
+تم مدرن ۲۰۲۵ — نسخه ۲.۲
+"""
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUT_PATH = os.path.join(BASE_DIR, "web", "templates", "index.html")
+
+HTML = r'''<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سامانه تحلیلی مقاطعه (STM)</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+<style>
+:root{
+  --bg:#09090b;--bg-2:#0f0f11;--panel:#131316;--panel-hover:#18181b;
+  --elevated:#1f1f23;--border:#23232a;--border-2:#33333d;--border-3:#4a4a56;
+  --text:#fafafa;--text-2:#a1a1aa;--text-3:#71717a;--text-4:#52525b;
+  --blue:#3b82f6;--blue-2:#60a5fa;--blue-bg:rgba(59,130,246,.08);
+  --green:#10b981;--green-bg:rgba(16,185,129,.08);
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.08);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.08);
+  --r:8px;--r-sm:6px;--r-lg:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:"Vazirmatn","Inter","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);direction:rtl;font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+header{background:rgba(9,9,11,.85);backdrop-filter:blur(16px) saturate(180%);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+header h1{margin:0;font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+header .sub{color:var(--text-3);font-size:12px;margin-top:1px}
+.header-actions{margin-inline-start:auto;display:flex;gap:6px;align-items:center}
+.user-chip{font-size:12.5px;font-weight:500;color:var(--text-2);padding:6px 12px;border-radius:var(--r-sm);background:var(--panel);border:1px solid var(--border)}
+.hbtn{padding:7px 13px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--text-2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;transition:all .12s ease;white-space:nowrap}
+.hbtn:hover{background:var(--panel);border-color:var(--border-2);color:var(--text)}
+.hbtn.gold{background:var(--blue);border-color:var(--blue);color:#fff}
+.hbtn.gold:hover{background:var(--blue-2);border-color:var(--blue-2)}
+.hbtn.danger{color:#fca5a5;border-color:rgba(239,68,68,.25)}
+.hbtn.danger:hover{background:var(--red-bg);border-color:var(--red)}
+.hbtn.refresh{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.hbtn.refresh:hover{background:#059669;border-color:#059669}
+.hbtn.refresh:disabled{opacity:.6;cursor:not-allowed}
+nav{display:flex;gap:2px;padding:8px 28px;background:rgba(9,9,11,.7);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);flex-wrap:wrap;position:sticky;top:52px;z-index:99}
+nav button{padding:7px 14px;background:transparent;cursor:pointer;font-size:13px;font-weight:500;border-radius:var(--r-sm);color:var(--text-3);border:1px solid transparent;transition:all .12s ease;font-family:inherit}
+nav button:hover{background:var(--panel);color:var(--text-2)}
+nav button.active{background:var(--elevated);color:var(--text);border-color:var(--border-2)}
+main{padding:24px 28px 60px;max-width:1600px;margin:0 auto}
+.hidden{display:none !important}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:22px}
+.card{background:var(--panel);border-radius:var(--r-lg);padding:18px 20px;border:1px solid var(--border);transition:all .15s ease}
+.card.clickable{cursor:pointer}
+.card.clickable:hover{border-color:var(--border-2);background:var(--panel-hover);transform:translateY(-1px)}
+.card .value{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .label{color:var(--text-3);font-size:11.5px;margin-top:6px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.card.warn-yellow-card{border-color:rgba(245,158,11,.35);background:linear-gradient(180deg,rgba(245,158,11,.05),transparent)}
+.card.warn-orange-card{border-color:rgba(249,115,22,.45);background:linear-gradient(180deg,rgba(249,115,22,.07),transparent)}
+.card.warn-red-card{border-color:rgba(239,68,68,.35);background:linear-gradient(180deg,var(--red-bg),transparent)}
+.card.active-filter{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.card.approved-card{border-color:rgba(16,185,129,.5);background:linear-gradient(180deg,rgba(16,185,129,.06),transparent)}
+.card.mini-uniform .value{color:var(--amber);font-size:18px}
+.panel{background:var(--panel);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:18px;border:1px solid var(--border)}
+.panel h3{margin:0 0 16px;font-size:14px;color:var(--text);padding-bottom:12px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
+.panel h3::before{content:"";width:3px;height:14px;background:var(--blue);border-radius:2px}
+.panel p{margin:0 0 12px;color:var(--text-2);font-size:13px;line-height:1.7}
+.report-box{background:var(--panel);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:18px;border:1px solid var(--border)}
+.report-box h3{margin:0 0 16px;font-size:14.5px;color:var(--text);padding-bottom:12px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
+.report-box h3::before{content:"";width:3px;height:14px;background:var(--blue);border-radius:2px}
+.report-box.compact{padding:16px 20px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--border);vertical-align:middle}
+th{background:var(--bg-2);color:var(--text-3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+tbody tr{transition:background .1s ease}
+tbody tr:hover{background:var(--panel-hover)}
+td.num,th.num{direction:ltr;text-align:left;font-variant-numeric:tabular-nums;font-family:ui-monospace,"SF Mono",Consolas,monospace;font-size:12.5px;white-space:nowrap;letter-spacing:-.01em}
+td.code{font-family:ui-monospace,"SF Mono",Consolas,monospace;direction:ltr;text-align:right;letter-spacing:.02em}
+.table-wrap{overflow:auto;max-height:640px;border-radius:var(--r);border:1px solid var(--border);background:var(--panel)}
+tbody tr.warn-yellow td{background:rgba(234,179,8,.18) !important;color:#fde047 !important;font-weight:600 !important;border-right:3px solid #eab308}
+tbody tr.warn-orange td{background:rgba(249,115,22,.25) !important;color:#fdba74 !important;font-weight:700 !important;border-right:3px solid #f97316}
+tbody tr.warn-red td{background:rgba(239,68,68,.22) !important;color:#fca5a5 !important;font-weight:700 !important;border-right:3px solid #ef4444}
+tbody tr.pending-approve td{background:rgba(59,130,246,.08)!important;border-right:3px solid #3b82f6}
+tbody tr.approved td{background:rgba(16,185,129,.15) !important;color:#6ee7b7 !important;font-weight:500 !important;border-right:3px solid #10b981}
+tr.col-search-row th{background:var(--bg-2);padding:6px 8px!important;position:sticky;top:36px;z-index:9}
+tr.col-search-row input{width:100%;padding:6px 10px;font-size:11.5px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-family:inherit}
+tr.col-search-row input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+#report-table thead tr:first-child th{position:sticky;top:0;z-index:10;background:var(--bg-2)}
+input,select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--bg-2);color:var(--text);transition:all .12s ease}
+input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg);background:var(--bg)}
+select option{background:var(--elevated);color:var(--text)}
+input[type=number],input.thousand-input{font-variant-numeric:tabular-nums;direction:ltr;text-align:left;font-family:ui-monospace,monospace;letter-spacing:-.01em}
+input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--blue)}
+button.action,button.ghost,button.gold,button.teal{padding:9px 18px;border-radius:var(--r-sm);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .12s ease;border:none;display:inline-flex;align-items:center;gap:6px}
+button.action{background:var(--blue);color:#fff}
+button.action:hover{background:var(--blue-2)}
+button.ghost{background:transparent;color:var(--text-2);border:1px solid var(--border)}
+button.ghost:hover{background:var(--panel);border-color:var(--border-2);color:var(--text)}
+button.gold{background:var(--amber);color:#09090b;font-weight:600}
+button.gold:hover{background:#fbbf24}
+button.teal{background:var(--green);color:#fff;font-weight:600}
+button.teal:hover{background:#059669}
+.row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.row label{font-weight:500;color:var(--text-2);font-size:12.5px}
+.msg{padding:11px 15px;border-radius:var(--r-sm);margin-top:10px;font-size:12.5px;line-height:1.6;font-weight:500}
+.msg.ok{background:var(--green-bg);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
+.msg.err{background:var(--red-bg);color:#fca5a5;border:1px solid rgba(239,68,68,.25)}
+.msg.warn{background:var(--amber-bg);color:#fcd34d;border:1px solid rgba(245,158,11,.25)}
+.samples{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--text-2);margin-top:8px;line-height:1.9}
+.empty-amount{color:var(--red);font-style:italic}
+.cell-warn{font-size:11.5px;color:#fbbf24;font-weight:600;display:inline-block}
+.cell-warn.red{color:#fca5a5}
+.person-result{border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;background:var(--panel);margin-bottom:18px}
+.person-result h3{margin:0 0 12px;color:var(--text);font-size:14.5px;display:flex;align-items:center;gap:8px;justify-content:space-between;font-weight:600}
+.person-result h4{margin:16px 0 8px;color:var(--blue-2);font-size:12.5px;font-weight:600}
+.close-btn{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:var(--r-sm);line-height:1}
+.close-btn:hover{background:var(--red-bg);color:var(--red)}
+.input-layout{display:flex;gap:18px;align-items:flex-start}
+.input-sidebar{flex:0 0 250px;background:var(--panel);border-radius:var(--r-lg);padding:10px;border:1px solid var(--border);position:sticky;top:115px}
+.input-sidebar h3{margin:6px 4px 10px;font-size:11.5px;color:var(--text-3);padding-bottom:10px;border-bottom:1px solid var(--border);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.input-sidebar button{display:block;width:100%;text-align:right;padding:9px 12px;background:transparent;border:none;border-radius:var(--r-sm);cursor:pointer;font-size:12.5px;font-family:inherit;color:var(--text-2);margin-bottom:1px;transition:all .12s ease;font-weight:500}
+.input-sidebar button:hover{background:var(--elevated);color:var(--text)}
+.input-sidebar button.active{background:var(--blue);color:#fff}
+.input-content{flex:1;min-width:0}
+#report-table th.approve,#report-table td.approve{width:80px;text-align:center;padding:8px 6px}
+#report-table th.row-num,#report-table td.row-num{width:56px;text-align:center}
+.chart-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--panel);border-radius:var(--r-lg);padding:16px 20px;margin-bottom:20px;border:1px solid var(--border)}
+.chart-toolbar label{font-weight:500;color:var(--text-2);font-size:12.5px}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:16px}
+.chart-box{background:var(--panel);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);display:flex;flex-direction:column}
+.chart-box h4{margin:0 0 16px;font-size:13.5px;color:var(--text);display:flex;align-items:center;justify-content:space-between;font-weight:600}
+.chart-box h4 .badge-period{font-size:10.5px;font-weight:500;color:var(--text-3);background:var(--elevated);padding:3px 10px;border-radius:var(--r-sm);border:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:12.5px}
+.bar-row .name{flex:0 0 150px;color:var(--text);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.bar-row .bar-wrap{flex:1;background:var(--bg);border-radius:var(--r-sm);overflow:hidden;height:20px;position:relative;border:1px solid var(--border)}
+.bar-row .bar{height:100%;border-radius:var(--r-sm);transition:width .3s ease;background:linear-gradient(90deg,var(--blue),var(--blue-2))}
+.bar-row .bar.gold{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.bar-row .bar.warn{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.bar-row .bar.green{background:linear-gradient(90deg,var(--green),#34d399)}
+.bar-row .val{flex:0 0 130px;color:var(--text-3);text-align:left;font-variant-numeric:tabular-nums;direction:ltr;font-family:ui-monospace,monospace;font-size:11.5px;font-weight:500}
+.donut-wrap{display:flex;justify-content:center;align-items:center;padding:12px;gap:22px;flex-wrap:wrap}
+.donut{width:160px;height:160px;border-radius:50%;position:relative}
+.donut::after{content:"";position:absolute;inset:24%;border-radius:50%;background:var(--panel);box-shadow:inset 0 0 0 1px var(--border)}
+.donut-legend{display:flex;flex-direction:column;gap:6px;font-size:12px}
+.donut-legend .item{display:flex;align-items:center;gap:9px;padding:5px 9px;border-radius:var(--r-sm)}
+.donut-legend .dot{width:12px;height:12px;border-radius:3px;flex:none}
+.donut-legend .lbl{flex:1;color:var(--text);font-weight:500}
+.donut-legend .v{font-variant-numeric:tabular-nums;color:var(--blue-2);font-weight:600;direction:ltr;font-family:ui-monospace,monospace;font-size:11.5px}
+.donut-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2;pointer-events:none}
+.donut-center .num{font-size:20px;font-weight:700;color:var(--text);direction:ltr;font-family:ui-monospace,monospace;letter-spacing:-.02em}
+.donut-center .lbl{font-size:10.5px;color:var(--text-3);margin-top:2px;font-weight:500}
+#payment-grid-table{font-size:12px}
+#payment-grid-table th,#payment-grid-table td{padding:6px 8px;white-space:nowrap}
+#payment-grid-table input{width:110px;padding:5px 8px;font-size:11.5px;direction:ltr;text-align:left;font-variant-numeric:tabular-nums;max-width:none}
+#payment-grid-table td.sticky-name{position:sticky;right:0;background:var(--bg-2);z-index:2}
+#payment-grid-table th.sticky-name{position:sticky;right:0;background:var(--bg-2);z-index:3}
+.summary-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+.summary-3col .card{padding:16px 18px;min-height:88px;display:flex;flex-direction:column;justify-content:center}
+.summary-3col .card .value{font-size:17px;font-weight:700;text-align:center;white-space:normal;word-break:break-word}
+.summary-3col .card .label{font-size:11.5px;margin-top:6px;text-align:center;font-weight:500}
+.mini-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini-3col .card{padding:12px 16px;min-height:68px;display:flex;flex-direction:column;justify-content:center}
+.mini-3col .card .value{font-size:14.5px;text-align:center}
+.mini-3col .card .label{font-size:11px;text-align:center;margin-top:6px}
+.cards.tight{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:0}
+.cards.tight .card{padding:12px 14px}
+.cards.tight .card .value{font-size:16px}
+.cards.tight .card .label{font-size:10.5px;margin-top:4px}
+.report-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.filter-item{display:flex;flex-direction:column;gap:6px;background:var(--bg-2);padding:10px 12px;border-radius:var(--r);border:1px solid var(--border)}
+.filter-item label{font-weight:500;color:var(--text-3);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+.filter-item select,.filter-item input{width:100%;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)}
+.filter-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:14px;border-top:1px solid var(--border);margin-top:4px}
+.filter-actions .spacer{flex:1}
+.filter-ncode-row{display:inline-flex;gap:8px;align-items:flex-end;padding:10px 14px;margin-bottom:4px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r)}
+.filter-ncode-row .filter-item{width:220px;flex:0 0 220px;background:transparent;border:none;padding:0}
+#ncode-input{padding:9px 12px;font-size:13.5px;font-family:ui-monospace,monospace;direction:ltr;text-align:right;letter-spacing:2px;max-width:none;background:var(--bg);color:var(--text)}
+#summary-table tfoot td{background:var(--bg-2);font-weight:700;color:var(--blue-2);border-top:1px solid var(--border)}
+#toasts{position:fixed;top:20px;left:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:380px;pointer-events:none}
+.toast{padding:13px 18px;border-radius:var(--r);background:var(--elevated);border:1px solid var(--border-2);color:var(--text);box-shadow:0 12px 32px -8px rgba(0,0,0,.7);animation:tIn .25s ease-out;pointer-events:auto}
+.toast.ok{border-right:3px solid var(--green)}
+.toast.err{border-right:3px solid var(--red)}
+.toast.warn{border-right:3px solid var(--amber)}
+.toast.info{border-right:3px solid var(--blue)}
+.toast .tt{font-size:13px;font-weight:600;margin-bottom:3px}
+.toast .tm{font-size:12px;color:var(--text-2);line-height:1.5}
+@keyframes tIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--border-3)}
+::selection{background:var(--blue-bg);color:var(--text)}
+.bulk-import-section{margin-bottom:18px;padding:16px;background:var(--bg-2);border-radius:var(--r);border:1px solid var(--border)}
+.bulk-import-section .bulk-title{font-weight:700;font-size:13px;color:var(--text);margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed var(--border)}
+.bulk-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:900px){.bulk-grid{grid-template-columns:1fr}}
+.bulk-item{padding:12px;background:var(--panel);border-radius:var(--r-sm);border:1px solid var(--border)}
+.bulk-item .bi-label{font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:8px}
+.bulk-item input[type=file]{font-size:11.5px;margin-bottom:8px;padding:6px}
+.bulk-item button{width:100%}
+@media (max-width:900px){
+  header,nav,main{padding-right:14px;padding-left:14px}
+  .input-layout{flex-direction:column}
+  .input-sidebar{position:static;width:100%;flex:none}
+  .summary-3col,.mini-3col{grid-template-columns:1fr}
+  .report-filters{grid-template-columns:1fr}
+  .filter-ncode-row{display:flex;flex-direction:column;align-items:stretch}
+  .filter-ncode-row .filter-item{width:100%;flex:1 1 auto}
+}
+
+  .hr-dd-item:hover{background:var(--panel-h);color:var(--text)}
+  .hr-dd-item.active{background:var(--elevated);color:var(--text)}
+<style>
+  .sub-tab-btn {display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s}
+  .sub-tab-btn:hover{background:var(--panel-h);color:var(--text)}
+  .sub-tab-btn.active{background:var(--elevated);color:var(--text)}
+
+.ms-container{position:relative;width:100%}
+.ms-header{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text);min-height:38px}
+.ms-header:hover{border-color:var(--border-2)}
+.ms-dropdown{position:absolute;top:calc(100% + 4px);right:0;left:0;background:var(--elevated);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:6px;max-height:250px;overflow-y:auto;z-index:9999;display:none;box-shadow:0 10px 30px rgba(0,0,0,.8)}
+.ms-dropdown.show{display:block}
+.ms-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;cursor:pointer;font-size:12.5px;color:var(--text-2);margin-bottom:2px}
+.ms-item:hover{background:var(--bg-2);color:var(--text)}
+.ms-item input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;margin:0}
+</style>
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+<header>
+  <div>
+    <h1>سامانه تحلیلی مقاطعه (STM)</h1>
+    <div class="sub">داشبورد مدیریتی و گزارش‌گیری</div>
+  </div>
+  <div class="header-actions">
+    <span class="user-chip">{{ session.full_name or session.username }}</span>
+    <button class="hbtn refresh" id="refresh-btn" onclick="refreshAll()">تازه‌سازی</button>
+    <a href="/command-center" class="hbtn" id="cc-link">اتاق فرمان</a>
+    <a href="/analytics" class="hbtn" id="an-link">اتاق تحلیل</a>
+    {% if session.role == 'admin' %}
+      <a href="/users" class="hbtn gold">مدیریت کاربران</a>
+    {% endif %}
+    <a href="/logout" class="hbtn danger">خروج</a>
+  </div>
+</header>
+
+<nav>
+  <button class="tab active" data-tab="dashboard">داشبورد</button>
+  <button class="tab" data-tab="report">گزارش خروجی</button>
+  <div style="position:relative;display:inline-block">
+    <button class="tab" data-tab="input" id="input-main-tab">اطلاعات ورودی <span style="font-size:9px;opacity:.6;margin-inline-start:4px">▼</span></button>
+    <div id="input-tab-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:260px;box-shadow:0 16px 40px -8px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.03);z-index:9999">
+      <button type="button" class="input-dd-item" data-input-sub="pricing" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;white-space:nowrap">ویرایش سقف پرداختی</button>
+      <button type="button" class="input-dd-item" data-input-sub="specialists" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">کارشناسان و خدمات و تجهیزات</button>
+      <button type="button" class="input-dd-item" data-input-sub="manual" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">سقف ماهانه دستی</button>
+      <button type="button" class="input-dd-item" data-input-sub="payments" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">پرداختی‌های ماه</button>
+      <button type="button" class="input-dd-item" data-input-sub="employment" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">وضعیت اشتغال</button>
+      <button type="button" class="input-dd-item" data-input-sub="maincenter" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">مرکز هزینه اصلی</button>
+      <button type="button" class="input-dd-item" data-input-sub="import" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">اکسل ورودی</button>
+    </div>
+  </div>
+  <div style="position:relative;display:inline-block">
+    <button class="tab" data-tab="personnel" id="hr-tab">منابع انسانی <span style="font-size:9px;opacity:.6;margin-inline-start:4px">▼</span></button>
+    <div id="hr-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:190px;box-shadow:0 16px 40px -8px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.03);z-index:9999">
+      <button type="button" class="hr-dd-item" data-hr-view="bank" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;white-space:nowrap">بانک نفرات</button>
+      <button type="button" class="hr-dd-item" data-hr-view="templates" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">الگو مصوب</button>
+      <button type="button" class="hr-dd-item" data-hr-view="shifts" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:.12s;margin-top:2px;white-space:nowrap">مبالغ و تعداد شیفت</button>
+    </div>
+  </div>
+</nav>
+<main>
+
+<section id="tab-dashboard">
+  <div class="chart-toolbar">
+    <label>دوره تحلیل داشبورد:</label>
+    <select id="dash-year"></select>
+    <select id="dash-month"></select>
+    <button class="ghost" onclick="loadDashboard()">بروزرسانی</button>
+    <span style="flex:1"></span>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-box">
+      <h4>روند پرداختی ماهانه <span class="badge-period">همه ماه‌ها</span></h4>
+      <div id="chart-by-month"></div>
+    </div>
+    <div class="chart-box">
+      <h4>ترکیب وضعیت رکوردها <span class="badge-period" id="badge-warn"></span></h4>
+      <div class="donut-wrap" id="chart-donut-warnings"></div>
+    </div>
+    <div class="chart-box">
+      <h4>توزیع دستمزد ماهانه <span class="badge-period" id="badge-wage"></span></h4>
+      <div id="chart-wage-dist"></div>
+    </div>
+    <div class="chart-box">
+      <h4>ترکیب وضعیت اشتغال <span class="badge-period" id="badge-emp"></span></h4>
+      <div id="chart-emp-dist"></div>
+    </div>
+    <div class="chart-box">
+      <h4>پراکندگی تعداد محل خدمتی <span class="badge-period">همه ماه‌ها</span></h4>
+      <div id="chart-places-dist"></div>
+    </div>
+  </div>
+
+  <div class="report-box" style="margin-top:20px">
+    <h3>خلاصه تفکیکی معاونت / شبکه</h3>
+    <div class="report-filters">
+      <div class="filter-item"><label>سال</label><select id="st-year" onchange="loadSummaryTable()"></select></div>
+      <div class="filter-item"><label>ماه</label><select id="st-month" onchange="loadSummaryTable()"></select></div>
+      <div class="filter-item"><label>معاونت</label><select id="st-deputy" onchange="loadSummaryTable()"></select></div>
+    </div>
+    <div class="filter-actions">
+      <span id="st-msg" style="color:var(--text-3);font-size:13px"></span>
+      <span class="spacer"></span>
+      <button class="teal" onclick="exportSummaryTable()">دریافت فایل اکسل</button>
+    </div>
+    <div class="table-wrap" style="margin-top:12px;max-height:600px">
+      <table id="summary-table">
+        <thead><tr>
+          <th style="width:180px">معاونت</th>
+          <th>شبکه / مرکز</th>
+          <th class="num">صلاحیت حرفه‌ای (ریال)</th>
+          <th class="num">تخصیص ماه (ریال)</th>
+          <th class="num">مجموع (ریال)</th>
+        </tr></thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="report-box" style="margin-top:20px">
+    <h3>وضعیت تأیید به تفکیک معاونت / مرکز</h3>
+    <div class="report-filters">
+      <div class="filter-item"><label>سال</label><select id="appr-year" onchange="loadApprovalStatus()"></select></div>
+      <div class="filter-item"><label>ماه</label><select id="appr-month" onchange="loadApprovalStatus()"></select></div>
+      <div class="filter-item"><label>فیلتر معاونت</label><select id="appr-deputy-filter" onchange="loadApprovalStatus()"></select></div>
+    </div>
+    <div class="filter-actions" style="padding-top:8px">
+      <span id="appr-msg" style="color:var(--text-3);font-size:13px"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+      <div>
+        <div style="font-weight:600;font-size:13px;color:var(--text-2);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">تأیید به تفکیک معاونت</div>
+        <div class="table-wrap" style="max-height:420px">
+          <table id="approval-deputies-table">
+            <thead><tr>
+              <th>معاونت</th><th class="num">کل</th><th class="num">تأییدشده</th>
+              <th class="num">در انتظار</th><th class="num">مبلغ تأیید</th><th class="num">مبلغ در انتظار</th>
+            </tr></thead>
+            <tbody></tbody><tfoot></tfoot>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:13px;color:var(--text-2);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">تأیید به تفکیک شبکه / مرکز</div>
+        <div class="table-wrap" style="max-height:420px">
+          <table id="approval-centers-table">
+            <thead><tr>
+              <th>معاونت</th><th>شبکه / مرکز</th><th class="num">کل</th>
+              <th class="num">تأییدشده</th><th class="num">در انتظار</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <div style="font-weight:600;font-size:13px;color:var(--text-2);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">آخرین تأییدها / ردها</div>
+      <div class="table-wrap" style="max-height:320px">
+        <table id="approval-log-table">
+          <thead><tr>
+            <th>زمان</th><th>کاربر</th><th>عملیات</th><th>نام</th><th>کد ملی</th>
+            <th>معاونت</th><th>مرکز</th><th>دوره</th><th class="num">مبلغ</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-report" class="hidden">
+  <div class="report-box">
+    <h3>فیلترهای گزارش</h3>
+    <div class="report-filters">
+      <div class="filter-item"><label>سال</label><select id="rep-year" onchange="loadReport()"></select></div>
+      <div class="filter-item"><label>ماه</label><select id="rep-month" onchange="loadReport()"></select></div>
+      <div class="filter-item"><label>معاونت</label><div class="ms-container" id="ms-deputy"></div></div>
+      <div class="filter-item"><label>شبکه / مرکز</label><div class="ms-container" id="ms-center"></div></div>
+      <div class="filter-item"><label>تامین / پخش</label><div class="ms-container" id="ms-supply"></div></div>
+    </div>
+    <div class="filter-ncode-row">
+      <div class="filter-item">
+        <label>کد ملی</label>
+        <input id="ncode-input" placeholder="0480060096">
+      </div>
+      <button class="action" onclick="searchPerson()">جستجو</button>
+      <button class="ghost" onclick="clearPersonResult()">پاک کردن</button>
+    </div>
+    <div class="filter-actions">
+      <span id="confirm-msg" style="color:var(--text-3);font-size:13px"></span>
+      <span class="spacer"></span>
+      <button class="teal" onclick="exportReportExcel()">دریافت فایل اکسل</button>
+      <button class="action" id="approve-all-btn" onclick="doBulkApprove()" style="background:var(--green);border-color:var(--green);color:#fff;font-weight:600">تأییدیه مدیر</button>
+      <button class="ghost" id="unapprove-all-btn" onclick="doBulkUnapprove()" style="display:none;color:#fca5a5;border-color:rgba(239,68,68,.3)">لغو تأییدیه</button>
+      <button class="gold" onclick="openExportDialog()" id="custom-export-btn" style="margin-inline-start:8px">گزارش مدیریتی</button>
+    </div>
+  </div>
+
+  <div id="person-result" class="person-result hidden"></div>
+
+  <div class="report-box">
+    <h3>خلاصه تحلیلی</h3>
+    <div class="summary-3col" id="report-summary"></div>
+    <div class="mini-3col" id="report-extra"></div>
+  </div>
+
+  <div class="report-box compact">
+    <h3>هشدارها (کلیک‌پذیر برای فیلتر)</h3>
+    <div class="cards tight" id="report-warnings" style="margin-bottom:0"></div>
+  </div>
+
+  <div class="report-box">
+    <h3>جدول جزئیات</h3>
+    <div class="table-wrap">
+      <table id="report-table" style="min-width:1900px">
+        <thead>
+          <tr>
+            <th class="approve">تاییدیه مدیر</th>
+            <th class="row-num">ردیف</th>
+            <th>نام</th>
+            <th>نام خانوادگی</th>
+            <th>کد ملی</th>
+            <th>حقوق دوم</th>
+            <th>مبنای قانونی</th>
+            <th class="num">پاداش کارت مهارت (ریال)</th>
+            <th class="num">بیمه کارفرما (ریال)</th>
+            <th class="num">پاداش غیرمستمر (ریال)</th>
+            <th class="num">دستمزد ماه (ریال)</th>
+            <th>مرکز هزینه</th>
+            <th>مرکز اصلی</th>
+            <th>وضعیت اشتغال</th>
+            <th class="num">سقف پرداختی (ریال)</th>
+            <th>نام برنامه</th>
+            <th class="num">نوع خطا</th>
+            <th class="num">پرداختی ماه (ریال)</th>
+            <th class="num">مجموع سال (ریال)</th>
+            <th class="num">سقف مستثنی (ریال)</th>
+            <th class="num" id="dyn-ceiling-th">سقف ماه (ریال)</th>
+            <th>محل خدمتی</th>
+          </tr>
+          <tr class="col-search-row" id="col-search-row"></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="tab-personnel" class="hidden">
+  <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);background:var(--panel)">
+    <iframe id="personnel-frame" src="" style="width:100%;height:calc(100vh - 200px);border:none;background:var(--bg)" data-loaded="0"></iframe>
+  </div>
+</section>
+
+<section id="tab-input" class="hidden">
+  <div class="input-layout">
+    <div style="position:relative;margin-bottom:16px">
+      <button class="btn primary" id="input-tab-btn" onclick="toggleInputDropdown()" style="padding:9px 18px;border-radius:6px;background:var(--blue);color:#fff;border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px">
+        انتخاب بخش <span style="font-size:10px;opacity:.8">▼</span>
+      </button>
+      <div id="input-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--panel);border:1px solid var(--border-2);border-radius:10px;padding:6px;min-width:240px;box-shadow:0 16px 40px -8px rgba(0,0,0,.8);z-index:999">
+        <button class="hr-dd-item sub-tab active" data-sub="pricing" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">ویرایش سقف پرداختی</button>
+        <button class="hr-dd-item sub-tab" data-sub="specialists" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">کارشناسان و خدمات و تجهیزات</button>
+        <button class="hr-dd-item sub-tab" data-sub="manual" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">سقف ماهانه دستی</button>
+        <button class="hr-dd-item sub-tab" data-sub="payments" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">پرداختی‌های ماه</button>
+        <button class="hr-dd-item sub-tab" data-sub="employment" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">وضعیت اشتغال</button>
+        <button class="hr-dd-item sub-tab" data-sub="maincenter" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">مرکز هزینه اصلی</button>
+        <button class="hr-dd-item sub-tab" data-sub="import" style="display:block;width:100%;text-align:right;padding:10px 14px;border:none;background:transparent;color:var(--text-2);font-family:inherit;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer">اکسل ورودی</button>
+      </div>
+    </div>
+    <div class="input-content">
+
+      <div id="sub-pricing" class="sub-panel">
+        <div class="panel">
+          <h3>ویرایش قوانین سقف پرداختی</h3>
+          <p>برای تغییر مبلغ هر قانون روی «ویرایش» بزنید. همه مبالغ به ریال.</p>
+          <div class="row">
+            <label>فیلتر معاونت:</label>
+            <select id="pr-deputy-filter" onchange="loadPricingRules()"></select>
+            <button class="action" onclick="recalcAll()">محاسبه مجدد همه</button>
+            <span id="pr-recalc-msg" style="color:var(--text-3);font-size:13px"></span>
+          </div>
+          <div class="table-wrap">
+            <table id="pricing-table">
+              <thead><tr><th>معاونت</th><th>ماده قانونی</th><th>دسته</th><th class="num">مبلغ (ریال)</th><th>عملیات</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="sub-specialists" class="sub-panel hidden">
+        <div class="panel">
+          <h3>کارشناسان، خدمات و تجهیزات، جوایز و هدایا</h3>
+          <p>داده‌ها از طریق ایمپورت اکسل بارگذاری می‌شوند. برای هر فایل، ستون‌های «مرکز هزینه» و «مبلغ» لازم است.</p>
+
+          <div class="bulk-import-section">
+            <div class="bulk-title">ایمپورت دسته‌جمعی از فایل اکسل</div>
+            <div class="bulk-grid">
+              <div class="bulk-item">
+                <div class="bi-label">کارشناسان</div>
+                <input type="file" id="bulk-specialists-file" accept=".xlsx">
+                <button class="action" onclick="doBulkImport('specialists')">بارگذاری کارشناسان</button>
+                <div id="bulk-specialists-msg" style="margin-top:6px;font-size:11px"></div>
+              </div>
+
+              <div class="bulk-item">
+                <div class="bi-label">خدمات و تجهیزات</div>
+                <input type="file" id="bulk-equipment-file" accept=".xlsx">
+                <button class="action" onclick="doBulkImport('equipment')">بارگذاری تجهیزات</button>
+                <div id="bulk-equipment-msg" style="margin-top:6px;font-size:11px"></div>
+              </div>
+
+              <div class="bulk-item">
+                <div class="bi-label">جوایز و هدایا</div>
+                <input type="file" id="bulk-bonus-file" accept=".xlsx">
+                <button class="action" onclick="doBulkImport('bonus')">بارگذاری جوایز</button>
+                <div id="bulk-bonus-msg" style="margin-top:6px;font-size:11px"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <label>فیلتر معاونت:</label>
+            <select id="sp-deputy-filter" onchange="loadSpecialists()"></select>
+          </div>
+
+          <div id="unmatched-box" style="display:none;margin-top:18px;padding:16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.3);border-radius:12px">
+            <div style="font-weight:700;font-size:13px;color:#fbbf24;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed rgba(245,158,11,.3)">
+              ⚠️ مراکز ناشناخته — تخصیص دستی
+            </div>
+            <p style="margin:0 0 12px;font-size:12px;color:#a1a1aa;line-height:1.7">
+              این مراکز در فایل شما هستند ولی در سیستم شناسایی نشدند. برای هر کدام، مرکز صحیح را انتخاب کنید.
+            </p>
+            <div class="table-wrap" style="max-height:400px">
+              <table id="unmatched-table">
+                <thead><tr>
+                  <th>نام در فایل</th>
+                  <th class="num">مبلغ (ریال)</th>
+                  <th>مرکز صحیح</th>
+                  <th>عملیات</th>
+                </tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table id="specialists-table">
+              <thead><tr>
+                <th>معاونت</th><th>مرکز/شبکه</th><th>تامین/پخش</th>
+                <th class="num">کارشناسان (ریال)</th>
+                <th class="num">خدمات و تجهیزات (ریال)</th>
+                <th class="num">جوایز و هدایا (ریال)</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="sp-msg"></div>
+        </div>
+      </div>
+
+      <div id="sub-manual" class="sub-panel hidden">
+        <div class="panel">
+          <h3>سقف ماهانه دستی برای هر شبکه/مرکز</h3>
+          <p>برای هر مرکز و هر ماه می‌توانید سقف پرداختی مخصوص همان ماه را تعیین کنید. همه مبالغ به ریال.</p>
+          <div class="row">
+            <label>سال:</label><select id="mc-year" onchange="loadManualCeilings()"></select>
+            <label>ماه:</label><select id="mc-month" onchange="loadManualCeilings()"></select>
+            <label>فیلتر معاونت:</label><select id="mc-deputy-filter" onchange="loadManualCeilings()"></select>
+            <span style="flex:1"></span>
+            <button class="action" onclick="saveAllManualCeilings()">ثبت همه تغییرات</button>
+          </div>
+          <div class="table-wrap" style="max-height:640px">
+            <table id="manual-ceilings-table">
+              <thead><tr>
+                <th>معاونت</th><th>مرکز/شبکه</th><th>تامین/پخش</th>
+                <th class="num">سقف پیش‌فرض (ریال)</th>
+                <th class="num">سقف دستی این ماه (ریال)</th>
+                <th>عملیات</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="mc-msg"></div>
+        </div>
+      </div>
+
+      <div id="sub-payments" class="sub-panel hidden">
+        <div class="panel">
+          <h3>ایمپورت دسته‌جمعی پرداختی‌های ماهانه</h3>
+          <p>فایل «پرداختی نفرات» را انتخاب کنید. ستون‌های D تا O (فروردین تا اسفند) خوانده می‌شوند.</p>
+          <div class="row">
+            <label>سال:</label>
+            <select id="pay-year" onchange="loadPaymentGrid()"></select>
+            <label>تاریخچه قبلی:</label>
+            <select id="pay-overwrite">
+              <option value="false">دست نخورد (فقط اضافه شود)</option>
+              <option value="true">پاک شود و از نو ساخته شود</option>
+            </select>
+          </div>
+          <div class="row">
+            <input type="file" id="pay-file" accept=".xlsx">
+            <button class="action" onclick="doImportPayments()">ایمپورت پرداختی‌ها</button>
+          </div>
+          <div id="pay-import-msg"></div>
+        </div>
+        <div class="panel">
+          <h3>ماتریس پرداختی (هر شخص یک ردیف، هر ماه یک ستون)</h3>
+          <p>برای ویرایش، مبلغ را تغییر دهید و از کادر خارج شوید. همه مبالغ به ریال.</p>
+          <div class="row">
+            <input id="pg-search" placeholder="جستجو بر اساس نام یا کد ملی" oninput="loadPaymentGrid()" style="max-width:400px">
+            <span style="color:var(--text-3);font-size:12px" id="pg-count"></span>
+            <span style="flex:1"></span>
+            <button class="gold" onclick="location.href='/api/payment-grid/export'">خروجی اکسل ماتریس</button>
+          </div>
+          <div class="table-wrap" style="max-height:600px">
+            <table id="payment-grid-table">
+              <thead><tr id="pg-thead"></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="pg-msg"></div>
+        </div>
+      </div>
+
+      <div id="sub-employment" class="sub-panel hidden">
+        <div class="panel">
+          <h3>وضعیت اشتغال ماهانه</h3>
+          <p>فایل با ستون‌های: نام | نام خانوادگی | کد ملی | وضعیت اشتغال | مرکز هزینه اصلی</p>
+          <div class="row">
+            <label>سال:</label><select id="emp-year"></select>
+            <label>ماه:</label><select id="emp-month"></select>
+          </div>
+          <div class="row">
+            <input type="file" id="emp-file" accept=".xlsx">
+            <button class="action" onclick="doImportEmployment()">بارگذاری</button>
+            <button class="ghost" onclick="clearMonthData('employment')">پاک کردن حافظه</button>
+          </div>
+          <div class="row">
+            <button class="ghost" onclick="applyEmployment()">اعمال وضعیت اشتغال روی همه رکوردها</button>
+            <span id="apply-msg" style="color:var(--text-3);font-size:13px"></span>
+          </div>
+          <div id="emp-msg"></div>
+        </div>
+      </div>
+
+      <div id="sub-import" class="sub-panel hidden">
+        <div class="panel">
+          <h3>اکسل ورودی ماهانه</h3>
+          <p>فایل شیت ورودی را انتخاب و دوره را مشخص کنید.</p>
+          <div class="row">
+            <label>سال:</label><select id="period-year"></select>
+            <label>ماه:</label><select id="period-month"></select>
+          </div>
+          <div class="row">
+            <input type="file" id="file-input" accept=".xlsx">
+            <button class="action" onclick="doImport()">بارگذاری</button>
+            <button class="ghost" onclick="clearMonthData('records')">پاک کردن حافظه</button>
+          </div>
+          <div id="import-msg"></div>
+        </div>
+      </div>
+
+      <div id="sub-maincenter" class="sub-panel hidden">
+        <div class="panel">
+          <h3>مرکز هزینه اصلی</h3>
+          <p>فایل اکسل با ستون‌های زیر بارگذاری کنید:</p>
+          <p style="direction:ltr;text-align:left;background:var(--bg);padding:10px;border-radius:6px;font-family:ui-monospace,monospace;font-size:11.5px;color:var(--text-2);margin:0 0 14px">
+            کد ملی | نام | نام خانوادگی | مرکز هزینه اصلی
+          </p>
+          <div class="row">
+            <input type="file" id="maincenter-file" accept=".xlsx">
+            <button class="action" onclick="doImportMainCenter()">بارگذاری</button>
+          </div>
+          <div id="maincenter-msg"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<dialog id="export-dialog" style="border:1px solid var(--border);border-radius:var(--r-lg);padding:0;background:var(--panel);color:var(--text);width:min(820px,95vw);max-height:92vh;overflow:hidden">
+  <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <h2 style="margin:0;font-size:16px;font-weight:600">گزارش مدیریتی — انتخاب ستون‌ها</h2>
+    <button onclick="closeExportDialog()" style="border:none;background:none;color:var(--text-3);font-size:20px;cursor:pointer">×</button>
+  </div>
+  <div style="padding:18px 22px;max-height:62vh;overflow-y:auto">
+    <div style="margin-bottom:14px;font-size:12.5px;color:var(--text-2);line-height:1.7;background:var(--bg-2);padding:10px 14px;border-radius:var(--r);border-right:3px solid var(--blue)">
+      فیلترهای فعلی گزارش روی فایل خروجی اعمال می‌شوند.<br>
+      فقط ستون‌های تیک‌خورده در فایل اکسل ظاهر می‌شوند.
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button onclick="exportSelectAll(true)" type="button" class="ghost" style="padding:7px 14px;font-size:12px">انتخاب همه</button>
+      <button onclick="exportSelectAll(false)" type="button" class="ghost" style="padding:7px 14px;font-size:12px">حذف همه</button>
+      <button onclick="exportSelectDefault()" type="button" class="ghost" style="padding:7px 14px;font-size:12px">پیش‌فرض</button>
+    </div>
+    <div id="export-cols-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px">
+      <div style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:20px">در حال بارگذاری...</div>
+    </div>
+  </div>
+  <div style="padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+    <button onclick="closeExportDialog()" type="button" class="ghost">انصراف</button>
+    <button onclick="doCustomExport()" type="button" class="gold">دانلود اکسل</button>
+  </div>
+</dialog>
+</main>
+
+<script>
+window.addEventListener('error', function(e){
+  console.error('JS ERROR:', e.message, 'at', e.filename, e.lineno + ':' + e.colno);
+});
+
+var MONTHS = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+var YEARS = ["1404","1405","1406","1407"];
+var CURRENT_YEAR = "1405";
+var CURRENT_MONTH = "شهریور";
+var activeFilter = null;
+window.activeFilter = null;
+var _lastReportRows = [];
+var currentTab = 'dashboard';
+
+var REPORT_COLS = [
+  { key: "row_num", label: "ردیف", type: "text" },
+  { key: "first_name", label: "نام", type: "text" },
+  { key: "last_name", label: "نام خانوادگی", type: "text" },
+  { key: "national_code", label: "کد ملی", type: "text" },
+  { key: "has_second_salary", label: "حقوق دوم", type: "text" },
+  { key: "legal_article", label: "مبنای قانونی", type: "text" },
+  { key: "skill_card_bonus", label: "پاداش کارت مهارت", type: "num" },
+  { key: "employer_insurance", label: "بیمه کارفرما", type: "num" },
+  { key: "non_continuous_bonus", label: "پاداش غیرمستمر", type: "num" },
+  { key: "monthly_wage", label: "دستمزد ماه", type: "num" },
+  { key: "cost_center", label: "مرکز هزینه", type: "text" },
+  { key: "main_cost_center", label: "مرکز اصلی", type: "text" },
+  { key: "employment_status", label: "وضعیت اشتغال", type: "text" },
+  { key: "ceiling_status", label: "سقف پرداختی", type: "text" },
+  { key: "program_name", label: "نام برنامه", type: "text" },
+  { key: "payment_list_status", label: "نوع خطا", type: "text" },
+  { key: "paid_amount", label: "پرداختی ماه", type: "num" },
+  { key: "yearly_paid_total", label: "مجموع سال", type: "num" },
+  { key: "exempted_ceiling", label: "سقف مستثنی", type: "num" },
+  { key: "six_month_ceiling", label: "سقف ماه", type: "num" },
+  { key: "service_places", label: "محل خدمتی", type: "text" }
+];
+
+var _colSearchValues = {};
+
+function showToast(title, msg, kind){
+  var box = document.getElementById('toasts');
+  if (!box) return;
+  var t = document.createElement('div');
+  t.className = 'toast ' + (kind || 'info');
+  t.innerHTML = '<div class="tt">' + title + '</div>' +
+    (msg ? '<div class="tm">' + msg + '</div>' : '');
+  box.appendChild(t);
+  setTimeout(function(){
+    t.classList.add('out');
+    setTimeout(function(){ t.remove(); }, 350);
+  }, 3500);
+}
+
+async function refreshAll(){
+  var btn = document.getElementById('refresh-btn');
+  if (!btn) return;
+  var orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'در حال تازه‌سازی...';
+  try {
+    var r = await fetch('/api/recalculate', {method: 'POST'});
+    var d = await r.json();
+
+    if (currentTab === 'dashboard'){
+      await loadDashboard();
+    } else if (currentTab === 'report'){
+      await loadReport();
+    } else if (currentTab === 'input'){
+      var activeSub = document.querySelector('.sub-tab.active');
+      if (activeSub){
+        var s = activeSub.dataset.sub;
+        if (s === 'pricing') await loadPricingRules();
+        else if (s === 'specialists') await loadSpecialists();
+        else if (s === 'manual') await loadManualCeilings();
+        else if (s === 'payments') await loadPaymentGrid();
+      }
+    }
+    showToast('تازه‌سازی انجام شد', (d.updated || 0) + ' رکورد بازمحاسبه شد', 'ok');
+  } catch(e){
+    console.error(e);
+    showToast('خطا در تازه‌سازی', String(e), 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+function fmt(n){
+  if (n === null || n === undefined || n === '') return '';
+  var num = Number(n);
+  if (isNaN(num)) return n;
+  return num.toLocaleString('fa-IR');
+}
+function fmtRial(n){
+  if (n === null || n === undefined || n === '') return '';
+  var num = Number(n);
+  if (isNaN(num)) return num;
+  return num.toLocaleString('fa-IR') + ' ریال';
+}
+function unformatNumber(v){
+  if (v === null || v === undefined) return 0;
+  var s = String(v).replace(/[^\d\-]/g, '');
+  var n = Number(s);
+  return isNaN(n) ? 0 : n;
+}
+function formatThousandInput(el){
+  var raw = el.value || '';
+  var isNeg = raw.trim().startsWith('-');
+  var digits = raw.replace(/[^\d]/g, '');
+  if (digits === ''){ el.value = isNeg ? '-' : ''; return; }
+  var num = parseInt(digits, 10);
+  el.value = (isNeg ? '-' : '') + num.toLocaleString('en-US');
+}
+document.addEventListener('input', function(e){
+  var el = e.target;
+  if (el && el.classList && el.classList.contains('thousand-input')){
+    formatThousandInput(el);
+  }
+});
+
+function fillYearSelect(id, defaultYear){
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = YEARS.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
+  el.value = defaultYear || CURRENT_YEAR;
+}
+function fillMonthSelect(id, defaultMonth, includeAll){
+  var el = document.getElementById(id);
+  if (!el) return;
+  var html = '';
+  if (includeAll) html += '<option value="همه">همه ماه‌ها</option>';
+  html += MONTHS.map(function(m){ return '<option value="'+m+'">'+m+'</option>'; }).join('');
+  el.innerHTML = html;
+  el.value = defaultMonth || CURRENT_MONTH;
+}
+function getPeriod(yearId, monthId){
+  var y = document.getElementById(yearId).value;
+  var m = document.getElementById(monthId).value;
+  if (m === 'همه') return 'همه';
+  return y + '-' + m;
+}
+
+document.querySelectorAll('.tab').forEach(function(btn){
+  btn.addEventListener('click', function(e){
+    var tabName = btn.dataset.tab;
+
+    // ==== برای اطلاعات ورودی: فقط dropdown باز/بسته کن ====
+    if (tabName === 'input') {
+      e.stopPropagation();
+      var dd = document.getElementById('input-tab-dropdown');
+      if (dd) dd.style.display = (dd.style.display === 'block') ? 'none' : 'block';
+      var hrDd = document.getElementById('hr-dropdown');
+      if (hrDd) hrDd.style.display = 'none';
+      return;
+    }
+
+    // ==== برای منابع انسانی: dropdown + نمایش section ====
+    if (tabName === 'personnel') {
+      e.stopPropagation();
+      document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+      var sec = document.getElementById('tab-personnel');
+      if (sec) sec.classList.remove('hidden');
+      currentTab = 'personnel';
+
+      var dd2 = document.getElementById('hr-dropdown');
+      if (dd2) dd2.style.display = (dd2.style.display === 'block') ? 'none' : 'block';
+      var inDd = document.getElementById('input-tab-dropdown');
+      if (inDd) inDd.style.display = 'none';
+
+      var ifr = document.getElementById('personnel-frame');
+      if (ifr && ifr.dataset.loaded === '0') {
+        ifr.src = '/personnel?embedded=1&view=bank';
+        ifr.dataset.loaded = '1';
+      }
+      return;
+    }
+
+    // ==== بقیه تب‌ها: عادی ====
+    document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+    var target = document.getElementById('tab-' + tabName);
+    if (target) target.classList.remove('hidden');
+    currentTab = tabName;
+    if (tabName === 'dashboard') loadDashboard();
+
+    var inDd = document.getElementById('input-tab-dropdown');
+    if (inDd) inDd.style.display = 'none';
+    var hrDd = document.getElementById('hr-dropdown');
+    if (hrDd) hrDd.style.display = 'none';
+  });
+});
+
+document.querySelectorAll('.sub-tab').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.sub-tab').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    document.querySelectorAll('.sub-panel').forEach(function(p){p.classList.add('hidden');});
+    var target = document.getElementById('sub-' + btn.dataset.sub);
+    if (target) target.classList.remove('hidden');
+    var s = btn.dataset.sub;
+    if (s === 'pricing') loadPricingRules();
+    if (s === 'specialists') loadSpecialists();
+    if (s === 'manual') loadManualCeilings();
+    if (s === 'payments') loadPaymentGrid();
+    if (s === 'maincenter') {}
+  });
+});
+
+function buildColSearchRow(){
+  var row = document.getElementById('col-search-row');
+  if (!row) return;
+  row.innerHTML = REPORT_COLS.map(function(c){
+    var cls = c.type === "num" ? 'num' : '';
+    return '<th class="'+cls+'"><input type="text" placeholder="جستجو..." data-col-key="'+c.key+'" oninput="onColSearch(this)"></th>';
+  }).join('');
+}
+function onColSearch(inp){
+  var key = inp.getAttribute('data-col-key');
+  var v = (inp.value || '').trim().toLowerCase();
+  if (v) _colSearchValues[key] = v;
+  else delete _colSearchValues[key];
+  applyColSearch();
+}
+function applyColSearch(){
+  var rows = _lastReportRows;
+  var keys = Object.keys(_colSearchValues);
+  if (keys.length){
+    rows = rows.filter(function(r){
+      for (var i = 0; i < keys.length; i++){
+        var k = keys[i];
+        var target = r[k];
+        var s = (target === null || target === undefined) ? '' : String(target).toLowerCase();
+        if (s.indexOf(_colSearchValues[k]) === -1) return false;
+      }
+      return true;
+    });
+  }
+  renderReportRows(rows);
+}
+
+function renderBars(containerId, data, opts){
+  opts = opts || {};
+  var maxV = opts.max || Math.max.apply(null, data.map(function(x){return x.value;}).concat([1]));
+  var colorCls = opts.color || '';
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (!data.length){
+    el.innerHTML = '<div style="color:var(--text-3);font-size:12px;text-align:center;padding:24px">داده‌ای ثبت نشده است</div>';
+    return;
+  }
+  el.innerHTML = data.map(function(x){
+    var pct = maxV > 0 ? (x.value / maxV) * 100 : 0;
+    var cls = x.color || colorCls;
+    return '<div class="bar-row">' +
+      '<div class="name" title="' + (x.label || '') + '">' + (x.label || '') + '</div>' +
+      '<div class="bar-wrap"><div class="bar ' + cls + '" style="width:' + pct + '%"></div></div>' +
+      '<div class="val">' + (opts.formatter ? opts.formatter(x.value) : fmt(x.value)) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderDonut(containerId, parts, centerLabel){
+  var total = parts.reduce(function(s, p){ return s + p.value; }, 0);
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (total <= 0){
+    el.innerHTML = '<div style="color:var(--text-3);font-size:12px;text-align:center;padding:24px">داده‌ای ثبت نشده است</div>';
+    return;
+  }
+  var stops = [];
+  var acc = 0;
+  parts.forEach(function(p){
+    var start = (acc / total) * 100;
+    acc += p.value;
+    var end = (acc / total) * 100;
+    stops.push(p.color + ' ' + start + '% ' + end + '%');
+  });
+  var donut = '<div class="donut" style="background:conic-gradient(from -90deg, ' + stops.join(',') + ')">' +
+    '<div class="donut-center"><div class="num">' + fmt(total) + '</div>' +
+    '<div class="lbl">' + (centerLabel || 'کل') + '</div></div></div>';
+  var legend = '<div class="donut-legend">' + parts.map(function(p){
+    var pct = ((p.value / total) * 100).toFixed(1);
+    return '<div class="item">' +
+      '<span class="dot" style="background:' + p.color + '"></span>' +
+      '<span class="lbl">' + p.label + '</span>' +
+      '<span class="v">' + fmt(p.value) + ' (' + pct + '٪)</span>' +
+    '</div>';
+  }).join('') + '</div>';
+  el.innerHTML = donut + legend;
+}
+
+async function loadDashboard(){
+  var period = getPeriod('dash-year', 'dash-month');
+  var charts = await (await fetch('/api/dashboard-charts?period=' + encodeURIComponent(period))).json();
+
+  var periodLabel = (charts.period === 'همه') ? 'همه ماه‌ها' : 'دوره: ' + charts.period;
+  document.getElementById('badge-warn').textContent = periodLabel;
+  document.getElementById('badge-wage').textContent = periodLabel;
+  document.getElementById('badge-emp').textContent = periodLabel;
+
+  var byMonth = (charts.by_month || []).map(function(x){
+    return { label: x.month, value: x.amount };
+  });
+  renderBars('chart-by-month', byMonth, {color: '', formatter: function(v){ return fmtRial(v); }});
+
+  var w = charts.warnings || {};
+  var warnParts = [
+    { label: 'سالم', value: w.ok || 0, color: '#94a3b8' },
+    { label: 'تأییدشده', value: w.approved || 0, color: '#10b981' },
+    { label: 'هشدار زرد', value: w.yellow || 0, color: '#eab308' },
+    { label: 'هشدار نارنجی', value: w.orange || 0, color: '#f97316' },
+    { label: 'شاغل (قرمز)', value: w.employed || 0, color: '#ef4444' },
+  ];
+  renderDonut('chart-donut-warnings', warnParts, 'کل رکورد');
+
+  var wageDist = (charts.wage_distribution || []).map(function(x){
+    return { label: x.label, value: x.count };
+  });
+  renderBars('chart-wage-dist', wageDist, {color: 'gold'});
+
+  var empDist = (charts.employment_distribution || []).map(function(x){
+    return { label: x.label, value: x.count };
+  });
+  renderBars('chart-emp-dist', empDist, {color: 'green'});
+
+  var placesDist = (charts.places_distribution || []).map(function(x){
+    return { label: x.count + ' محل خدمتی', value: x.persons };
+  });
+  renderBars('chart-places-dist', placesDist, {color: 'warn'});
+
+  loadSummaryTable();
+  loadApprovalStatus();
+}
+
+async function loadSummaryTable(){
+  var period = getPeriod('st-year', 'st-month');
+  var deputyEl = document.getElementById('st-deputy');
+  var deputy = deputyEl ? (deputyEl.value || 'همه') : 'همه';
+  var url = '/api/summary-table?period=' + encodeURIComponent(period)
+          + '&deputy=' + encodeURIComponent(deputy);
+  var msg = document.getElementById('st-msg');
+  if (msg) msg.textContent = 'در حال بارگذاری...';
+  try {
+    var data = await (await fetch(url)).json();
+    var rows = data.rows || [];
+    var tbody = document.querySelector('#summary-table tbody');
+    var tfoot = document.querySelector('#summary-table tfoot');
+    if (!rows.length){
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-3)">داده‌ای برای این فیلتر وجود ندارد</td></tr>';
+      tfoot.innerHTML = '';
+      if (msg) msg.textContent = '';
+      return;
+    }
+    tbody.innerHTML = rows.map(function(r){
+      return '<tr>' +
+        '<td>' + (r.deputy || '') + '</td>' +
+        '<td>' + (r.center || '') + '</td>' +
+        '<td class="num">' + fmt(Math.round(r.professional)) + '</td>' +
+        '<td class="num">' + fmt(Math.round(r.allocation)) + '</td>' +
+        '<td class="num" style="font-weight:600">' + fmt(Math.round(r.total)) + '</td>' +
+      '</tr>';
+    }).join('');
+    tfoot.innerHTML = '<tr>' +
+      '<td colspan="2">جمع کل</td>' +
+      '<td class="num">' + fmt(Math.round(data.total_professional)) + '</td>' +
+      '<td class="num">' + fmt(Math.round(data.total_allocation)) + '</td>' +
+      '<td class="num">' + fmt(Math.round(data.total_sum)) + '</td>' +
+    '</tr>';
+    if (msg) msg.textContent = rows.length + ' ردیف';
+  } catch (e){
+    if (msg) msg.textContent = 'خطا: ' + e;
+  }
+}
+
+function exportSummaryTable(){
+  var period = getPeriod('st-year', 'st-month');
+  var deputyEl = document.getElementById('st-deputy');
+  var deputy = deputyEl ? (deputyEl.value || 'همه') : 'همه';
+  var url = '/api/summary-table/export?period=' + encodeURIComponent(period)
+          + '&deputy=' + encodeURIComponent(deputy);
+  window.location.href = url;
+}
+
+async function searchPerson(){
+  var code = document.getElementById('ncode-input').value.trim();
+  var box = document.getElementById('person-result');
+  if (!code){ box.classList.remove('hidden'); box.innerHTML = '<div class="msg err">کد ملی را وارد کنید.</div>'; return; }
+  var res = await fetch('/api/person?national_code=' + encodeURIComponent(code));
+  var data = await res.json();
+  box.classList.remove('hidden');
+  if (!res.ok){ box.innerHTML = '<div class="msg err">'+data.error+'</div>'; return; }
+  var html = '<h3><span>'+(data.person.first_name||'')+' '+(data.person.last_name||'')+' — <span style="direction:ltr;display:inline-block">'+data.person.national_code+'</span></span><button class="close-btn" onclick="clearPersonResult()">×</button></h3>';
+  html += '<h4>رکوردهای ماهانه</h4><div class="table-wrap"><table><thead><tr><th>دوره</th><th>معاونت</th><th>مرکز هزینه</th><th>وضعیت اشتغال</th><th class="num">سقف پرداختی</th><th class="num">دستمزد ماه</th></tr></thead><tbody>';
+  for (var i=0; i<data.records.length; i++){
+    var r = data.records[i];
+    html += '<tr><td>'+r.period_month+'</td><td>'+(r.deputy||'')+'</td><td>'+(r.cost_center||'')+'</td><td>'+(r.employment_status||'')+'</td><td class="num">'+(fmt(r.ceiling_status)||'-')+'</td><td class="num">'+fmt(r.monthly_wage)+'</td></tr>';
+  }
+  html += '</tbody></table></div>';
+  if (data.payments.length){
+    html += '<h4>پرداختی‌ها</h4><div class="table-wrap"><table><thead><tr><th>دوره</th><th class="num">مبلغ (ریال)</th><th>منبع</th></tr></thead><tbody>';
+    for (var j=0; j<data.payments.length; j++){
+      var p = data.payments[j];
+      var src = p.source === 'auto' ? 'خودکار' : (p.source === 'approved' ? 'تأیید مدیر' : 'دستی');
+      html += '<tr><td>'+p.period_month+'</td><td class="num">'+fmt(p.amount)+'</td><td>'+src+'</td></tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+  box.innerHTML = html;
+}
+function clearPersonResult(){
+  var box = document.getElementById('person-result');
+  box.classList.add('hidden');
+  box.innerHTML = '';
+  document.getElementById('ncode-input').value = '';
+}
+
+var _filterLoaded = false;
+async function loadFilterOptions(){
+  var opts = await (await fetch('/api/filter-options')).json();
+  var stDeputy = document.getElementById('st-deputy');
+  if (stDeputy){
+    var cur = stDeputy.value;
+    stDeputy.innerHTML = '<option value="همه">همه</option>' +
+      opts.deputies.filter(function(d){ return d !== 'همه'; }).map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+    if (cur) stDeputy.value = cur;
+  }
+  buildMultiSelect('ms-deputy', opts.deputies);
+  buildMultiSelect('ms-center', opts.centers);
+  buildMultiSelect('ms-supply', opts.supply_types);
+  _filterLoaded = true;
+}
+async function loadDeputyFilters(){
+  var opts = await (await fetch('/api/filter-options')).json();
+  var html = opts.deputies.map(function(d){return '<option>'+d+'</option>';}).join('');
+  document.getElementById('pr-deputy-filter').innerHTML = html;
+  document.getElementById('sp-deputy-filter').innerHTML = html;
+  document.getElementById('mc-deputy-filter').innerHTML = html;
+  loadPricingRules();
+  loadSpecialists();
+}
+
+function buildMultiSelect(containerId, options) {
+  var c = document.getElementById(containerId);
+  if (!c) return;
+  var html = '<div class="ms-header" onclick="toggleMs(\''+containerId+'\')"><span id="'+containerId+'-label">همه</span><span>▼</span></div><div class="ms-dropdown" id="'+containerId+'-dropdown"><label class="ms-item"><input type="checkbox" value="همه" checked onchange="onMsChange(\''+containerId+'\',this)"> <span>همه</span></label>';
+  options.forEach(function(opt) {
+    if (opt === 'همه') return;
+    html += '<label class="ms-item"><input type="checkbox" value="'+opt+'" onchange="onMsChange(\''+containerId+'\',this)"> <span>'+opt+'</span></label>';
+  });
+  html += '</div>';
+  c.innerHTML = html;
+}
+function toggleMs(id) {
+  var dd = document.getElementById(id + '-dropdown');
+  document.querySelectorAll('.ms-dropdown').forEach(function(el) { if (el.id !== id + '-dropdown') el.classList.remove('show'); });
+  dd.classList.toggle('show');
+}
+function onMsChange(containerId, cb) {
+  var dd = document.getElementById(containerId + '-dropdown');
+  var allCb = dd.querySelector('input[value="همه"]');
+  var others = dd.querySelectorAll('input:not([value="همه"])');
+  if (cb.value === 'همه' && cb.checked) { others.forEach(function(x){x.checked=false;}); }
+  else if (cb.value !== 'همه' && cb.checked) { allCb.checked = false; }
+  var checked = Array.from(dd.querySelectorAll('input:checked')).map(function(x){return x.value;});
+  if (checked.length === 0) { allCb.checked = true; checked = ['همه']; }
+  var label = document.getElementById(containerId + '-label');
+  if (checked.includes('همه')) label.textContent = 'همه';
+  else if (checked.length === 1) label.textContent = checked[0];
+  else label.textContent = checked.length + ' مورد انتخاب شده';
+  if (window._reportTimer) clearTimeout(window._reportTimer);
+  window._reportTimer = setTimeout(loadReport, 300);
+}
+function getSelectedValues(containerId) {
+  var dd = document.getElementById(containerId + '-dropdown');
+  if (!dd) return ['همه'];
+  var checked = Array.from(dd.querySelectorAll('input:checked')).map(function(x){return x.value;});
+  if (checked.length === 0 || checked.includes('همه')) return ['همه'];
+  return checked;
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ms-container')) document.querySelectorAll('.ms-dropdown').forEach(function(el){el.classList.remove('show');});
+});
+
+function onDeputyChange(){ loadReport(); }
+
+function renderReportRows(rows){
+  document.querySelector('#report-table tbody').innerHTML = rows.map(function(r){
+    var cls = '';
+    if (r.is_employed) cls = 'warn-red';
+    else if (r.warn_orange) cls = 'warn-orange';
+    else if (r.warn_yellow) cls = 'warn-yellow';
+    else if (r.manager_approved) cls = 'approved';
+
+    var payCell = '';
+    if (Array.isArray(r.payment_list_status) && r.payment_list_status.length) {
+      payCell = r.payment_list_status.map(function(m){
+        var extraCls = (m === 'شاغل') ? ' red' : '';
+        return '<span class="cell-warn' + extraCls + '">' + m + '</span>';
+      }).join('<br>');
+    } else if (typeof r.payment_list_status === 'string' && r.payment_list_status.length) {
+      payCell = '<span class="cell-warn">' + r.payment_list_status + '</span>';
+    } else if (r.manager_approved && r.monthly_wage) {
+      payCell = fmt(r.monthly_wage);
+    }
+
+    return '<tr class="'+cls+'">' +
+      '<td class="approve"><input type="checkbox" class="approve-check" data-record-id="'+r.record_id+'" '+(r.manager_approved?'checked':'')+'></td>' +
+      '<td class="row-num">'+r.row_num+'</td>' +
+      '<td>'+(r.first_name||'')+'</td>' +
+      '<td>'+(r.last_name||'')+'</td>' +
+      '<td class="code">'+(r.national_code||'')+'</td>' +
+      '<td>'+(r.has_second_salary||'')+'</td>' +
+      '<td>'+(r.legal_article||'')+'</td>' +
+      '<td class="num">'+fmt(r.skill_card_bonus)+'</td>' +
+      '<td class="num">'+fmt(r.employer_insurance)+'</td>' +
+      '<td class="num">'+fmt(r.non_continuous_bonus)+'</td>' +
+      '<td class="num">'+fmt(r.monthly_wage)+'</td>' +
+      '<td>'+(r.cost_center||'')+'</td>' +
+      '<td>'+(r.main_cost_center||'')+'</td>' +
+      '<td>'+(r.employment_status||'')+'</td>' +
+      '<td class="num">'+(r.ceiling_status||'')+'</td>' +
+      '<td>'+(r.program_name||'')+'</td>' +
+      '<td class="num">'+payCell+'</td>' +
+      '<td class="num">'+(r.paid_amount != null ? fmt(r.paid_amount) : '-')+'</td>' +
+      '<td class="num">'+(r.yearly_paid_total != null ? fmt(r.yearly_paid_total) : '')+'</td>' +
+      '<td class="num">'+(r.exempted_ceiling != null ? fmt(r.exempted_ceiling) : '')+'</td>' +
+      '<td class="num">'+(r.six_month_ceiling != null ? fmt(r.six_month_ceiling) : '')+'</td>' +
+      '<td>'+(r.service_places||'')+'</td>' +
+    '</tr>';
+  }).join('');
+
+  document.querySelectorAll('#report-table input.approve-check').forEach(function(inp){
+    inp.addEventListener('change', function(){
+      // فقط بصری — بدون ثبت در backend
+      if (inp.checked) {
+        inp.closest('tr').classList.add('pending-approve');
+      } else {
+        inp.closest('tr').classList.remove('pending-approve');
+      }
+      updateApproveButtons();
+    });
+  });
+  updateApproveButtons();
+}
+
+async function loadReport(){
+  if (!_filterLoaded) await loadFilterOptions();
+  var period = getPeriod('rep-year', 'rep-month');
+  document.getElementById('dyn-ceiling-th').textContent = 'سقف ' + period + ' (ریال)';
+  var deputy = getSelectedValues('ms-deputy').join(',');
+  var center = getSelectedValues('ms-center').join(',');
+  var supply = getSelectedValues('ms-supply').join(',');
+  var url = '/api/report?period='+encodeURIComponent(period)+'&deputy='+encodeURIComponent(deputy)+'&center='+encodeURIComponent(center)+'&supply_type='+encodeURIComponent(supply);
+  var data = await (await fetch(url)).json();
+  var s = data.summary || {};
+
+  document.getElementById('report-summary').innerHTML =
+    '<div class="card"><div class="value">'+fmtRial(s.professional_qualification || 0)+'</div><div class="label">صلاحیت حرفه‌ای</div></div>' +
+    '<div class="card"><div class="value">'+fmtRial(Math.round(s.monthly_allocation || 0))+'</div><div class="label">تخصیص ماه جاری</div></div>' +
+    '<div class="card"><div class="value">'+(s.month_ceiling != null ? fmtRial(s.month_ceiling) : '-')+'</div><div class="label">سقف ماه جاری</div></div>';
+
+  document.getElementById('report-extra').innerHTML =
+    '<div class="card mini-uniform"><div class="value">'+fmtRial(s.specialists)+'</div><div class="label">کارشناسان</div></div>' +
+    '<div class="card mini-uniform"><div class="value">'+fmtRial(s.equipment)+'</div><div class="label">خدمات و تجهیزات</div></div>' +
+    '<div class="card mini-uniform"><div class="value">'+fmtRial(s.bonus)+'</div><div class="label">هدایا</div></div>';
+
+  var yCls = 'card clickable' + (s.warn_yellow_count > 0 ? ' warn-yellow-card' : '') + (activeFilter === 'yellow' ? ' active-filter' : '');
+  var oCls = 'card clickable' + (s.warn_orange_count > 0 ? ' warn-orange-card' : '') + (activeFilter === 'orange' ? ' active-filter' : '');
+  var rCls = 'card clickable' + (s.employed_count > 0 ? ' warn-red-card' : '') + (activeFilter === 'red' ? ' active-filter' : '');
+  var aCls = 'card clickable' + (s.approved_count > 0 ? ' approved-card' : '') + (activeFilter === 'approved' ? ' active-filter' : '');
+
+  document.getElementById('report-warnings').innerHTML =
+    '<div class="'+yCls+'" data-filter="yellow"><div class="value">'+fmt(s.warn_yellow_count || 0)+'</div><div class="label">هشدار زرد (کلیک)</div></div>' +
+    '<div class="'+oCls+'" data-filter="orange"><div class="value">'+fmt(s.warn_orange_count || 0)+'</div><div class="label">سقف ماه منفی (کلیک)</div></div>' +
+    '<div class="'+rCls+'" data-filter="red"><div class="value">'+fmt(s.employed_count || 0)+'</div><div class="label">شاغل — قرمز (کلیک)</div></div>' +
+    '<div class="'+aCls+'" data-filter="approved"><div class="value">'+fmt(s.approved_count || 0)+'</div><div class="label">تأییدشده (کلیک)</div></div>';
+
+  document.querySelectorAll('#report-warnings .card[data-filter]').forEach(function(el){
+    el.addEventListener('click', function(){ setFilter(el.dataset.filter); });
+  });
+
+  var rows = data.rows || [];
+  if (activeFilter === 'yellow') rows = rows.filter(function(r){ return r.warn_yellow; });
+  else if (activeFilter === 'orange') rows = rows.filter(function(r){ return r.warn_orange; });
+  else if (activeFilter === 'red') rows = rows.filter(function(r){ return r.is_employed; });
+
+  _lastReportRows = rows;
+  applyColSearch();
+}
+
+function setFilter(f){
+  activeFilter = (activeFilter === f) ? null : f;
+  window.activeFilter = activeFilter;
+  loadReport();
+}
+async function toggleApproval(recordId, approved){
+  var res = await fetch('/api/toggle-approval', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ record_id: recordId, approved: approved })
+  });
+  if (!res.ok) { alert('خطا در ثبت تأیید'); return; }
+  loadReport();
+}
+
+var _exportColsCache = null;
+
+async function openExportDialog(){
+  var dlg = document.getElementById('export-dialog');
+  if (!dlg) return;
+  if (!_exportColsCache){
+    try {
+      var r = await fetch('/api/export/columns');
+      var d = await r.json();
+      _exportColsCache = d.report || [];
+    } catch(e) { _exportColsCache = []; }
+  }
+  renderExportCols(_exportColsCache);
+  dlg.showModal();
+}
+
+function renderExportCols(cols){
+  var box = document.getElementById('export-cols-container');
+  if (!cols.length){
+    box.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:20px">ستونی تعریف نشده</div>';
+    return;
+  }
+  box.innerHTML = cols.map(function(c){
+    return '<label style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:var(--r-sm);background:var(--bg-2);border:1px solid var(--border);cursor:pointer;font-size:12.5px">' +
+      '<input type="checkbox" class="export-col-cb" value="' + c.key + '" data-default="' + (c.default ? '1' : '0') + '" ' + (c.default ? 'checked' : '') + ' style="width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex:none">' +
+      '<span>' + c.label + '</span>' +
+    '</label>';
+  }).join('');
+}
+function exportSelectAll(v){
+  document.querySelectorAll('.export-col-cb').forEach(function(el){ el.checked = v; });
+}
+function exportSelectDefault(){
+  document.querySelectorAll('.export-col-cb').forEach(function(el){
+    el.checked = el.getAttribute('data-default') === '1';
+  });
+}
+function closeExportDialog(){
+  var dlg = document.getElementById('export-dialog');
+  if (dlg) dlg.close();
+}
+function doCustomExport(){
+  var cols = [];
+  document.querySelectorAll('.export-col-cb:checked').forEach(function(el){ cols.push(el.value); });
+  if (!cols.length){ alert('حداقل یک ستون انتخاب کن'); return; }
+  var period = getPeriod('rep-year', 'rep-month');
+  var deputy = getSelectedValues('ms-deputy').join(',');
+  var center = getSelectedValues('ms-center').join(',');
+  var supply = getSelectedValues('ms-supply').join(',');
+  var url = '/api/report-export'
+    + '?period=' + encodeURIComponent(period)
+    + '&deputy=' + encodeURIComponent(deputy)
+    + '&center=' + encodeURIComponent(center)
+    + '&supply_type=' + encodeURIComponent(supply)
+    + '&columns=' + encodeURIComponent(cols.join(','));
+  if (window.activeFilter) {
+    url += '&filter_type=' + encodeURIComponent(window.activeFilter);
+  }
+  // ==== STM v3: ارسال جستجوی ستونی ====
+  if (Object.keys(_colSearchValues).length) {
+    url += '&search=' + encodeURIComponent(JSON.stringify(_colSearchValues));
+  }
+  window.location.href = url;
+  closeExportDialog();
+}
+function exportReportExcel(){
+  var period = getPeriod('rep-year', 'rep-month');
+  var deputy = getSelectedValues('ms-deputy').join(',');
+  var center = getSelectedValues('ms-center').join(',');
+  var supply = getSelectedValues('ms-supply').join(',');
+  var url = '/api/report-export?period=' + encodeURIComponent(period)
+          + '&deputy=' + encodeURIComponent(deputy)
+          + '&center=' + encodeURIComponent(center)
+          + '&supply_type=' + encodeURIComponent(supply);
+  if (window.activeFilter) {
+    url += '&filter_type=' + encodeURIComponent(window.activeFilter);
+  }
+  // ==== STM v3: ارسال جستجوی ستونی ====
+  if (Object.keys(_colSearchValues).length) {
+    url += '&search=' + encodeURIComponent(JSON.stringify(_colSearchValues));
+  }
+  window.location.href = url;
+}
+
+async function loadPricingRules(){
+  var filter = document.getElementById('pr-deputy-filter').value;
+  var all = await (await fetch('/api/pricing-rules')).json();
+  var rows = (filter && filter !== 'همه') ? all.filter(function(r){return r.deputy === filter;}) : all;
+  document.querySelector('#pricing-table tbody').innerHTML = rows.map(function(r){
+    return '<tr><td>'+r.deputy+'</td><td>'+r.legal_article+'</td><td>'+r.category+'</td>' +
+      '<td class="num">'+(r.amount != null ? fmtRial(r.amount) : '<span class="empty-amount">خالی</span>')+'</td>' +
+      '<td><button class="action" data-edit-id="'+r.id+'" data-edit-amount="'+(r.amount == null ? '' : r.amount)+'">ویرایش</button></td></tr>';
+  }).join('');
+  document.querySelectorAll('#pricing-table button[data-edit-id]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = Number(btn.dataset.editId);
+      var cur = btn.dataset.editAmount;
+      editPricingRule(id, cur === '' ? null : Number(cur));
+    });
+  });
+}
+async function editPricingRule(id, current){
+  var v = prompt('مبلغ جدید (ریال):', current == null ? '' : current);
+  if (v === null) return;
+  var num = v === '' ? null : unformatNumber(v);
+  if (v !== '' && isNaN(num)){ alert('عدد معتبر وارد کنید.'); return; }
+  var res = await fetch('/api/pricing-rules/'+id, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ amount: num, username: 'کاربر' })
+  });
+  if (res.ok) loadPricingRules(); else alert('خطا.');
+}
+async function recalcAll(){
+  var msg = document.getElementById('pr-recalc-msg');
+  msg.textContent = 'در حال محاسبه...';
+  var r = await (await fetch('/api/recalculate', {method:'POST'})).json();
+  msg.textContent = r.updated + ' ردیف بازمحاسبه شد.';
+  loadDashboard();
+}
+
+async function doBulkImport(category){
+  var fileInput = document.getElementById('bulk-' + category + '-file');
+  var msg = document.getElementById('bulk-' + category + '-msg');
+
+  if (!fileInput.files.length){
+    msg.innerHTML = '<span style="color:#fca5a5">فایل را انتخاب کنید.</span>';
+    return;
+  }
+
+  var fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+
+  msg.innerHTML = '<span style="color:#a1a1aa">در حال ایمپورت...</span>';
+
+  try {
+    var res = await fetch('/api/bulk-import/' + category, {method: 'POST', body: fd});
+    var data = await res.json();
+
+    if (!res.ok){
+      msg.innerHTML = '<span style="color:#fca5a5">' + (data.error || 'خطا') + '</span>';
+      return;
+    }
+
+    var r = data.result;
+    var txt = r.centers_count + ' مرکز — درج: ' + r.inserted + '، به‌روز: ' + r.updated;
+
+    if (r.remapped_count > 0){
+      txt += ' — تطبیق هوشمند: ' + r.remapped_count;
+    }
+    if (r.unmatched_count > 0){
+      txt += ' — ⚠️ ناشناخته: ' + r.unmatched_count;
+    }
+
+    msg.innerHTML = '<span style="color:#6ee7b7">' + txt + '</span>';
+
+    fileInput.value = '';
+
+    loadSpecialists();
+
+    // نمایش مراکز ناشناخته
+    if (r.unmatched && r.unmatched.length){
+      showUnmatched(r.unmatched, category);
+    } else {
+      document.getElementById('unmatched-box').style.display = 'none';
+    }
+  } catch(e){
+    msg.innerHTML = '<span style="color:#fca5a5">خطا: ' + e + '</span>';
+  }
+}
+
+function showUnmatched(items, category){
+  var box = document.getElementById('unmatched-box');
+  var tbody = document.querySelector('#unmatched-table tbody');
+  box.style.display = 'block';
+
+  // پر کردن dropdown مراکز (بعداً با لیست مراکز پر می‌شه)
+  tbody.innerHTML = items.map(function(it, idx){
+    return '<tr data-idx="' + idx + '">' +
+      '<td>' + (it.raw_name || '') + '</td>' +
+      '<td class="num">' + fmt(it.amount || 0) + '</td>' +
+      '<td><select class="unmatched-target" data-idx="' + idx + '" style="width:100%">' +
+        '<option value="">— انتخاب کنید —</option>' +
+      '</select></td>' +
+      '<td><button class="action" data-apply-idx="' + idx + '">ثبت</button></td>' +
+    '</tr>';
+  }).join('');
+
+  // پر کردن dropdown‌ها
+  loadCenterOptions().then(function(centers){
+    document.querySelectorAll('.unmatched-target').forEach(function(sel){
+      sel.innerHTML = '<option value="">— انتخاب کنید —</option>' +
+        centers.map(function(c){ return '<option value="' + c + '">' + c + '</option>'; }).join('');
+    });
+  });
+
+  // دکمه‌ها
+  document.querySelectorAll('#unmatched-table button[data-apply-idx]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var idx = Number(btn.dataset.applyIdx);
+      applyRemap(idx, items, category);
+    });
+  });
+}
+
+var _centerOptionsCache = null;
+async function loadCenterOptions(){
+  if (_centerOptionsCache) return _centerOptionsCache;
+  try {
+    var r = await fetch('/api/all-centers');
+    var d = await r.json();
+    _centerOptionsCache = d.map(function(x){ return x.name; }).sort();
+    return _centerOptionsCache;
+  } catch(e){
+    return [];
+  }
+}
+
+async function applyRemap(idx, items, category){
+  var sel = document.querySelector('.unmatched-target[data-idx="' + idx + '"]');
+  var target = sel ? sel.value : '';
+  if (!target){
+    alert('مرکز صحیح را انتخاب کنید');
+    return;
+  }
+  var it = items[idx];
+  var res = await fetch('/api/bulk-import/remap', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      source: it.raw_name,
+      target: target,
+      amount: it.amount,
+      category: category
+    })
+  });
+  var d = await res.json();
+  if (res.ok){
+    showToast('تخصیص انجام شد', it.raw_name + ' → ' + target, 'ok');
+    // حذف سطر
+    var tr = document.querySelector('#unmatched-table tr[data-idx="' + idx + '"]');
+    if (tr) tr.remove();
+    // اگه خالی شد، مخفی کن
+    var tbody = document.querySelector('#unmatched-table tbody');
+    if (tbody && !tbody.querySelector('tr')){
+      document.getElementById('unmatched-box').style.display = 'none';
+    }
+    loadSpecialists();
+  } else {
+    alert(d.error || 'خطا');
+  }
+}
+
+
+async function loadSpecialists(){
+  var filter = document.getElementById('sp-deputy-filter').value;
+  var all = await (await fetch('/api/specialists')).json();
+  var rows = (filter && filter !== 'همه') ? all.filter(function(r){return r.deputy === filter;}) : all;
+  document.querySelector('#specialists-table tbody').innerHTML = rows.map(function(r){
+    return '<tr>' +
+      '<td>'+(r.deputy||'')+'</td>' +
+      '<td>'+r.center_name+'</td>' +
+      '<td>'+(r.supply_type||'-')+'</td>' +
+      '<td><input type="text" inputmode="numeric" class="thousand-input" value="'+(r.specialists||0)+'" data-edit-id="'+r.id+'" data-edit-field="specialists"></td>' +
+      '<td><input type="text" inputmode="numeric" class="thousand-input" value="'+(r.equipment||0)+'" data-edit-id="'+r.id+'" data-edit-field="equipment"></td>' +
+      '<td><input type="text" inputmode="numeric" class="thousand-input" value="'+(r.bonus||0)+'" data-edit-id="'+r.id+'" data-edit-field="bonus"></td>' +
+    '</tr>';
+  }).join('');
+
+  document.querySelectorAll('#specialists-table input[data-edit-id]').forEach(function(inp){
+    inp.addEventListener('change', function(){
+      var id = Number(inp.dataset.editId);
+      var field = inp.dataset.editField;
+      var value = unformatNumber(inp.value);
+      fetch('/api/specialists/' + id, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ field: field, value: value })
+      }).then(function(r){
+        if (r.ok){
+          inp.style.background = 'rgba(16,185,129,.15)';
+          setTimeout(function(){ inp.style.background = ''; }, 800);
+        } else {
+          inp.style.background = 'rgba(239,68,68,.15)';
+        }
+      });
+    });
+  });
+}
+
+var _mcCache = [];
+
+async function loadManualCeilings(){
+  var period = getPeriod('mc-year', 'mc-month');
+  var filter = document.getElementById('mc-deputy-filter').value;
+  var manualRows = await (await fetch('/api/manual-ceilings?period=' + encodeURIComponent(period))).json();
+  var manualByKey = {};
+  manualRows.forEach(function(m){ manualByKey[m.center_name + '|' + (m.supply_type||'')] = m; });
+  var all = await (await fetch('/api/specialists')).json();
+  var rows = (filter && filter !== 'همه') ? all.filter(function(r){return r.deputy === filter;}) : all;
+  _mcCache = rows;
+  document.querySelector('#manual-ceilings-table tbody').innerHTML = rows.map(function(r, idx){
+    var key = r.center_name + '|' + (r.supply_type||'');
+    var m = manualByKey[key];
+    var manualVal = m ? m.amount : '';
+    return '<tr>' +
+      '<td>'+(r.deputy||'')+'</td>' +
+      '<td>'+r.center_name+'</td>' +
+      '<td>'+(r.supply_type||'-')+'</td>' +
+      '<td class="num">'+(r.monthly_quota != null ? fmtRial(r.monthly_quota) : '-')+'</td>' +
+      '<td><input type="text" inputmode="numeric" data-idx="'+idx+'" class="mc-amount thousand-input" value="'+manualVal+'" placeholder="خالی = پیش‌فرض"></td>' +
+      '<td>'+(m ? '<button class="ghost" onclick="deleteManualCeiling('+m.id+')">حذف</button>' : '')+'</td>' +
+    '</tr>';
+  }).join('');
+}
+async function saveAllManualCeilings(){
+  var period = getPeriod('mc-year', 'mc-month');
+  var inputs = document.querySelectorAll('#manual-ceilings-table input.mc-amount');
+  var saved = 0;
+  for (var i = 0; i < inputs.length; i++){
+    var inp = inputs[i];
+    var idx = Number(inp.dataset.idx);
+    var row = _mcCache[idx];
+    if (!row) continue;
+    var val = inp.value;
+    if (val === '' || val === null) continue;
+    var num = unformatNumber(val);
+    if (isNaN(num)) continue;
+    var res = await fetch('/api/manual-ceilings/save', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        center_name: row.center_name,
+        supply_type: row.supply_type || '',
+        period_month: period,
+        amount: num
+      })
+    });
+    if (res.ok) saved++;
+  }
+  var msg = document.getElementById('mc-msg');
+  msg.innerHTML = '<div class="msg ok">'+saved+' سقف دستی ثبت شد.</div>';
+  loadManualCeilings();
+  setTimeout(function(){ msg.innerHTML=''; }, 3000);
+}
+async function deleteManualCeiling(id){
+  if (!confirm('این سقف دستی حذف شود؟')) return;
+  await fetch('/api/manual-ceilings/' + id, {method: 'DELETE'});
+  loadManualCeilings();
+}
+
+async function loadPaymentGrid(){
+  var year = document.getElementById('pay-year').value || CURRENT_YEAR;
+  var all = await (await fetch('/api/payment-grid?year=' + encodeURIComponent(year))).json();
+  var search = (document.getElementById('pg-search').value || '').trim().toLowerCase();
+  if (search){
+    all = all.filter(function(r){
+      return (r.national_code && r.national_code.includes(search))
+          || (r.first_name && r.first_name.toLowerCase().includes(search))
+          || (r.last_name && r.last_name.toLowerCase().includes(search));
+    });
+  } else {
+    all = all.slice(0, 200);
+  }
+  document.getElementById('pg-count').textContent = all.length + ' نفر نمایش داده می‌شود';
+  var thead = document.getElementById('pg-thead');
+  var headHtml = '<th class="sticky-name">کد ملی</th><th class="sticky-name">نام</th><th class="sticky-name">خانوادگی</th>';
+  MONTHS.forEach(function(m){
+    headHtml += '<th class="num" style="min-width:120px">'+m+' (ریال)</th>';
+  });
+  thead.innerHTML = headHtml;
+  var tbody = document.querySelector('#payment-grid-table tbody');
+  tbody.innerHTML = all.map(function(r){
+    var row = '<tr>' +
+      '<td class="code sticky-name">'+r.national_code+'</td>' +
+      '<td class="sticky-name">'+(r.first_name||'')+'</td>' +
+      '<td class="sticky-name">'+(r.last_name||'')+'</td>';
+    MONTHS.forEach(function(m){
+      var v = r.amounts[m];
+      var valAttr = (v != null && v !== '') ? v : '';
+      row += '<td class="num"><input type="text" inputmode="numeric" class="thousand-input" value="'+valAttr+'" data-nc="'+r.national_code+'" data-m="'+m+'"></td>';
+    });
+    row += '</tr>';
+    return row;
+  }).join('');
+  document.querySelectorAll('#payment-grid-table input[data-nc]').forEach(function(inp){
+    inp.addEventListener('change', function(){ savePaymentCell(inp); });
+  });
+}
+async function savePaymentCell(input){
+  var nc = input.getAttribute('data-nc');
+  var month = input.getAttribute('data-m');
+  var year = document.getElementById('pay-year').value || CURRENT_YEAR;
+  var period = year + '-' + month;
+  var amount = unformatNumber(input.value);
+  var res = await fetch('/api/payment-grid/save', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ national_code: nc, period_month: period, amount: amount })
+  });
+  var msg = document.getElementById('pg-msg');
+  if (res.ok){
+    msg.innerHTML = '<div class="msg ok">ذخیره شد.</div>';
+    setTimeout(function(){ msg.innerHTML=''; }, 1500);
+  } else {
+    msg.innerHTML = '<div class="msg err">خطا در ذخیره.</div>';
+  }
+}
+
+async function clearMonthData(type){
+  var period, label, payload;
+  if (type === 'records'){
+    period = getPeriod('period-year', 'period-month');
+    label = 'اکسل ورودی';
+    payload = { period_month: period, clear_records: true };
+  } else if (type === 'employment'){
+    period = getPeriod('emp-year', 'emp-month');
+    label = 'وضعیت اشتغال';
+    payload = { period_month: period, clear_employment: true };
+  } else { return; }
+  var msg = 'آیا مطمئن هستید که می‌خواهید داده‌های «' + label + '» برای دورهٔ «' + period + '» را پاک کنید؟\n\n';
+  msg += 'این عمل قابل بازگشت نیست!';
+  if (!confirm(msg)) return;
+  try {
+    var res = await fetch('/api/clear-month', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    var data = await res.json();
+    if (res.ok){
+      var d = data.deleted || {};
+      var parts = [];
+      if (d.records_deleted != null) parts.push(d.records_deleted + ' رکورد ورودی');
+      if (d.employment_deleted != null) parts.push(d.employment_deleted + ' وضعیت اشتغال');
+      if (d.payments_deleted != null) parts.push(d.payments_deleted + ' پرداختی');
+      alert('پاک شد:\n' + (parts.join('\n') || 'موردی برای پاک کردن نبود.'));
+      loadDashboard();
+    } else {
+      alert('خطا: ' + (data.error || 'نامعلوم'));
+    }
+  } catch (e) {
+    alert('خطا: ' + e);
+  }
+}
+async function doImport(){
+  var period = getPeriod('period-year', 'period-month');
+  var fileInput = document.getElementById('file-input');
+  var msg = document.getElementById('import-msg');
+  if (!fileInput.files.length){ msg.innerHTML = '<div class="msg err">فایل انتخاب کنید.</div>'; return; }
+  var fd = new FormData();
+  fd.append('period', period);
+  fd.append('file', fileInput.files[0]);
+  msg.innerHTML = '<div class="msg">در حال ایمپورت...</div>';
+  try {
+    var res = await fetch('/api/import', { method: 'POST', body: fd });
+    var data = await res.json();
+    if (!res.ok){ msg.innerHTML = '<div class="msg err">'+data.error+'</div>'; return; }
+    var samples = '';
+    if (data.unresolved_samples && data.unresolved_samples.length){
+      samples = '<div class="samples"><b>نمونه‌های شناسایی‌نشده:</b><br>' +
+        data.unresolved_samples.slice(0, 15).map(function(s){return '• ' + s;}).join('<br>') + '</div>';
+    }
+    msg.innerHTML = '<div class="msg ok">'+data.import_result.ok+' رکورد ایمپورت شد.<br>'+
+      data.import_result.unresolved_deputy+' رکورد مرکزشان شناسایی نشد.<br>'+
+      data.import_result.employment_applied+' رکورد وضعیت اشتغال اعمال شد.<br>'+
+      'محاسبه برای '+data.calculation.updated+' ردیف.'+samples+'</div>';
+    loadDashboard();
+  } catch (e) {
+    msg.innerHTML = '<div class="msg err">خطا: '+e+'</div>';
+  }
+}
+async function doImportEmployment(){
+  var period = getPeriod('emp-year', 'emp-month');
+  var fileInput = document.getElementById('emp-file');
+  var msg = document.getElementById('emp-msg');
+  if (!fileInput.files.length){ msg.innerHTML = '<div class="msg err">فایل انتخاب کنید.</div>'; return; }
+  var fd = new FormData();
+  fd.append('period', period);
+  fd.append('file', fileInput.files[0]);
+  msg.innerHTML = '<div class="msg">در حال ایمپورت...</div>';
+  try {
+    var res = await fetch('/api/import-employment', { method: 'POST', body: fd });
+    var data = await res.json();
+    if (!res.ok){ msg.innerHTML = '<div class="msg err">'+data.error+'</div>'; return; }
+    var r = data.import_result;
+    msg.innerHTML = '<div class="msg ok">'+
+      r.ok+' ردیف وضعیت اشتغال برای «'+r.period+'» ذخیره شد.<br>'+
+      r.records_updated+' رکورد در این ماه به‌روزرسانی شد.<br>'+
+      'محاسبه برای '+data.calculation.updated+' ردیف.'+
+      '</div>';
+    loadDashboard();
+  } catch (e) {
+    msg.innerHTML = '<div class="msg err">خطا: '+e+'</div>';
+  }
+}
+async function applyEmployment(){
+  var msg = document.getElementById('apply-msg');
+  msg.textContent = 'در حال اعمال...';
+  try {
+    var res = await fetch('/api/apply-employment', { method: 'POST' });
+    var data = await res.json();
+    if (!res.ok){ msg.textContent = data.error || 'خطا'; return; }
+    msg.textContent = data.updated + ' رکورد در ' + data.months.length + ' ماه به‌روز شد.';
+    loadDashboard();
+  } catch (e) {
+    msg.textContent = 'خطا: ' + e;
+  }
+}
+async function doImportPayments(){
+  var fileInput = document.getElementById('pay-file');
+  var overwrite = document.getElementById('pay-overwrite').value;
+  var year = document.getElementById('pay-year').value || CURRENT_YEAR;
+  var msg = document.getElementById('pay-import-msg');
+  if (!fileInput.files.length){
+    msg.innerHTML = '<div class="msg err">فایل را انتخاب کنید.</div>';
+    return;
+  }
+  var fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  fd.append('overwrite', overwrite);
+  fd.append('year', year);
+  msg.innerHTML = '<div class="msg">در حال ایمپورت...</div>';
+  try {
+    var res = await fetch('/api/import-monthly-payments', { method: 'POST', body: fd });
+    var data = await res.json();
+    if (!res.ok){
+      msg.innerHTML = '<div class="msg err">'+(data.error||'خطا')+'</div>';
+      return;
+    }
+    var r = data.import_result;
+    msg.innerHTML = '<div class="msg ok">'+
+      r.ok+' پرداخت ماهانه ذخیره شد.<br>'+
+      r.created_persons+' شخص جدید به فهرست اضافه شد.<br>'+
+      r.skipped+' ردیف بدون کد ملی رد شد.<br>'+
+      'سال: '+r.year+'<br>'+
+      'محاسبهٔ مجدد: '+data.calculation.updated+' ردیف.'+
+      '</div>';
+    loadPaymentGrid();
+    loadDashboard();
+  } catch (e) {
+    msg.innerHTML = '<div class="msg err">خطا: '+e+'</div>';
+  }
+}
+
+async function loadApprovalStatus(){
+  try {
+    var period = getPeriod('appr-year', 'appr-month');
+    var depFilter = document.getElementById('appr-deputy-filter').value || 'همه';
+    var depUrl = '/api/approval-status/deputies?period=' + encodeURIComponent(period);
+    var cenUrl = '/api/approval-status/centers?period=' + encodeURIComponent(period);
+    if (depFilter && depFilter !== 'همه') cenUrl += '&deputy=' + encodeURIComponent(depFilter);
+    var deps = await (await fetch(depUrl)).json();
+    var cens = await (await fetch(cenUrl)).json();
+    var log = await (await fetch('/api/approval-log?limit=50')).json();
+    var msg = document.getElementById('appr-msg');
+    if (msg) msg.textContent = deps.length + ' معاونت، ' + cens.length + ' مرکز';
+    renderApprovalDeputies(deps);
+    renderApprovalCenters(cens);
+    renderApprovalLog(log);
+  } catch(e){ console.warn('loadApprovalStatus', e); }
+}
+function renderApprovalDeputies(rows){
+  var tbody = document.querySelector('#approval-deputies-table tbody');
+  var tfoot = document.querySelector('#approval-deputies-table tfoot');
+  if (!rows.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-3)">داده‌ای نیست</td></tr>';
+    tfoot.innerHTML = '';
+    return;
+  }
+  var tTot=0, tAppr=0, tPend=0, tApprA=0, tPendA=0;
+  tbody.innerHTML = rows.map(function(r){
+    tTot += r.total||0; tAppr += r.approved||0; tPend += r.pending||0;
+    tApprA += r.approved_amount||0; tPendA += r.pending_amount||0;
+    var pct = r.total ? Math.round((r.approved/r.total)*100) : 0;
+    return '<tr>' +
+      '<td>'+r.deputy+'</td>' +
+      '<td class="num">'+fmt(r.total)+'</td>' +
+      '<td class="num" style="color:var(--green)">'+fmt(r.approved)+' <span style="color:var(--text-3);font-weight:400">('+pct+'٪)</span></td>' +
+      '<td class="num" style="color:var(--amber)">'+fmt(r.pending)+'</td>' +
+      '<td class="num">'+fmt(Math.round(r.approved_amount))+'</td>' +
+      '<td class="num">'+fmt(Math.round(r.pending_amount))+'</td>' +
+    '</tr>';
+  }).join('');
+  tfoot.innerHTML = '<tr>' +
+    '<td>جمع کل</td>' +
+    '<td class="num">'+fmt(tTot)+'</td>' +
+    '<td class="num">'+fmt(tAppr)+'</td>' +
+    '<td class="num">'+fmt(tPend)+'</td>' +
+    '<td class="num">'+fmt(Math.round(tApprA))+'</td>' +
+    '<td class="num">'+fmt(Math.round(tPendA))+'</td>' +
+  '</tr>';
+}
+function renderApprovalCenters(rows){
+  var tbody = document.querySelector('#approval-centers-table tbody');
+  if (!rows.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-3)">داده‌ای نیست</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(function(r){
+    var badge = r.pending === 0
+      ? '<span style="color:var(--green)">کامل</span>'
+      : (r.approved === 0 ? '<span style="color:var(--red)">هیچ</span>' : '<span style="color:var(--amber)">جزئی</span>');
+    return '<tr>' +
+      '<td>'+r.deputy+'</td>' +
+      '<td>'+r.center+'</td>' +
+      '<td class="num">'+fmt(r.total)+'</td>' +
+      '<td class="num" style="color:var(--green)">'+fmt(r.approved)+' '+badge+'</td>' +
+      '<td class="num" style="color:var(--amber)">'+fmt(r.pending)+'</td>' +
+    '</tr>';
+  }).join('');
+}
+function renderApprovalLog(rows){
+  var tbody = document.querySelector('#approval-log-table tbody');
+  if (!rows.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-3)">فعالیتی ثبت نشده</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(function(r){
+    var act = r.action === 'approve' ? '<span style="color:var(--green)">تأیید</span>'
+            : (r.action === 'unapprove' ? '<span style="color:var(--red)">رد</span>'
+            : '<span>'+r.action+'</span>');
+    return '<tr>' +
+      '<td style="font-size:11.5px;color:var(--text-3)">'+r.created_at+'</td>' +
+      '<td>'+r.username+'</td>' +
+      '<td>'+act+'</td>' +
+      '<td>'+((r.first_name||'')+' '+(r.last_name||''))+'</td>' +
+      '<td class="code">'+(r.national_code||'')+'</td>' +
+      '<td>'+(r.deputy||'')+'</td>' +
+      '<td>'+(r.cost_center||'')+'</td>' +
+      '<td>'+r.period_month+'</td>' +
+      '<td class="num">'+fmt(Math.round(r.amount||0))+'</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function updateApproveButtons(){
+  var checked = document.querySelectorAll('#report-table input.approve-check:checked:not([disabled])').length;
+  var btnApprove = document.getElementById('approve-all-btn');
+  var btnUnapprove = document.getElementById('unapprove-all-btn');
+
+  if (checked > 0){
+    btnApprove.textContent = 'تأییدیه مدیر (' + checked + ')';
+    btnApprove.disabled = false;
+    btnUnapprove.style.display = '';
+  } else {
+    btnApprove.textContent = 'تأییدیه مدیر';
+    btnApprove.disabled = true;
+    btnUnapprove.style.display = 'none';
+  }
+}
+
+async function doBulkApprove(){
+  var ids = [];
+  document.querySelectorAll('#report-table input.approve-check:checked').forEach(function(inp){
+    ids.push(Number(inp.dataset.recordId));
+  });
+
+  if (!ids.length){
+    showToast('هیچ ردیفی تیک نخورده', 'اول ردیف‌های موردنظر را تیک بزنید', 'warn');
+    return;
+  }
+
+  if (!confirm('آیا ' + ids.length + ' ردیف را تأیید می‌کنید؟\nاین ردیف‌ها به پرداختی ماهانه اضافه می‌شوند.')) return;
+
+  var btn = document.getElementById('approve-all-btn');
+  btn.disabled = true;
+  btn.textContent = 'در حال ثبت...';
+
+  try {
+    var r = await fetch('/api/bulk-approve', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ record_ids: ids })
+    });
+    var d = await r.json();
+
+    if (r.ok){
+      showToast('تأییدیه ثبت شد', d.approved_count + ' ردیف به تأییدشده‌ها اضافه شد', 'ok');
+      await loadReport();
+    } else {
+      showToast('خطا', d.error || 'خطا در ثبت', 'err');
+    }
+  } catch(e){
+    showToast('خطا', String(e), 'err');
+  } finally {
+    updateApproveButtons();
+  }
+}
+
+async function doBulkUnapprove(){
+  var ids = [];
+  document.querySelectorAll('#report-table input.approve-check:checked').forEach(function(inp){
+    ids.push(Number(inp.dataset.recordId));
+  });
+
+  if (!ids.length){
+    showToast('هیچ ردیفی تیک نخورده', 'اول ردیف‌های تأییدشده را تیک بزنید', 'warn');
+    return;
+  }
+
+  if (!confirm('لغو تأیید ' + ids.length + ' ردیف؟')) return;
+
+  try {
+    var r = await fetch('/api/bulk-unapprove', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ record_ids: ids })
+    });
+    var d = await r.json();
+    if (r.ok){
+      showToast('لغو شد', d.unapproved_count + ' ردیف از تأییدشده‌ها حذف شد', 'warn');
+      await loadReport();
+    } else {
+      showToast('خطا', d.error || 'خطا', 'err');
+    }
+  } catch(e){
+    showToast('خطا', String(e), 'err');
+  }
+}
+
+async function doImportMainCenter(){
+  var fileInput = document.getElementById('maincenter-file');
+  var msg = document.getElementById('maincenter-msg');
+
+  if (!fileInput.files.length){
+    msg.innerHTML = '<div class="msg err">فایل را انتخاب کنید.</div>';
+    return;
+  }
+
+  var fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+
+  msg.innerHTML = '<div class="msg">در حال بارگذاری...</div>';
+
+  try {
+    var res = await fetch('/api/import-main-center', {method: 'POST', body: fd});
+    var data = await res.json();
+
+    if (!res.ok){
+      msg.innerHTML = '<div class="msg err">' + (data.error || 'خطا') + '</div>';
+      return;
+    }
+
+    var r = data.import_result;
+    var html = '<div class="msg ok">' + r.ok + ' ردیف خوانده شد';
+    html += '<br>' + r.records_updated + ' رکورد به‌روزرسانی شد';
+    if (r.skipped > 0) html += '<br>' + r.skipped + ' ردیف رد شد';
+    html += '</div>';
+    msg.innerHTML = html;
+
+    fileInput.value = '';
+  } catch(e){
+    msg.innerHTML = '<div class="msg err">خطا: ' + e + '</div>';
+  }
+}
+
+// ============================================================
+// STM: dropdown منابع انسانی
+// ============================================================
+function openHRView(view){
+  // بستن dropdown
+  var dd = document.getElementById('hr-dropdown');
+  if (dd) dd.style.display = 'none';
+
+  // فعال کردن تَب
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+  var tab = document.getElementById('hr-tab');
+  if (tab) tab.classList.add('active');
+  document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+  var sec = document.getElementById('tab-personnel');
+  if (sec) sec.classList.remove('hidden');
+  currentTab = 'personnel';
+
+  // علامت‌گذاری آیتم فعال
+  document.querySelectorAll('.hr-dd-item').forEach(function(el){
+    el.classList.toggle('active', el.dataset.hrView === view);
+  });
+
+  // بارگذاری iframe
+  var ifr = document.getElementById('personnel-frame');
+  if (!ifr) return;
+
+  if (ifr.dataset.loaded === '0' || !ifr.src){
+    ifr.src = '/personnel?embedded=1&view=' + view;
+    ifr.dataset.loaded = '1';
+  } else {
+    // قبلاً لود شده — postMessage
+    try {
+      ifr.contentWindow.postMessage({action: 'openHRView', view: view}, '*');
+    } catch(e){
+      // اگه postMessage کار نکرد، src رو عوض کن
+      ifr.src = '/personnel?embedded=1&view=' + view;
+    }
+  }
+}
+
+// اتصال کلیک روی آیتم‌های dropdown
+document.addEventListener('click', function(e){
+  var item = e.target.closest('.hr-dd-item');
+  if (item){
+    e.stopPropagation();
+    var v = item.dataset.hrView;
+    if (v) openHRView(v);
+    return;
+  }
+  // کلیک بیرون → بستن dropdown
+  var dd = document.getElementById('hr-dropdown');
+  if (dd && !e.target.closest('#hr-tab') && !e.target.closest('#hr-dropdown')){
+    dd.style.display = 'none';
+  }
+});
+
+
+// ============================================================
+// dropdown اطلاعات ورودی
+// ============================================================
+
+document.addEventListener('click', function(e){
+  // کلیک روی آیتم‌های dropdown ورودی
+  var item = e.target.closest('.input-dd-item');
+  if (item){
+    e.stopPropagation();
+    var sub = item.dataset.inputSub;
+    if (sub) openInputView(sub);
+    return;
+  }
+
+  // بستن dropdown اگر بیرون کلیک شد
+  var dd = document.getElementById('input-tab-dropdown');
+  var mainBtn = document.getElementById('input-main-tab');
+  if (dd && dd.style.display === 'block'){
+    if (!mainBtn || (!mainBtn.contains(e.target) && !dd.contains(e.target))){
+      dd.style.display = 'none';
+    }
+  }
+});
+
+
+// ============================================================
+// dropdown اطلاعات ورودی
+// ============================================================
+function openInputView(sub){
+  var dd = document.getElementById('input-tab-dropdown');
+  if (dd) dd.style.display = 'none';
+
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+  var tab = document.getElementById('input-main-tab');
+  if (tab) tab.classList.add('active');
+
+  document.querySelectorAll('main > section').forEach(function(s){s.classList.add('hidden');});
+  var sec = document.getElementById('tab-input');
+  if (sec) sec.classList.remove('hidden');
+  currentTab = 'input';
+
+  document.querySelectorAll('.sub-panel').forEach(function(p){p.classList.add('hidden');});
+  var target = document.getElementById('sub-' + sub);
+  if (target) target.classList.remove('hidden');
+
+  document.querySelectorAll('.input-dd-item').forEach(function(el){
+    el.classList.toggle('active', el.dataset.inputSub === sub);
+  });
+
+  if (sub === 'pricing') loadPricingRules();
+  if (sub === 'specialists') loadSpecialists();
+  if (sub === 'manual') loadManualCeilings();
+  if (sub === 'payments') loadPaymentGrid();
+  if (sub === 'import') loadDeputyFilters();
+}
+
+// outside-click handler برای بستن dropdownها
+document.addEventListener('click', function(e){
+  // آیتم‌های input
+  var inItem = e.target.closest('.input-dd-item');
+  if (inItem) {
+    e.stopPropagation();
+    var sub = inItem.dataset.inputSub;
+    if (sub) openInputView(sub);
+    return;
+  }
+
+  // آیتم‌های HR
+  var hrItem = e.target.closest('.hr-dd-item');
+  if (hrItem) {
+    e.stopPropagation();
+    var v = hrItem.dataset.hrView;
+    if (v && typeof openHRView === 'function') openHRView(v);
+    return;
+  }
+
+  // بستن input-dropdown
+  var inDd = document.getElementById('input-tab-dropdown');
+  var inBtn = document.getElementById('input-main-tab');
+  if (inDd && inDd.style.display === 'block'){
+    if (!inBtn || (!inBtn.contains(e.target) && !inDd.contains(e.target))){
+      inDd.style.display = 'none';
+    }
+  }
+
+  // بستن hr-dropdown
+  var hrDd = document.getElementById('hr-dropdown');
+  var hrBtn = document.getElementById('hr-tab');
+  if (hrDd && hrDd.style.display === 'block'){
+    if (!hrBtn || (!hrBtn.contains(e.target) && !hrDd.contains(e.target))){
+      hrDd.style.display = 'none';
+    }
+  }
+});
+
+fillYearSelect('dash-year', CURRENT_YEAR);
+fillMonthSelect('dash-month', CURRENT_MONTH, true);
+fillYearSelect('rep-year', CURRENT_YEAR);
+fillMonthSelect('rep-month', CURRENT_MONTH, false);
+fillYearSelect('emp-year', CURRENT_YEAR);
+fillMonthSelect('emp-month', CURRENT_MONTH, false);
+fillYearSelect('period-year', CURRENT_YEAR);
+fillMonthSelect('period-month', CURRENT_MONTH, false);
+fillYearSelect('mc-year', CURRENT_YEAR);
+fillMonthSelect('mc-month', CURRENT_MONTH, false);
+fillYearSelect('st-year', CURRENT_YEAR);
+fillMonthSelect('st-month', CURRENT_MONTH, true);
+fillYearSelect('pay-year', CURRENT_YEAR);
+fillYearSelect('appr-year', CURRENT_YEAR);
+fillMonthSelect('appr-month', CURRENT_MONTH, true);
+
+document.getElementById('dash-month').value = 'همه';
+document.getElementById('st-month').value = 'همه';
+
+buildColSearchRow();
+
+loadFilterOptions().then(function(){ loadReport(); }).catch(function(e){ console.warn(e); loadReport(); });
+loadDashboard();
+</script>
+</body>
+</html>'''
+
+
+def main():
+    with open(OUT_PATH, "w", encoding="utf-8", newline="") as f:
+        f.write(HTML)
+    print(f"OK -> {OUT_PATH} ({len(HTML):,} chars)")
+
+
+if __name__ == "__main__":
+    main()
