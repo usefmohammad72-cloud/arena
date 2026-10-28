@@ -1,0 +1,893 @@
+==============================================================================
+1) API endpoints مربوط به deputy / center / structure
+==============================================================================
+
+  D:\moghatee\samane\app\web\app.py:196
+    196: @app.route("/api/all-centers")
+    197: @auth.login_required
+    198: def api_all_centers():
+    199:     conn = get_connection(DB_PATH)
+    200:     rows = conn.execute("SELECT DISTINCT center_name, deputy FROM centers_structure WHERE center_name IS NOT NULL AND center_name != '' ORDER BY deputy, center_name").fetchall()
+    201:     conn.close()
+    202:     return jsonify([{"name": r["center_name"], "deputy": r["deputy"] or ""} for r in rows])
+    203: 
+    204: @app.route("/")
+    205: def index():
+    206:     return render_template("index.html", months=PERSIAN_MONTHS)
+    207: 
+    208: @app.route("/api/summary")
+    209: def api_summary():
+    210:     conn = get_connection(DB_PATH)
+    211:     total = conn.execute("SELECT COUNT(*) c FROM records").fetchone()["c"]
+    212:     removed = conn.execute("SELECT COUNT(*) c FROM calculated_results WHERE ceiling_status = 'حذف شود' AND COALESCE(manager_approved, 0) = 0").fetchone()["c"]
+    213:     unresolved = conn.execute("SELECT COUNT(*) c FROM calculated_results WHERE (ceiling_status IS NULL OR ceiling_status = '') AND COALESCE(manager_approved, 0) = 0").fetchone()["c"]
+    214:     total_amount = conn.execute("SELECT COALESCE(SUM(CAST(ceiling_status AS REAL)),0) s FROM calculated_results WHERE ceiling_status IS NOT NULL AND ceiling_status NOT IN ('', 'حذف شود')").fetchone()["s"]
+    215:     conn.close()
+    216:     return jsonify({"total_records": total, "removed_count": removed, "unresolved_count": unresolved, "total_amount": total_amount})
+    217: 
+    218: @app.route("/api/by-deputy")
+    219: def api_by_deputy():
+    220:     conn = get_connection(DB_PATH)
+    221:     rows = conn.execute("SELECT r.deputy AS deputy, COUNT(*) AS person_count, COALESCE(SUM(CASE WHEN cr.ceiling_status NOT IN ('', 'حذف شود') THEN CAST(cr.ceiling_status AS REAL) ELSE 0 END), 0) AS total_amount FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id GROUP BY r.deputy ORDER BY total_amount DESC").fetchall()
+    222:     conn.close()
+    223:     return jsonify([dict(r) for r in rows])
+    224: 
+    225: @app.route("/api/by-supply-type")
+    226: def api_by_supply_type():
+
+  D:\moghatee\samane\app\web\app.py:218
+    218: @app.route("/api/by-deputy")
+    219: def api_by_deputy():
+    220:     conn = get_connection(DB_PATH)
+    221:     rows = conn.execute("SELECT r.deputy AS deputy, COUNT(*) AS person_count, COALESCE(SUM(CASE WHEN cr.ceiling_status NOT IN ('', 'حذف شود') THEN CAST(cr.ceiling_status AS REAL) ELSE 0 END), 0) AS total_amount FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id GROUP BY r.deputy ORDER BY total_amount DESC").fetchall()
+    222:     conn.close()
+    223:     return jsonify([dict(r) for r in rows])
+    224: 
+    225: @app.route("/api/by-supply-type")
+    226: def api_by_supply_type():
+    227:     conn = get_connection(DB_PATH)
+    228:     rows = conn.execute("SELECT CASE WHEN r.contract_subject LIKE '%تامین%' THEN 'تامین' WHEN r.contract_subject LIKE '%پخش%' THEN 'پخش' WHEN r.contract_subject LIKE '%تولید و فنی%' THEN 'تولید و فنی' ELSE 'سایر' END AS supply_type, COUNT(*) AS person_count, COALESCE(SUM(CASE WHEN cr.ceiling_status NOT IN ('', 'حذف شود') THEN CAST(cr.ceiling_status AS REAL) ELSE 0 END), 0) AS total_amount FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id WHERE r.deputy = 'معاونت سیما' GROUP BY supply_type ORDER BY total_amount DESC").fetchall()
+    229:     conn.close()
+    230:     return jsonify([dict(r) for r in rows])
+    231: 
+    232: @app.route("/api/dashboard-charts")
+    233: def api_dashboard_charts():
+    234:     period = request.args.get("period") or None
+    235:     if period in ("همه", "", "all"): period = None
+    236:     conn = get_connection(DB_PATH)
+    237:     if period: by_month_rows = conn.execute("SELECT period_month, COALESCE(SUM(amount),0) s, COUNT(*) c FROM monthly_payments WHERE period_month = ? GROUP BY period_month", (period,)).fetchall()
+    238:     else: by_month_rows = conn.execute("SELECT period_month, COALESCE(SUM(amount),0) s, COUNT(*) c FROM monthly_payments GROUP BY period_month").fetchall()
+    239:     def _sort_key(x):
+    240:         try:
+    241:             y, m = x["month"].split("-", 1)
+    242:             return (int(y), PERSIAN_MONTHS.index(m) if m in PERSIAN_MONTHS else 99)
+    243:         except: return (0, 99)
+    244:     by_month = sorted([{"month": r["period_month"], "amount": float(r["s"] or 0), "count": r["c"]} for r in by_month_rows], key=_sort_key)
+    245:     where_month = " WHERE r.period_month = ? " if period else " WHERE 1=1 "
+    246:     params_month = [period] if period else []
+    247:     warn = conn.execute(f"SELECT SUM(CASE WHEN cr.ceiling_status = 'حذف شود' AND COALESCE(cr.manager_approved,0) = 0 THEN 1 ELSE 0 END) AS employed, SUM(CASE WHEN cr.six_month_ceiling < 0 AND COALESCE(cr.manager_approved,0) = 0 THEN 1 ELSE 0 END) AS orange_cnt, SUM(CASE WHEN cr.six_month_ceiling >= 0 AND cr.ceiling_status NOT IN ('', 'حذف شود') AND COALESCE(cr.manager_approved,0) = 0 AND r.monthly_wage > CAST(cr.ceiling_status AS REAL) THEN 1 ELSE 0 END) AS yellow_cnt, SUM(CASE WHEN COALESCE(cr.manager_approved,0) = 1 THEN 1 ELSE 0 END) AS approved_cnt, SUM(CASE WHEN cr.ceiling_status NOT IN ('', 'حذف شود') AND COALESCE(cr.manager_approved,0) = 0 AND (cr.six_month_ceiling IS NULL OR cr.six_month_ceiling >= 0) AND r.monthly_wage <= CAST(cr.ceiling_status AS REAL) THEN 1 ELSE 0 END) AS ok_cnt FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id {where_month}", params_month).fetchone()
+    248:     buckets = [("۰ تا ۵۰ میلیون", 0, 50_000_000), ("۵۰ تا ۱۰۰ میلیون", 50_000_000, 100_000_000), ("۱۰۰ تا ۲۰۰ میلیون", 100_000_000, 200_000_000), ("۲۰۰ تا ۳۰۰ میلیون", 200_000_000, 300_000_000), ("۳۰۰ تا ۵۰۰ میلیون", 300_000_000, 500_000_000), ("بیش از ۵۰۰ میلیون", 500_000_000, 10**18)]
+
+  D:\moghatee\samane\app\web\app.py:263
+    263: @app.route("/api/period-options")
+    264: def api_period_options():
+    265:     conn = get_connection(DB_PATH)
+    266:     rows = conn.execute("SELECT DISTINCT period_month FROM records UNION SELECT DISTINCT period_month FROM monthly_payments UNION SELECT DISTINCT period_month FROM employment_monthly UNION SELECT DISTINCT period_month FROM manual_monthly_ceilings").fetchall()
+    267:     conn.close()
+    268:     from engine.pricing_engine import year_of, month_name_of
+    269:     options = set()
+    270:     for r in rows:
+    271:         pm = r[0]
+    272:         if pm:
+    273:             y, m = year_of(pm), month_name_of(pm)
+    274:             if y and m: options.add(f"{y}-{m}")
+    275:     return jsonify(sorted(options, key=lambda pm: (int(pm.split('-')[0]), PERSIAN_MONTHS.index(pm.split('-')[1]) if pm.split('-')[1] in PERSIAN_MONTHS else 99), reverse=True))
+    276: 
+    277: @app.route("/api/person")
+    278: def api_person():
+    279:     nc = request.args.get("national_code", "").strip().zfill(10)
+    280:     if not nc: return jsonify({"error": "کد ملی وارد نشده است."}), 400
+    281:     conn = get_connection(DB_PATH)
+    282:     person = conn.execute("SELECT * FROM persons WHERE national_code=?", (nc,)).fetchone()
+    283:     if not person:
+    284:         conn.close()
+    285:         return jsonify({"error": "شخصی با این کد ملی پیدا نشد."}), 404
+    286:     records = conn.execute("SELECT r.*, cr.ceiling_status FROM records r LEFT JOIN calculated_results cr ON cr.record_id = r.id WHERE r.person_id = ? ORDER BY r.period_month DESC", (person["id"],)).fetchall()
+    287:     payments = conn.execute("SELECT period_month, amount, source FROM monthly_payments WHERE national_code = ? ORDER BY id", (nc,)).fetchall()
+    288:     conn.close()
+    289:     return jsonify({"person": dict(person), "records": [dict(r) for r in records], "payments": [dict(r) for r in payments]})
+    290: 
+    291: @app.route("/api/pricing-rules", methods=["GET"])
+    292: def api_pricing_rules_list():
+    293:     conn = get_connection(DB_PATH)
+
+  D:\moghatee\samane\app\web\app.py:462
+    462: @app.route("/api/import-main-center", methods=["POST"])
+    463: @perms.perm_required('can_upload')
+    464: def api_import_main_center():
+    465:     if "file" not in request.files: return jsonify({"error": "فایلی ارسال نشده است."}), 400
+    466:     f = request.files["file"]
+    467:     period = request.form.get("period", "").strip()
+    468:     if not period: return jsonify({"error": "دوره (period) ارسال نشده"}), 400
+    469:     save_path = os.path.join(UPLOAD_DIR, "main_center_" + f.filename)
+    470:     f.save(save_path)
+    471:     try: result = import_main_cost_centers(save_path, DB_PATH, period_month=period)
+    472:     except Exception as e: return jsonify({"error": f"خطا: {e}"}), 500
+    473:     calc = recalculate_all(DB_PATH)
+    474:     return jsonify({"import_result": result, "calculation": calc})
+    475: 
+    476: @app.route("/api/apply-employment", methods=["POST"])
+    477: @perms.perm_required('can_upload')
+    478: def api_apply_employment():
+    479:     conn = get_connection(DB_PATH)
+    480:     months = [r["period_month"] for r in conn.execute("SELECT DISTINCT period_month FROM records")]
+    481:     total = 0
+    482:     for m in months:
+    483:         total += _apply_employment_for_month(conn, m)
+    484:         sync_employment_status(conn, m)
+    485:     conn.commit()
+    486:     conn.close()
+    487:     calc = recalculate_all(DB_PATH)
+    488:     return jsonify({"updated": total, "months": months, "calculation": calc})
+    489: 
+    490: @app.route("/api/filter-options")
+    491: def api_filter_options():
+    492:     conn = get_connection(DB_PATH)
+
+  D:\moghatee\samane\app\web\app.py:490
+    490: @app.route("/api/filter-options")
+    491: def api_filter_options():
+    492:     conn = get_connection(DB_PATH)
+    493:     deputies = [r["deputy"] for r in conn.execute("SELECT deputy FROM deputies_structure ORDER BY id")]
+    494:     deputy = request.args.get("deputy", "")
+    495:     if deputy and deputy != "همه": centers = [r["center_name"] for r in conn.execute("SELECT DISTINCT center_name FROM centers_structure WHERE deputy=? ORDER BY center_name", (deputy,))]
+    496:     else: centers = [r["center_name"] for r in conn.execute("SELECT DISTINCT center_name FROM centers_structure ORDER BY center_name")]
+    497:     center_scope = perms.current_center_scope()
+    498:     if center_scope is not None: centers = [c for c in centers if c in set(center_scope)]
+    499:     conn.close()
+    500:     return jsonify({"deputies": ["همه"] + deputies, "centers": ["همه"] + centers, "supply_types": ["همه", "تولید", "تامین", "پخش", "فنی"]})
+    501: 
+    502: @app.route("/api/report")
+    503: def api_report():
+    504:     deputy, center, supply_type = request.args.get("deputy", "همه"), request.args.get("center", "همه"), request.args.get("supply_type", "همه")
+    505:     period = request.args.get("period") or None
+    506:     scope, center_scope = perms.current_scope(), perms.current_center_scope()
+    507:     if scope and deputy in ("همه", "", None): pass
+    508:     elif scope and deputy not in scope: deputy = scope[0] if scope else deputy
+    509:     if center_scope is not None:
+    510:         if center in ("همه", "", None): pass
+    511:         elif center not in center_scope: return jsonify({"summary": {}, "rows": []}), 403
+    512: 
+    513:     data = build_report(DB_PATH, deputy, center, supply_type, period)
+    514: 
+    515:     # *** منطق فوق‌هوشمند پایتون برای تضمین اعمال وضعیت اشتغال در گزارش ***
+    516:     conn = get_connection(DB_PATH)
+    517:     em_rows = conn.execute("SELECT national_code, period_month, employment_status FROM employment_monthly").fetchall()
+    518:     em_map = {}
+    519:     for r in em_rows:
+    520:         em_map[(smart_nc(r['national_code']), str(r['period_month']).strip())] = r['employment_status']
+
+  D:\moghatee\samane\app\web\app.py:822
+    822: @app.route("/api/specialists", methods=["GET"])
+    823: def api_specialists_list():
+    824:     period = request.args.get("period")
+    825:     conn = get_connection(DB_PATH)
+    826:     query = "SELECT s.id, s.center_name, s.supply_type, s.period_month, s.specialists, s.equipment, s.bonus, c.deputy FROM specialists_equipment_bonus s LEFT JOIN centers_structure c ON c.center_name = s.center_name AND COALESCE(c.supply_type,'') = s.supply_type"
+    827:     params = []
+    828:     if period and period != 'همه':
+    829:         query += " WHERE s.period_month = ?"
+    830:         params.append(period)
+    831:     query += " ORDER BY c.deputy, s.center_name, s.supply_type"
+    832:     rows = conn.execute(query, params).fetchall()
+    833:     conn.close()
+    834:     return jsonify([dict(r) for r in rows])
+    835: 
+    836: @app.route("/api/bulk-import/<category>", methods=["POST"])
+    837: @perms.perm_required('can_edit_specialists')
+    838: def api_bulk_import(category):
+    839:     if category not in ("specialists", "equipment", "bonus"): return jsonify({"error": "دستهٔ نامعتبر"}), 400
+    840:     if "file" not in request.files: return jsonify({"error": "فایلی ارسال نشده است."}), 400
+    841:     f = request.files["file"]
+    842:     period = request.form.get("period", "").strip()
+    843:     if not period: return jsonify({"error": "دوره (period) ارسال نشده"}), 400
+    844:     save_path = os.path.join(UPLOAD_DIR, f"bulk_{category}_" + f.filename)
+    845:     f.save(save_path)
+    846:     try: result = import_bulk(save_path, category, DB_PATH, username=session.get("username", "کاربر"), period_month=period)
+    847:     except Exception as e: return jsonify({"error": f"خطا: {e}"}), 500
+    848:     return jsonify({"ok": True, "result": result})
+    849: 
+    850: @app.route("/api/bulk-import/remap", methods=["POST"])
+    851: @perms.perm_required('can_edit_specialists')
+    852: def api_bulk_import_remap():
+
+  D:\moghatee\samane\app\web\app.py:874
+    874: @app.route("/api/specialists/<int:row_id>", methods=["PUT"])
+    875: @perms.perm_required('can_edit_specialists')
+    876: def api_specialists_update(row_id):
+    877:     payload = request.get_json() or {}
+    878:     field, value = payload.get("field"), payload.get("value")
+    879:     if field not in ("specialists", "equipment", "bonus"): return jsonify({"error": "فیلد نامعتبر."}), 400
+    880:     try: value = float(value or 0)
+    881:     except: return jsonify({"error": "مقدار عددی لازم است."}), 400
+    882:     conn = get_connection(DB_PATH)
+    883:     conn.execute(f"UPDATE specialists_equipment_bonus SET {field} = ? WHERE id = ?", (value, row_id))
+    884:     log_action(conn, "کاربر", "ویرایش کارشناسان", f"row {row_id}: {field}")
+    885:     conn.commit()
+    886:     conn.close()
+    887:     return jsonify({"ok": True})
+    888: 
+    889: def _build_summary_rows(conn, period, deputy_filter, center_filter, supply_filter):
+    890:     from collections import defaultdict
+    891:     q = "SELECT r.deputy, r.cost_center, COALESCE(SUM(r.skill_card_bonus), 0) AS skill_card_all, COALESCE(SUM(CASE WHEN r.legal_article NOT LIKE '%38%' AND r.legal_article NOT LIKE '%۳۸%' THEN r.skill_card_bonus ELSE 0 END), 0) AS skill_card_excl_38, COALESCE(SUM(r.monthly_wage), 0) AS wage_sum, COALESCE(SUM(r.non_continuous_bonus), 0) AS non_continuous_sum, COALESCE(SUM(r.employer_insurance), 0) AS employer_insurance_sum, COUNT(*) AS cnt FROM records r WHERE 1=1"
+    892:     p = []
+    893:     if period: q += " AND r.period_month = ?"; p.append(period)
+    894:     if deputy_filter and deputy_filter != "همه": q += " AND r.deputy = ?"; p.append(deputy_filter)
+    895:     if center_filter and center_filter != "همه": q += " AND r.cost_center = ?"; p.append(center_filter)
+    896:     if supply_filter and supply_filter != "همه": q += " AND r.contract_subject LIKE ?"; p.append(f"%{supply_filter}%")
+    897:     q += " GROUP BY r.deputy, r.cost_center ORDER BY r.deputy, r.cost_center"
+    898:     rows = conn.execute(q, p).fetchall()
+    899:     if period: se_rows = conn.execute("SELECT center_name, supply_type, specialists, equipment, bonus FROM specialists_equipment_bonus WHERE period_month = ?", (period,)).fetchall()
+    900:     else: se_rows = conn.execute("SELECT center_name, supply_type, SUM(specialists) AS specialists, SUM(equipment) AS equipment, SUM(bonus) AS bonus FROM specialists_equipment_bonus GROUP BY center_name, supply_type").fetchall()
+    901:     se_map = defaultdict(lambda: {"specialists": 0.0, "equipment": 0.0, "bonus": 0.0})
+    902:     for r in se_rows:
+    903:         se_map[r["center_name"]]["specialists"] += float(r["specialists"] or 0)
+    904:         se_map[r["center_name"]]["equipment"] += float(r["equipment"] or 0)
+
+  D:\moghatee\samane\app\web\app.py:984
+    984: @app.route("/api/approval-status/deputies")
+    985: @auth.login_required
+    986: def api_approval_status_deputies():
+    987:     period = request.args.get("period") or None
+    988:     if period in ("همه", "", "all"): period = None
+    989:     rows = approval.get_status_by_deputy(period)
+    990:     scope = perms.current_scope()
+    991:     if scope: rows = [r for r in rows if r.get('deputy') in scope]
+    992:     return jsonify(rows)
+    993: 
+    994: @app.route("/api/approval-status/centers")
+    995: @auth.login_required
+    996: def api_approval_status_centers():
+    997:     period = request.args.get("period") or None
+    998:     if period in ("همه", "", "all"): period = None
+    999:     deputy = request.args.get("deputy") or None
+    1000:     if deputy in ("همه", ""): deputy = None
+    1001:     scope = perms.current_scope()
+    1002:     if scope and deputy and deputy not in scope: return jsonify([])
+    1003:     rows = approval.get_status_by_center(period, deputy)
+    1004:     if scope: rows = [r for r in rows if r.get('deputy') in scope]
+    1005:     return jsonify(rows)
+    1006: 
+    1007: @app.route("/api/approval-log")
+    1008: @auth.login_required
+    1009: def api_approval_log():
+    1010:     try: limit = int(request.args.get("limit", 100))
+    1011:     except: limit = 100
+    1012:     return jsonify(approval.get_recent_approvals(max(1, min(limit, 500))))
+    1013: 
+    1014: @app.route("/command-center")
+
+  D:\moghatee\samane\app\web\app.py:994
+    994: @app.route("/api/approval-status/centers")
+    995: @auth.login_required
+    996: def api_approval_status_centers():
+    997:     period = request.args.get("period") or None
+    998:     if period in ("همه", "", "all"): period = None
+    999:     deputy = request.args.get("deputy") or None
+    1000:     if deputy in ("همه", ""): deputy = None
+    1001:     scope = perms.current_scope()
+    1002:     if scope and deputy and deputy not in scope: return jsonify([])
+    1003:     rows = approval.get_status_by_center(period, deputy)
+    1004:     if scope: rows = [r for r in rows if r.get('deputy') in scope]
+    1005:     return jsonify(rows)
+    1006: 
+    1007: @app.route("/api/approval-log")
+    1008: @auth.login_required
+    1009: def api_approval_log():
+    1010:     try: limit = int(request.args.get("limit", 100))
+    1011:     except: limit = 100
+    1012:     return jsonify(approval.get_recent_approvals(max(1, min(limit, 500))))
+    1013: 
+    1014: @app.route("/command-center")
+    1015: @perms.perm_required('command_center')
+    1016: def command_center_page():
+    1017:     return render_template("command_center.html")
+    1018: 
+    1019: @app.route("/api/command-center/snapshot")
+    1020: @perms.perm_required('command_center')
+    1021: def api_command_center_snapshot():
+    1022:     try: last = int(request.args.get("last", 0))
+    1023:     except: last = 0
+    1024:     return jsonify(cc.get_snapshot(scope=perms.current_scope(), last_event_id=last))
+
+  D:\moghatee\samane\app\web\app.py:1014
+    1014: @app.route("/command-center")
+    1015: @perms.perm_required('command_center')
+    1016: def command_center_page():
+    1017:     return render_template("command_center.html")
+    1018: 
+    1019: @app.route("/api/command-center/snapshot")
+    1020: @perms.perm_required('command_center')
+    1021: def api_command_center_snapshot():
+    1022:     try: last = int(request.args.get("last", 0))
+    1023:     except: last = 0
+    1024:     return jsonify(cc.get_snapshot(scope=perms.current_scope(), last_event_id=last))
+    1025: 
+    1026: @app.route("/analytics")
+    1027: @perms.perm_required('command_center')
+    1028: def analytics_page():
+    1029:     return render_template("analytics.html")
+    1030: 
+    1031: @app.route("/api/analytics/all")
+    1032: @perms.perm_required('command_center')
+    1033: def api_analytics_all():
+    1034:     return jsonify(analytics.get_analytics(scope=perms.current_scope()))
+    1035: 
+    1036: @app.route("/api/deadline")
+    1037: @auth.login_required
+    1038: def api_deadline():
+    1039:     return jsonify(deadline_mod.get_deadline_status())
+    1040: 
+    1041: @app.route("/personnel")
+    1042: @auth.login_required
+    1043: def personnel_page():
+    1044:     return render_template("personnel.html")
+
+  D:\moghatee\samane\app\web\app.py:1019
+    1019: @app.route("/api/command-center/snapshot")
+    1020: @perms.perm_required('command_center')
+    1021: def api_command_center_snapshot():
+    1022:     try: last = int(request.args.get("last", 0))
+    1023:     except: last = 0
+    1024:     return jsonify(cc.get_snapshot(scope=perms.current_scope(), last_event_id=last))
+    1025: 
+    1026: @app.route("/analytics")
+    1027: @perms.perm_required('command_center')
+    1028: def analytics_page():
+    1029:     return render_template("analytics.html")
+    1030: 
+    1031: @app.route("/api/analytics/all")
+    1032: @perms.perm_required('command_center')
+    1033: def api_analytics_all():
+    1034:     return jsonify(analytics.get_analytics(scope=perms.current_scope()))
+    1035: 
+    1036: @app.route("/api/deadline")
+    1037: @auth.login_required
+    1038: def api_deadline():
+    1039:     return jsonify(deadline_mod.get_deadline_status())
+    1040: 
+    1041: @app.route("/personnel")
+    1042: @auth.login_required
+    1043: def personnel_page():
+    1044:     return render_template("personnel.html")
+    1045: 
+    1046: @app.route("/api/personnel/meta")
+    1047: @auth.login_required
+    1048: def api_personnel_meta():
+    1049:     return jsonify({"job_titles": personnel.JOB_TITLES, "contract_types": personnel.CONTRACT_TYPES, "supply_types": personnel.SUPPLY_TYPES, "sima_deputy": personnel.SIMA_DEPUTY})
+
+==============================================================================
+2) فایل‌های HTML با dropdown مرکز/معاونت
+==============================================================================
+
+  FILE: D:\moghatee\samane\app\web\templates\analytics.html
+
+  FILE: D:\moghatee\samane\app\web\templates\index.html
+    --- around line 413 ---
+        411:         <div class="filter-item"><label>سال</label><select id="st-year" onchange="loadSummaryTable()"></select></div>
+        412:         <div class="filter-item"><label>ماه</label><select id="st-month" onchange="loadSummaryTable()"></select></div>
+    >>> 413:         <div class="filter-item"><label>معاونت</label><select id="st-deputy" onchange="loadSummaryTable()"></select></div>
+        414:       </div>
+        415:       <div class="filter-actions">
+        416:         <span id="st-msg" style="color:var(--text-3);font-size:13px"></span>
+        417:         <span class="spacer"></span>
+    --- around line 437 ---
+        435:         <div class="filter-item"><label>سال</label><select id="appr-year" onchange="loadApprovalStatus()"></select></div>
+        436:         <div class="filter-item"><label>ماه</label><select id="appr-month" onchange="loadApprovalStatus()"></select></div>
+    >>> 437:         <div class="filter-item"><label>فیلتر معاونت</label><select id="appr-deputy-filter" onchange="loadApprovalStatus()"></select></div>
+        438:       </div>
+        439:       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+        440:         <div>
+        441:           <div style="font-weight:600;font-size:13px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">تأیید به تفکیک معاونت</div>
+    --- around line 547 ---
+        545:         <h3>ویرایش قوانین سقف پرداختی</h3>
+        546:         <div class="row">
+    >>> 547:           <label>فیلتر معاونت:</label><select id="pr-deputy-filter" onchange="loadPricingRules()"></select>
+        548:           <button class="action" onclick="recalcAll()">محاسبه مجدد همه</button>
+        549:           <span id="pr-recalc-msg" style="color:var(--text-3);font-size:13px"></span>
+        550:         </div>
+        551:         <div class="table-wrap"><table id="pricing-table"><thead><tr><th>معاونت</th><th>ماده قانونی</th><th>دسته</th><th class="num">مبلغ (ریال)</th><th>عملیات</th></tr></thead><tbody></tbody></table>
+    --- around line 569 ---
+        567:           </div>
+        568:         </div>
+    >>> 569:         <div class="row"><label>فیلتر معاونت:</label><select id="sp-deputy-filter" onchange="loadSpecialists()"></select></div>
+        570:         <div class="table-wrap"><table id="specialists-table"><thead><tr><th>معاونت</th><th>مرکز/شبکه</th><th>تامین/پخش</th><th class="num">کارشناسان</th><th class="num">خدمات و تجهیزات</th><th class=
+        571:       </div>
+        572:     </div>
+        573:     <div id="sub-manual" class="sub-panel hidden">
+    --- around line 579 ---
+        577:           <label>سال:</label><select id="mc-year" onchange="loadManualCeilings()"></select>
+        578:           <label>ماه:</label><select id="mc-month" onchange="loadManualCeilings()"></select>
+    >>> 579:           <label>فیلتر معاونت:</label><select id="mc-deputy-filter" onchange="loadManualCeilings()"></select>
+        580:           <span style="flex:1"></span>
+        581:           <button class="action" onclick="saveAllManualCeilings()">ثبت همه تغییرات</button>
+        582:         </div>
+        583:         <div class="table-wrap" style="max-height:640px"><table id="manual-ceilings-table"><thead><tr><th>معاونت</th><th>مرکز/شبکه</th><th>تامین/پخش</th><th class="num">سقف پیش‌فرض</th><th class="num"
+    --- around line 844 ---
+        842: async function loadSmartCenterData(){
+        843:   try {
+    >>> 844:     var ccData = await (await fetch('/api/command-center/snapshot')).json();
+        845:     var anData = await (await fetch('/api/analytics/all')).json();
+        846:     var kpi = ccData.kpi || {};
+        847:     document.getElementById('sa-total-paid').textContent = fmtRial(kpi.approved_amount||0);
+        848:     document.getElementById('sa-total-records').textContent = fmt(kpi.total_records||0);
+    --- around line 888 ---
+        886:   var period = getPeriod('dash-year','dash-month');
+        887:   try {
+    >>> 888:     var allCenters = await (await fetch('/api/all-centers')).json();
+        889:     var sum = await (await fetch('/api/summary-table?period='+encodeURIComponent(period)+'&deputy=همه&center=همه&supply_type=همه')).json();
+        890:     var submitted = new Set((sum.rows||[]).map(function(r){return r.center;}));
+        891:     var depMap = {};
+        892:     allCenters.forEach(function(c){ if(!depMap[c.deputy]) depMap[c.deputy]=[]; depMap[c.deputy].push(c.name); });
+    --- around line 942 ---
+        940:   var period = getPeriod('dash-year','dash-month');
+        941:   try {
+    >>> 942:     var sum = await (await fetch('/api/summary-table?period='+encodeURIComponent(period)+'&deputy=همه&center=همه&supply_type=همه')).json();
+        943:     var tS=0,tE=0,tB=0,top={};
+        944:     (sum.rows||[]).forEach(function(r){
+        945:       tS+=r.specialists||0; tE+=r.equipment||0; tB+=r.bonus||0;
+        946:       var tt=(r.specialists||0)+(r.equipment||0)+(r.bonus||0);
+    --- around line 1005 ---
+        1003:     var period = getPeriod('appr-year','appr-month');
+        1004:     var deps = await (await fetch('/api/approval-status/deputies?period='+encodeURIComponent(period))).json();
+    >>> 1005:     var cens = await (await fetch('/api/approval-status/centers?period='+encodeURIComponent(period))).json();
+        1006:     var dt = document.querySelector('#approval-deputies-table tbody');
+        1007:     dt.innerHTML = deps.length ? deps.map(function(r){
+        1008:       var pct=r.total?Math.round((r.approved/r.total)*100):0;
+        1009:       return '<tr><td>'+r.deputy+'</td><td class="num">'+fmt(r.total)+'</td><td class="num" style="color:var(--green)">'+fmt(r.approved)+' ('+pct+'%)</td><td class="num" style="color:var(--amber)">'+f
+    --- around line 1406 ---
+        1404:   var fd=new FormData(); fd.append('file',fi.files[0]); fd.append('period',p);
+        1405:   m.innerHTML='<div class="msg">در حال بارگذاری...</div>';
+    >>> 1406:   try{ var r=await fetch('/api/import-main-center',{method:'POST',body:fd}); var d=await r.json(); if(!r.ok){m.innerHTML='<div class="msg err">'+(d.error||'خطا')+'</div>';return;} m.innerHTML='<div cl
+        1407: }
+        1408: 
+        1409: // INIT
+        1410: fillYearSelect('dash-year',CURRENT_YEAR); fillMonthSelect('dash-month',CURRENT_MONTH,true);
+
+  FILE: D:\moghatee\samane\app\web\templates\index.theme.backup.html
+    --- around line 391 ---
+        389:       <div class="filter-item"><label>سال</label><select id="st-year" onchange="loadSummaryTable()"></select></div>
+        390:       <div class="filter-item"><label>ماه</label><select id="st-month" onchange="loadSummaryTable()"></select></div>
+    >>> 391:       <div class="filter-item"><label>معاونت</label><select id="st-deputy" onchange="loadSummaryTable()"></select></div>
+        392:     </div>
+        393:     <div class="filter-actions">
+        394:       <span id="st-msg" style="color:var(--text-3);font-size:13px"></span>
+        395:       <span class="spacer"></span>
+    --- around line 418 ---
+        416:       <div class="filter-item"><label>سال</label><select id="appr-year" onchange="loadApprovalStatus()"></select></div>
+        417:       <div class="filter-item"><label>ماه</label><select id="appr-month" onchange="loadApprovalStatus()"></select></div>
+    >>> 418:       <div class="filter-item"><label>فیلتر معاونت</label><select id="appr-deputy-filter" onchange="loadApprovalStatus()"></select></div>
+        419:     </div>
+        420:     <div class="filter-actions" style="padding-top:8px">
+        421:       <span id="appr-msg" style="color:var(--text-3);font-size:13px"></span>
+        422:     </div>
+    --- around line 572 ---
+        570:           <div class="row">
+        571:             <label>فیلتر معاونت:</label>
+    >>> 572:             <select id="pr-deputy-filter" onchange="loadPricingRules()"></select>
+        573:             <button class="action" onclick="recalcAll()">محاسبه مجدد همه</button>
+        574:             <span id="pr-recalc-msg" style="color:var(--text-3);font-size:13px"></span>
+        575:           </div>
+        576:           <div class="table-wrap">
+    --- around line 618 ---
+        616:           <div class="row">
+        617:             <label>فیلتر معاونت:</label>
+    >>> 618:             <select id="sp-deputy-filter" onchange="loadSpecialists()"></select>
+        619:           </div>
+        620: 
+        621:           <div id="unmatched-box" style="display:none;margin-top:18px;padding:16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.3);border-radius:12px">
+        622:             <div style="font-weight:700;font-size:13px;color:#fbbf24;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed rgba(245,158,11,.3)">
+    --- around line 663 ---
+        661:             <label>سال:</label><select id="mc-year" onchange="loadManualCeilings()"></select>
+        662:             <label>ماه:</label><select id="mc-month" onchange="loadManualCeilings()"></select>
+    >>> 663:             <label>فیلتر معاونت:</label><select id="mc-deputy-filter" onchange="loadManualCeilings()"></select>
+        664:             <span style="flex:1"></span>
+        665:             <button class="action" onclick="saveAllManualCeilings()">ثبت همه تغییرات</button>
+        666:           </div>
+        667:           <div class="table-wrap" style="max-height:640px">
+    --- around line 1290 ---
+        1288: });
+        1289: 
+    >>> 1290: function onDeputyChange(){ loadReport(); }
+        1291: 
+        1292: function renderReportRows(rows){
+        1293:   document.querySelector('#report-table tbody').innerHTML = rows.map(function(r){
+        1294:     var cls = '';
+    --- around line 1616 ---
+        1614:   if (_centerOptionsCache) return _centerOptionsCache;
+        1615:   try {
+    >>> 1616:     var r = await fetch('/api/all-centers');
+        1617:     var d = await r.json();
+        1618:     _centerOptionsCache = d.map(function(x){ return x.name; }).sort();
+        1619:     return _centerOptionsCache;
+        1620:   } catch(e){
+    --- around line 2153 ---
+        2151: 
+        2152:   try {
+    >>> 2153:     var res = await fetch('/api/import-main-center', {method: 'POST', body: fd});
+        2154:     var data = await res.json();
+        2155: 
+        2156:     if (!res.ok){
+        2157:       msg.innerHTML = '<div class="msg err">' + (data.error || 'خطا') + '</div>';
+
+  FILE: D:\moghatee\samane\app\web\templates\personnel.html
+    --- around line 208 ---
+        206:       <div class="filters">
+        207:         <div><label>کد ملی / نام</label><input id="f-search" placeholder="جستجو..." oninput="debouncedLoad()"></div>
+    >>> 208:         <div><label>معاونت</label><select id="f-deputy" onchange="onDeputyChange()"><option value="همه">همه</option></select></div>
+        209:         <div><label>شبکه / مرکز</label><select id="f-center" onchange="loadList()"><option value="همه">همه</option></select></div>
+        210:         <div><label>عنوان شغلی</label><select id="f-job" onchange="loadList()"><option value="همه">همه</option></select></div>
+        211:         <div><label>نوع قرارداد</label><select id="f-contract" onchange="loadList()"><option value="همه">همه</option></select></div>
+        212:       </div>
+    --- around line 277 ---
+        275:           <div class="field">
+        276:             <label>معاونت مقصد</label>
+    >>> 277:             <select id="tr-deputy" onchange="onTransferDeputyChange()"><option value="">—</option></select>
+        278:           </div>
+        279:           <div class="field">
+        280:             <label>شبکه / مرکز مقصد *</label>
+        281:             <select id="tr-center" onchange="updateTransferDest()"><option value="">—</option></select>
+    --- around line 394 ---
+        392:         <div>
+        393:           <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">معاونت</label>
+    >>> 394:           <select id="tpl-filter-deputy" onchange="onTemplateDeputyChange()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-
+        395:             <option value="">همه</option>
+        396:           </select>
+        397:         </div>
+        398:         <div>
+    --- around line 471 ---
+        469:         <div>
+        470:           <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">معاونت</label>
+    >>> 471:           <select id="shifts-filter-deputy" onchange="onShiftsDeputyChange()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font
+        472:             <option value="">همه</option>
+        473:           </select>
+        474:         </div>
+        475:         <div>
+    --- around line 529 ---
+        527:       <div class="field"><label>نوع قرارداد</label><select id="p-contract"></select></div>
+        528:       <div class="field"><label>تاریخ تبدیل وضعیت</label><input id="p-statusdate" placeholder="1405/06/15" dir="ltr"></div>
+    >>> 529:       <div class="field"><label>معاونت</label><select id="p-deputy" onchange="onPersonDeputyChange()"><option value="">—</option></select></div>
+        530:       <div class="field"><label>شبکه / مرکز</label><select id="p-center"><option value="">—</option></select></div>
+        531:       <div class="field supply-field" id="p-supply-wrapper" style="grid-column:1/-1">
+        532:         <label>تامین / پخش / تولید *</label>
+        533:         <select id="p-supply"><option value="">—</option></select>
+    --- around line 606 ---
+        604:     CONTRACT_TYPES.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+        605: 
+    >>> 606:   var c2 = await (await fetch('/api/all-centers')).json();
+        607:   ALL_CENTERS = c2;
+        608:   DEPUTIES = Array.from(new Set(c2.map(function(x){ return x.deputy; }).filter(Boolean))).sort();
+        609: 
+        610:   document.getElementById('f-deputy').innerHTML = '<option value="همه">همه</option>' +
+    --- around line 632 ---
+        630: }
+        631: 
+    >>> 632: function onDeputyChange(){
+        633:   var dep = document.getElementById('f-deputy').value;
+        634:   var centers = (dep === 'همه') ? ALL_CENTERS : ALL_CENTERS.filter(function(c){ return c.deputy === dep; });
+        635:   document.getElementById('f-center').innerHTML = '<option value="همه">همه</option>' +
+        636:     centers.map(function(c){ return '<option>'+c.name+'</option>'; }).join('');
+    --- around line 646 ---
+        644:   toggleSupplyVisibility();
+        645: }
+    >>> 646: function onTransferDeputyChange(){
+        647:   var dep = document.getElementById('tr-deputy').value;
+        648:   var centers = dep ? ALL_CENTERS.filter(function(c){ return c.deputy === dep; }) : ALL_CENTERS;
+        649:   document.getElementById('tr-center').innerHTML = '<option value="">—</option>' +
+        650:     centers.map(function(c){ return '<option>'+c.name+'</option>'; }).join('');
+    --- around line 943 ---
+        941:   document.getElementById('p-statusdate').value = r.status_changed_date || '';
+        942:   document.getElementById('p-deputy').value = r.deputy || '';
+    >>> 943:   onPersonDeputyChange();
+        944:   document.getElementById('p-center').value = r.center || '';
+        945:   document.getElementById('p-supply').value = r.supply_type || '';
+        946:   toggleSupplyVisibility();
+        947:   document.getElementById('dlg-person').showModal();
+    --- around line 1083 ---
+        1081: 
+        1082:   var depEl = document.getElementById('tpl-filter-deputy');
+    >>> 1083:   var cenEl = document.getElementById('tpl-filter-center');
+        1084:   var supEl = document.getElementById('tpl-filter-supply');
+        1085:   var dep = depEl ? depEl.value : '';
+        1086:   var cen = cenEl ? cenEl.value : '';
+        1087:   var sup = supEl ? supEl.value : '';
+
+  FILE: D:\moghatee\samane\app\web\templates\users.html
+    --- around line 204 ---
+        202:  </div>
+        203:  <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+    >>> 204:  <input id="center-search" placeholder="جستجوی مرکز..." style="flex:1;min-width:200px" oninput="filterCenters()">
+        205:  <select id="center-deputy-filter" onchange="filterCenters()" style="max-width:200px">
+        206:  <option value="">همه معاونت‌ها</option>
+        207:  </select>
+        208:  </div>
+    --- around line 319 ---
+        317:  '<option value="">همه معاونت‌ها</option>' +
+        318:  DEPUTIES.map(function(d){ return '<option value="' + d + '">' + d + '</option>'; }).join('');
+    >>> 319:  filterCenters();
+        320: }
+        321: 
+        322: function filterCenters() {
+        323:  var q = (document.getElementById('center-search').value || '').trim().toLowerCase();
+    --- around line 518 ---
+        516: 
+        517:  // گرفتن لیست همه مراکز با معاونتشون از API
+    >>> 518:  var r2 = await fetch('/api/all-centers');
+        519:  if (r2.ok) {
+        520:  CENTERS = await r2.json();
+        521:  } else {
+        522:  CENTERS = [];
+
+  FILE: D:\moghatee\samane\app\web\templates\analytics.html
+
+  FILE: D:\moghatee\samane\app\web\templates\index.html
+    --- around line 413 ---
+        411:         <div class="filter-item"><label>سال</label><select id="st-year" onchange="loadSummaryTable()"></select></div>
+        412:         <div class="filter-item"><label>ماه</label><select id="st-month" onchange="loadSummaryTable()"></select></div>
+    >>> 413:         <div class="filter-item"><label>معاونت</label><select id="st-deputy" onchange="loadSummaryTable()"></select></div>
+        414:       </div>
+        415:       <div class="filter-actions">
+        416:         <span id="st-msg" style="color:var(--text-3);font-size:13px"></span>
+        417:         <span class="spacer"></span>
+    --- around line 437 ---
+        435:         <div class="filter-item"><label>سال</label><select id="appr-year" onchange="loadApprovalStatus()"></select></div>
+        436:         <div class="filter-item"><label>ماه</label><select id="appr-month" onchange="loadApprovalStatus()"></select></div>
+    >>> 437:         <div class="filter-item"><label>فیلتر معاونت</label><select id="appr-deputy-filter" onchange="loadApprovalStatus()"></select></div>
+        438:       </div>
+        439:       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+        440:         <div>
+        441:           <div style="font-weight:600;font-size:13px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">تأیید به تفکیک معاونت</div>
+    --- around line 547 ---
+        545:         <h3>ویرایش قوانین سقف پرداختی</h3>
+        546:         <div class="row">
+    >>> 547:           <label>فیلتر معاونت:</label><select id="pr-deputy-filter" onchange="loadPricingRules()"></select>
+        548:           <button class="action" onclick="recalcAll()">محاسبه مجدد همه</button>
+        549:           <span id="pr-recalc-msg" style="color:var(--text-3);font-size:13px"></span>
+        550:         </div>
+        551:         <div class="table-wrap"><table id="pricing-table"><thead><tr><th>معاونت</th><th>ماده قانونی</th><th>دسته</th><th class="num">مبلغ (ریال)</th><th>عملیات</th></tr></thead><tbody></tbody></table>
+    --- around line 569 ---
+        567:           </div>
+        568:         </div>
+    >>> 569:         <div class="row"><label>فیلتر معاونت:</label><select id="sp-deputy-filter" onchange="loadSpecialists()"></select></div>
+        570:         <div class="table-wrap"><table id="specialists-table"><thead><tr><th>معاونت</th><th>مرکز/شبکه</th><th>تامین/پخش</th><th class="num">کارشناسان</th><th class="num">خدمات و تجهیزات</th><th class=
+        571:       </div>
+        572:     </div>
+        573:     <div id="sub-manual" class="sub-panel hidden">
+    --- around line 579 ---
+        577:           <label>سال:</label><select id="mc-year" onchange="loadManualCeilings()"></select>
+        578:           <label>ماه:</label><select id="mc-month" onchange="loadManualCeilings()"></select>
+    >>> 579:           <label>فیلتر معاونت:</label><select id="mc-deputy-filter" onchange="loadManualCeilings()"></select>
+        580:           <span style="flex:1"></span>
+        581:           <button class="action" onclick="saveAllManualCeilings()">ثبت همه تغییرات</button>
+        582:         </div>
+        583:         <div class="table-wrap" style="max-height:640px"><table id="manual-ceilings-table"><thead><tr><th>معاونت</th><th>مرکز/شبکه</th><th>تامین/پخش</th><th class="num">سقف پیش‌فرض</th><th class="num"
+    --- around line 844 ---
+        842: async function loadSmartCenterData(){
+        843:   try {
+    >>> 844:     var ccData = await (await fetch('/api/command-center/snapshot')).json();
+        845:     var anData = await (await fetch('/api/analytics/all')).json();
+        846:     var kpi = ccData.kpi || {};
+        847:     document.getElementById('sa-total-paid').textContent = fmtRial(kpi.approved_amount||0);
+        848:     document.getElementById('sa-total-records').textContent = fmt(kpi.total_records||0);
+    --- around line 888 ---
+        886:   var period = getPeriod('dash-year','dash-month');
+        887:   try {
+    >>> 888:     var allCenters = await (await fetch('/api/all-centers')).json();
+        889:     var sum = await (await fetch('/api/summary-table?period='+encodeURIComponent(period)+'&deputy=همه&center=همه&supply_type=همه')).json();
+        890:     var submitted = new Set((sum.rows||[]).map(function(r){return r.center;}));
+        891:     var depMap = {};
+        892:     allCenters.forEach(function(c){ if(!depMap[c.deputy]) depMap[c.deputy]=[]; depMap[c.deputy].push(c.name); });
+    --- around line 942 ---
+        940:   var period = getPeriod('dash-year','dash-month');
+        941:   try {
+    >>> 942:     var sum = await (await fetch('/api/summary-table?period='+encodeURIComponent(period)+'&deputy=همه&center=همه&supply_type=همه')).json();
+        943:     var tS=0,tE=0,tB=0,top={};
+        944:     (sum.rows||[]).forEach(function(r){
+        945:       tS+=r.specialists||0; tE+=r.equipment||0; tB+=r.bonus||0;
+        946:       var tt=(r.specialists||0)+(r.equipment||0)+(r.bonus||0);
+    --- around line 1005 ---
+        1003:     var period = getPeriod('appr-year','appr-month');
+        1004:     var deps = await (await fetch('/api/approval-status/deputies?period='+encodeURIComponent(period))).json();
+    >>> 1005:     var cens = await (await fetch('/api/approval-status/centers?period='+encodeURIComponent(period))).json();
+        1006:     var dt = document.querySelector('#approval-deputies-table tbody');
+        1007:     dt.innerHTML = deps.length ? deps.map(function(r){
+        1008:       var pct=r.total?Math.round((r.approved/r.total)*100):0;
+        1009:       return '<tr><td>'+r.deputy+'</td><td class="num">'+fmt(r.total)+'</td><td class="num" style="color:var(--green)">'+fmt(r.approved)+' ('+pct+'%)</td><td class="num" style="color:var(--amber)">'+f
+    --- around line 1406 ---
+        1404:   var fd=new FormData(); fd.append('file',fi.files[0]); fd.append('period',p);
+        1405:   m.innerHTML='<div class="msg">در حال بارگذاری...</div>';
+    >>> 1406:   try{ var r=await fetch('/api/import-main-center',{method:'POST',body:fd}); var d=await r.json(); if(!r.ok){m.innerHTML='<div class="msg err">'+(d.error||'خطا')+'</div>';return;} m.innerHTML='<div cl
+        1407: }
+        1408: 
+        1409: // INIT
+        1410: fillYearSelect('dash-year',CURRENT_YEAR); fillMonthSelect('dash-month',CURRENT_MONTH,true);
+
+  FILE: D:\moghatee\samane\app\web\templates\index.theme.backup.html
+    --- around line 391 ---
+        389:       <div class="filter-item"><label>سال</label><select id="st-year" onchange="loadSummaryTable()"></select></div>
+        390:       <div class="filter-item"><label>ماه</label><select id="st-month" onchange="loadSummaryTable()"></select></div>
+    >>> 391:       <div class="filter-item"><label>معاونت</label><select id="st-deputy" onchange="loadSummaryTable()"></select></div>
+        392:     </div>
+        393:     <div class="filter-actions">
+        394:       <span id="st-msg" style="color:var(--text-3);font-size:13px"></span>
+        395:       <span class="spacer"></span>
+    --- around line 418 ---
+        416:       <div class="filter-item"><label>سال</label><select id="appr-year" onchange="loadApprovalStatus()"></select></div>
+        417:       <div class="filter-item"><label>ماه</label><select id="appr-month" onchange="loadApprovalStatus()"></select></div>
+    >>> 418:       <div class="filter-item"><label>فیلتر معاونت</label><select id="appr-deputy-filter" onchange="loadApprovalStatus()"></select></div>
+        419:     </div>
+        420:     <div class="filter-actions" style="padding-top:8px">
+        421:       <span id="appr-msg" style="color:var(--text-3);font-size:13px"></span>
+        422:     </div>
+    --- around line 572 ---
+        570:           <div class="row">
+        571:             <label>فیلتر معاونت:</label>
+    >>> 572:             <select id="pr-deputy-filter" onchange="loadPricingRules()"></select>
+        573:             <button class="action" onclick="recalcAll()">محاسبه مجدد همه</button>
+        574:             <span id="pr-recalc-msg" style="color:var(--text-3);font-size:13px"></span>
+        575:           </div>
+        576:           <div class="table-wrap">
+    --- around line 618 ---
+        616:           <div class="row">
+        617:             <label>فیلتر معاونت:</label>
+    >>> 618:             <select id="sp-deputy-filter" onchange="loadSpecialists()"></select>
+        619:           </div>
+        620: 
+        621:           <div id="unmatched-box" style="display:none;margin-top:18px;padding:16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.3);border-radius:12px">
+        622:             <div style="font-weight:700;font-size:13px;color:#fbbf24;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed rgba(245,158,11,.3)">
+    --- around line 663 ---
+        661:             <label>سال:</label><select id="mc-year" onchange="loadManualCeilings()"></select>
+        662:             <label>ماه:</label><select id="mc-month" onchange="loadManualCeilings()"></select>
+    >>> 663:             <label>فیلتر معاونت:</label><select id="mc-deputy-filter" onchange="loadManualCeilings()"></select>
+        664:             <span style="flex:1"></span>
+        665:             <button class="action" onclick="saveAllManualCeilings()">ثبت همه تغییرات</button>
+        666:           </div>
+        667:           <div class="table-wrap" style="max-height:640px">
+    --- around line 1290 ---
+        1288: });
+        1289: 
+    >>> 1290: function onDeputyChange(){ loadReport(); }
+        1291: 
+        1292: function renderReportRows(rows){
+        1293:   document.querySelector('#report-table tbody').innerHTML = rows.map(function(r){
+        1294:     var cls = '';
+    --- around line 1616 ---
+        1614:   if (_centerOptionsCache) return _centerOptionsCache;
+        1615:   try {
+    >>> 1616:     var r = await fetch('/api/all-centers');
+        1617:     var d = await r.json();
+        1618:     _centerOptionsCache = d.map(function(x){ return x.name; }).sort();
+        1619:     return _centerOptionsCache;
+        1620:   } catch(e){
+    --- around line 2153 ---
+        2151: 
+        2152:   try {
+    >>> 2153:     var res = await fetch('/api/import-main-center', {method: 'POST', body: fd});
+        2154:     var data = await res.json();
+        2155: 
+        2156:     if (!res.ok){
+        2157:       msg.innerHTML = '<div class="msg err">' + (data.error || 'خطا') + '</div>';
+
+  FILE: D:\moghatee\samane\app\web\templates\personnel.html
+    --- around line 208 ---
+        206:       <div class="filters">
+        207:         <div><label>کد ملی / نام</label><input id="f-search" placeholder="جستجو..." oninput="debouncedLoad()"></div>
+    >>> 208:         <div><label>معاونت</label><select id="f-deputy" onchange="onDeputyChange()"><option value="همه">همه</option></select></div>
+        209:         <div><label>شبکه / مرکز</label><select id="f-center" onchange="loadList()"><option value="همه">همه</option></select></div>
+        210:         <div><label>عنوان شغلی</label><select id="f-job" onchange="loadList()"><option value="همه">همه</option></select></div>
+        211:         <div><label>نوع قرارداد</label><select id="f-contract" onchange="loadList()"><option value="همه">همه</option></select></div>
+        212:       </div>
+    --- around line 277 ---
+        275:           <div class="field">
+        276:             <label>معاونت مقصد</label>
+    >>> 277:             <select id="tr-deputy" onchange="onTransferDeputyChange()"><option value="">—</option></select>
+        278:           </div>
+        279:           <div class="field">
+        280:             <label>شبکه / مرکز مقصد *</label>
+        281:             <select id="tr-center" onchange="updateTransferDest()"><option value="">—</option></select>
+    --- around line 394 ---
+        392:         <div>
+        393:           <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">معاونت</label>
+    >>> 394:           <select id="tpl-filter-deputy" onchange="onTemplateDeputyChange()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font-
+        395:             <option value="">همه</option>
+        396:           </select>
+        397:         </div>
+        398:         <div>
+    --- around line 471 ---
+        469:         <div>
+        470:           <label style="font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:4px">معاونت</label>
+    >>> 471:           <select id="shifts-filter-deputy" onchange="onShiftsDeputyChange()" style="width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--br);color:var(--tx);border-radius:6px;font
+        472:             <option value="">همه</option>
+        473:           </select>
+        474:         </div>
+        475:         <div>
+    --- around line 529 ---
+        527:       <div class="field"><label>نوع قرارداد</label><select id="p-contract"></select></div>
+        528:       <div class="field"><label>تاریخ تبدیل وضعیت</label><input id="p-statusdate" placeholder="1405/06/15" dir="ltr"></div>
+    >>> 529:       <div class="field"><label>معاونت</label><select id="p-deputy" onchange="onPersonDeputyChange()"><option value="">—</option></select></div>
+        530:       <div class="field"><label>شبکه / مرکز</label><select id="p-center"><option value="">—</option></select></div>
+        531:       <div class="field supply-field" id="p-supply-wrapper" style="grid-column:1/-1">
+        532:         <label>تامین / پخش / تولید *</label>
+        533:         <select id="p-supply"><option value="">—</option></select>
+    --- around line 606 ---
+        604:     CONTRACT_TYPES.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+        605: 
+    >>> 606:   var c2 = await (await fetch('/api/all-centers')).json();
+        607:   ALL_CENTERS = c2;
+        608:   DEPUTIES = Array.from(new Set(c2.map(function(x){ return x.deputy; }).filter(Boolean))).sort();
+        609: 
+        610:   document.getElementById('f-deputy').innerHTML = '<option value="همه">همه</option>' +
+    --- around line 632 ---
+        630: }
+        631: 
+    >>> 632: function onDeputyChange(){
+        633:   var dep = document.getElementById('f-deputy').value;
+        634:   var centers = (dep === 'همه') ? ALL_CENTERS : ALL_CENTERS.filter(function(c){ return c.deputy === dep; });
+        635:   document.getElementById('f-center').innerHTML = '<option value="همه">همه</option>' +
+        636:     centers.map(function(c){ return '<option>'+c.name+'</option>'; }).join('');
+    --- around line 646 ---
+        644:   toggleSupplyVisibility();
+        645: }
+    >>> 646: function onTransferDeputyChange(){
+        647:   var dep = document.getElementById('tr-deputy').value;
+        648:   var centers = dep ? ALL_CENTERS.filter(function(c){ return c.deputy === dep; }) : ALL_CENTERS;
+        649:   document.getElementById('tr-center').innerHTML = '<option value="">—</option>' +
+        650:     centers.map(function(c){ return '<option>'+c.name+'</option>'; }).join('');
+    --- around line 943 ---
+        941:   document.getElementById('p-statusdate').value = r.status_changed_date || '';
+        942:   document.getElementById('p-deputy').value = r.deputy || '';
+    >>> 943:   onPersonDeputyChange();
+        944:   document.getElementById('p-center').value = r.center || '';
+        945:   document.getElementById('p-supply').value = r.supply_type || '';
+        946:   toggleSupplyVisibility();
+        947:   document.getElementById('dlg-person').showModal();
+    --- around line 1083 ---
+        1081: 
+        1082:   var depEl = document.getElementById('tpl-filter-deputy');
+    >>> 1083:   var cenEl = document.getElementById('tpl-filter-center');
+        1084:   var supEl = document.getElementById('tpl-filter-supply');
+        1085:   var dep = depEl ? depEl.value : '';
+        1086:   var cen = cenEl ? cenEl.value : '';
+        1087:   var sup = supEl ? supEl.value : '';
+
+  FILE: D:\moghatee\samane\app\web\templates\users.html
+    --- around line 204 ---
+        202:  </div>
+        203:  <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+    >>> 204:  <input id="center-search" placeholder="جستجوی مرکز..." style="flex:1;min-width:200px" oninput="filterCenters()">
+        205:  <select id="center-deputy-filter" onchange="filterCenters()" style="max-width:200px">
+        206:  <option value="">همه معاونت‌ها</option>
+        207:  </select>
+        208:  </div>
+    --- around line 319 ---
+        317:  '<option value="">همه معاونت‌ها</option>' +
+        318:  DEPUTIES.map(function(d){ return '<option value="' + d + '">' + d + '</option>'; }).join('');
+    >>> 319:  filterCenters();
+        320: }
+        321: 
+        322: function filterCenters() {
+        323:  var q = (document.getElementById('center-search').value || '').trim().toLowerCase();
+    --- around line 518 ---
+        516: 
+        517:  // گرفتن لیست همه مراکز با معاونتشون از API
+    >>> 518:  var r2 = await fetch('/api/all-centers');
+        519:  if (r2.ok) {
+        520:  CENTERS = await r2.json();
+        521:  } else {
+        522:  CENTERS = [];
+
+==============================================================================
+3) چک: آیا /api/structure یا /api/centers لیست را filter می‌کند؟
+==============================================================================
+
+✅ تمام — هیچ چیزی تغییر نکرد.
+این خروجی را کامل بفرست تا پچ دقیق بدهم.
